@@ -1,0 +1,32 @@
+name: PRFlow Bikes
+
+on: 
+  push:
+    branches:
+    - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:        
+    - uses: actions/checkout@master    
+
+    - uses: azure/docker-login@v1
+      with:
+        login-server: ${{ secrets.CONTAINER_REGISTRY }}
+        username: ${{ secrets.REGISTRY_USERNAME }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+    
+    - run: |
+        docker build . -t ${{ secrets.CONTAINER_REGISTRY }}/siop:$GITHUB_SHA
+        docker push ${{ secrets.CONTAINER_REGISTRY }}/siop:$GITHUB_SHA
+
+    - uses: azure/aks-set-context@v1
+      with:
+        creds: '${{ secrets.AZURE_CREDENTIALS }}'
+        cluster-name: ${{ secrets.CLUSTER_NAME }}
+        resource-group: ${{ secrets.RESOURCE_GROUP }}
+
+    - name: Create child namespaces and add Dev Spaces labels
+      run:  |
+        kubectl -n siop rollout restart deployment/siop
