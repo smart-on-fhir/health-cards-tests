@@ -2,16 +2,17 @@
   "name": "health-passport-reference",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/index.js",
+  "main": "dist/src/server.js",
   "browserslist": [
     "last 1 Chrome versions"
   ],
   "scripts": {
-    "dev": "nodemon --exec ts-node ./src/index.ts",
+    "dev": "nodemon --exec ts-node ./src/server.ts",
     "prebuild": "tslint -c tslint.json -p tsconfig.json --fix",
+    "build-static": "parcel build ./src/*.html --out-dir dist/static && cp node_modules/qr-scanner/qr-scanner-worker.min.js* dist/static",
     "build": "tsc",
-    "prestart": "npm run build",
-    "start": "node .",
+    "_prestart": "npm run build",
+    "start": "node ./dist/src/server",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -23,6 +24,8 @@
     "express": "^4.17.1",
     "fhirclient": "^2.3.1",
     "multihashes": "^0.4.19",
+    "qr-scanner": "^1.1.1",
+    "qrcode": "^1.4.4",
     "querystring": "^0.2.0"
   },
   "devDependencies": {

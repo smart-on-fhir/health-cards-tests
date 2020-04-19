@@ -11,8 +11,8 @@ COPY src/ ./src
 COPY tslint.json tsconfig.json ./
 RUN find src
 RUN npm run build
-RUN $(npm bin)/parcel build ./src/*.html --out-dir dist/static
+RUN npm run build-static
 
 # Start
-CMD [ "npm", "start" ]
+CMD [ "npm", "run", "dev" ]
 EXPOSE 8080
