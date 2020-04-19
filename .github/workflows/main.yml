@@ -1,4 +1,4 @@
-name: PRFlow Bikes
+name: Deploy siop master to ci
 
 on: 
   push:
@@ -27,6 +27,6 @@ jobs:
         cluster-name: ${{ secrets.CLUSTER_NAME }}
         resource-group: ${{ secrets.RESOURCE_GROUP }}
 
-    - name: Create child namespaces and add Dev Spaces labels
+    - name: Rollout latest image to CI
       run:  |
         kubectl -n siop rollout restart deployment/siop
