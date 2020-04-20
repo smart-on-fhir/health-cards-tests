@@ -8,6 +8,7 @@ RUN npm install
 
 RUN git clone https://github.com/decentralized-identity/sidetree
 COPY src/ ./src
+COPY dist ./dist
 COPY tslint.json tsconfig.json ./
 RUN find src
 RUN npm run build-ui
