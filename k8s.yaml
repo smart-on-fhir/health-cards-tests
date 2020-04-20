@@ -65,6 +65,6 @@ spec:
       volumes:
       containers:
       - name: ui
-        image: argonautcontainerregistry.azurecr.io/subscriptions/siop:latest
+        image: argonautcontainerregistry.azurecr.io/siop:latest
         ports:
         - containerPort: 8080
