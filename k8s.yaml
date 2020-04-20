@@ -1,0 +1,70 @@
+# kubectl apply -f k8s.yaml
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: siop
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    certmanager.k8s.io/cluster-issuer: letsencrypt-prod
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+  name: siop-ingress
+  namespace: siop
+spec:
+  rules:
+  - host: siop.argo.run
+    http:
+      paths:
+      - backend:
+          serviceName: siop
+          servicePort: 80
+        path: /(.*)
+  tls:
+  - hosts:
+    - siop.argo.run
+    secretName: tls-secret
+status:
+  loadBalancer:
+    ingress:
+    - {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: siop
+  name: siop
+spec:
+  selector:
+    app: siop
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: siop
+  namespace: siop
+  labels:
+    app: siop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: siop
+  template:
+    metadata:
+      labels:
+        app: siop
+    spec:
+      volumes:
+      containers:
+      - name: ui
+        image: argonautcontainerregistry.azurecr.io/subscriptions/siop:latest
+        ports:
+        - containerPort: 8080

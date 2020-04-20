@@ -1,3 +1,14 @@
- $(npm bin)/parcel watch ./src/index.html
 
- cd dist && python -m SimpleHTTPServer
+## Getting started in dev, with node and web pack watchers
+    git clone https://github.com/microsoft-healthcare-madison/did-siop-vc
+    cd did-siop-vc
+    git clone https://github.com/decentralized-identity/sidetree
+    npm install
+    npm run dev-ui # Terminal 1
+    npm run dev    # Terminal 2
+
+
+## Build and run
+    npm run build-ui
+    npm run build
+    npm run start

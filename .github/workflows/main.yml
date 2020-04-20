@@ -1,6 +1,6 @@
 name: Deploy siop master to ci
-
-on: 
+#  Basics from https://docs.microsoft.com/en-us/azure/dev-spaces/how-to/github-actions
+on:
   push:
     branches:
     - master
@@ -8,18 +8,14 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    steps:        
-    - uses: actions/checkout@master    
+    steps:
+    - uses: actions/checkout@master
 
     - uses: azure/docker-login@v1
       with:
         login-server: ${{ secrets.CONTAINER_REGISTRY }}
         username: ${{ secrets.REGISTRY_USERNAME }}
         password: ${{ secrets.REGISTRY_PASSWORD }}
-    
-    - run: |
-        docker build . -t ${{ secrets.CONTAINER_REGISTRY }}/siop:$GITHUB_SHA
-        docker push ${{ secrets.CONTAINER_REGISTRY }}/siop:$GITHUB_SHA
 
     - uses: azure/aks-set-context@v1
       with:
@@ -27,6 +23,10 @@ jobs:
         cluster-name: ${{ secrets.CLUSTER_NAME }}
         resource-group: ${{ secrets.RESOURCE_GROUP }}
 
-    - name: Rollout latest image to CI
-      run:  |
+    - name: Build and rollout to CI
+      run: |
+        docker build . \
+          -t ${{ secrets.CONTAINER_REGISTRY }}/siop:$GITHUB_SHA \
+          -t ${{ secrets.CONTAINER_REGISTRY }}/siop:latest
+        docker push ${{ secrets.CONTAINER_REGISTRY }}/siop:$GITHUB_SHA
         kubectl -n siop rollout restart deployment/siop

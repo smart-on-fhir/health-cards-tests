@@ -10,8 +10,8 @@ RUN git clone https://github.com/decentralized-identity/sidetree
 COPY src/ ./src
 COPY tslint.json tsconfig.json ./
 RUN find src
+RUN npm run build-ui
 RUN npm run build
-RUN npm run build-static
 
 # Start
 CMD [ "npm", "run", "dev" ]

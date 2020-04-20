@@ -8,10 +8,10 @@
   ],
   "scripts": {
     "dev": "nodemon --exec ts-node ./src/server.ts",
-    "prebuild": "tslint -c tslint.json -p tsconfig.json --fix",
-    "build-static": "parcel build ./src/*.html --out-dir dist/static && cp node_modules/qr-scanner/qr-scanner-worker.min.js* dist/static",
+    "dev-ui": "npm run qr-static && parcel watch ./src/*.html --out-dir dist/static",
+    "qr-static": "cp node_modules/qr-scanner/qr-scanner-worker.min.js* dist/static",
+    "build-ui": "npm run qr-static && parcel build ./src/*.html --out-dir dist/static",
     "build": "tsc",
-    "_prestart": "npm run build",
     "start": "node ./dist/src/server",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

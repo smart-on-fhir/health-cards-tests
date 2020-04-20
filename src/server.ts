@@ -1,25 +1,15 @@
-import express from 'express';
-import qs from 'querystring';
-import * as FHIR from 'fhirclient';
 import axios from 'axios';
-import jose, { JWT } from 'jose';
 import cors from 'cors';
-
-import Did from '../sidetree/lib/core/versions/latest/Did';
-import Multihash from '../sidetree/lib/core/versions/latest/Multihash';
-import Jwk from '../sidetree/lib/core/versions/latest/util/Jwk';
-import JwkEs256k from '../sidetree/lib/core/models/JwkEs256k';
-import * as crypto from 'crypto';
-import base64url from 'base64url';
+import express from 'express';
+import { JWT } from 'jose';
+import qs from 'querystring';
 import OperationType from '../sidetree/lib/core/enums/OperationType';
-import OperationProcessor from '../sidetree/lib/core/versions/latest/OperationProcessor';
 import AnchoredOperationModel from '../sidetree/lib/core/models/AnchoredOperationModel';
+import Did from '../sidetree/lib/core/versions/latest/Did';
 import DocumentComposer from '../sidetree/lib/core/versions/latest/DocumentComposer';
-import multihashes from 'multihashes';
+import OperationProcessor from '../sidetree/lib/core/versions/latest/OperationProcessor';
 
-// Referincing here ensures typscript copies over these json files into dist
-import * as s1 from '../sidetree/lib/core/versions/latest/protocol-parameters.json';
-import * as s2 from '../sidetree/lib/bitcoin/protocol-parameters.json';
+
 
 const app = express();
 app.use(express.raw({ type: 'application/x-www-form-urlencoded' }));
@@ -103,7 +93,9 @@ app.get('/api/did/:did', async (req, res) => {
     res.json(didDoc.didDocument);
 });
 
-app.use(express.static('dist/static'));
+app.use(express.static('dist/static', {
+    extensions: ['html'],
+}));
 
 // start the Express server
 app.listen(port, () => {
