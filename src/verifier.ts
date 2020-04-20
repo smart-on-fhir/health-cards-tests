@@ -41,9 +41,11 @@ interface VerifierState {
     did: string;
     simulated: boolean;
     siopRequest?: {
-        created: any;
-        qrCodeUrl: string;
-        idToken?: any;
+        siopRequestPayload: any;
+        siopRequestPayloadSigned: string;
+        siopRequestQrCodeUrl: string;
+        siopRequestReady: boolean;
+        siopResponsePollingUrl: string;
     };
     siopResponse?: {
         idTokenRaw: string;
@@ -81,7 +83,7 @@ async function prepareSiopRequest (state: VerifierState, event: (e: any) => Prom
     const siopRequestHeader = {
         kid: state.did + '#signing-key-1'
     };
-    const siopRequestBody = {
+    const siopRequestPayload = {
         state: siopState,
         'iss': state.did,
         'response_type': 'id_token',
@@ -94,23 +96,24 @@ async function prepareSiopRequest (state: VerifierState, event: (e: any) => Prom
             'client_uri': serverBase
         }
     };
-    const siopRequest = await state.sk.sign(siopRequestHeader, siopRequestBody);
+    const siopRequestPayloadSigned = await state.sk.sign(siopRequestHeader, siopRequestPayload);
     const siopRequestCreated = await axios.post(`${serverBase}/siop/begin`, {
-        siopRequest
+        siopRequest: siopRequestPayloadSigned
     });
     const siopRequestQrCodeUrl = 'openid://?' + qs.encode({
         response_type: 'id_token',
         scope: 'did_authn',
-        request_uri: serverBase + '/siop/' + siopRequestBody.state,
-        client_id: siopRequestBody.client_id
+        request_uri: serverBase + '/siop/' + siopRequestPayload.state,
+        client_id: siopRequestPayload.client_id
     });
     await event({
         type: 'siop-request-created',
         siopRequest: {
-            payload: siopRequestBody,
-            jwt: siopRequest,
-            created: siopRequestCreated.data,
-            qrCodeUrl: siopRequestQrCodeUrl
+            siopRequestPayload,
+            siopRequestPayloadSigned,
+            siopRequestReady: siopRequestCreated.status === 200,
+            siopRequestQrCodeUrl,
+            siopResponsePollingUrl: siopRequestCreated.data.responsePollingUrl
         }
     });
     if (state.simulated) {
@@ -132,7 +135,7 @@ async function receiveSiopResponse (state: VerifierState, event: (e: any) => Pro
     const POLLING_RATE_MS = 500; // Obviously replace this with websockets, SSE, etc
     let responseRetrieved;
     do {
-        responseRetrieved = await axios.get(serverBase + state.siopRequest.created.responsePollingUrl);
+        responseRetrieved = await axios.get(serverBase + state.siopRequest.siopResponsePollingUrl);
         await new Promise((resolve) => setTimeout(resolve, POLLING_RATE_MS));
     } while (!responseRetrieved.data);
     const idTokenRetrieved = responseRetrieved.data.id_token;
@@ -143,9 +146,9 @@ async function receiveSiopResponse (state: VerifierState, event: (e: any) => Pro
         await event({
             type: 'siop-response-received',
             siopResponse: {
-                idTokenRaw: idTokenRetrieved,
-                idTokenDecrypted: idTokenRetrievedDecrypted,
-                idTokenVerified: idTokenVerified.payload
+                idTokenEncrypted: idTokenRetrieved,
+                idTokenSigned: idTokenRetrievedDecrypted,
+                idTokenPayload: idTokenVerified.payload
             }
         });
     }

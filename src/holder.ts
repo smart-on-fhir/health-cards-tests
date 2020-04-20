@@ -116,7 +116,9 @@ async function prepareSiopResponse (state: HolderState, event: (e: any) => Promi
         type: 'siop-response-submitted',
         siopResponse: {
             idTokenPayload,
-            siopResponse,
+            idTokenSigned,
+            idTokenEncrypted,
+            formPostBody: siopResponse,
             success: siopResponseCreated.status === 200
         }
     });
