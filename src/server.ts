@@ -9,8 +9,6 @@ import Did from '../sidetree/lib/core/versions/latest/Did';
 import DocumentComposer from '../sidetree/lib/core/versions/latest/DocumentComposer';
 import OperationProcessor from '../sidetree/lib/core/versions/latest/OperationProcessor';
 
-
-
 const app = express();
 app.use(express.raw({ type: 'application/x-www-form-urlencoded' }));
 app.use(express.json({ type: 'application/json' }));
@@ -94,7 +92,7 @@ app.get('/api/did/:did', async (req, res) => {
 });
 
 app.use(express.static('dist/static', {
-    extensions: ['html'],
+    extensions: ['html']
 }));
 
 // start the Express server

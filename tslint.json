@@ -2,7 +2,8 @@
   "extends": "tslint-config-standard",
   "linterOptions": {
     "exclude": [
-      "node_modules/**"
+      "node_modules/**",
+      "sidetree/**"
     ]
   },
   "defaultSeverity": "error",
@@ -43,6 +44,7 @@
       "only-arrow-functions": [
         true,
         "allow-named-functions"
-      ]
+      ],
+      "await-promise": [false]
   }
 }

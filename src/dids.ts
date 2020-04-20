@@ -22,7 +22,7 @@ export async function encryptFor (jws: string, did: string, ek: EncryptionKey) {
 const resolveKeyId = async (kid: string): Promise<JsonWebKey> => {
     const fragment = '#' + kid.split('#')[1];
     const didDoc = (await axios.get(resolveUrl + kid)).data;
-    return didDoc.publicKey.filter(k => k.id == fragment)[0].publicKeyJwk;
+    return didDoc.publicKey.filter(k => k.id === fragment)[0].publicKeyJwk;
 };
 export async function generateDid ({ signingPublicKey, encryptionPublicKey }) {
     const recoveryPublicKey = signingPublicKey;

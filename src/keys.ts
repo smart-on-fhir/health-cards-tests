@@ -67,7 +67,9 @@ export async function generateEncryptionKey (input?: JsonWebKey): Promise<Encryp
     };
 }
 export async function generateSigningKey (input?: JsonWebKey): Promise<SigningKey> {
-    let publicKey, privateKey, publicJwk;
+    let publicKey;
+    let privateKey;
+    let publicJwk;
     if (input) {
         let uncompressed = new Uint8Array(Buffer.from([0x04, ...base64url.toBuffer(input.x), ...base64url.toBuffer(input.y)]));
         publicKey = Buffer.from(uncompressed);

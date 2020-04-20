@@ -6,16 +6,16 @@ import { serverBase } from './config';
 import { generateDid, verifyJws } from './dids';
 import { EncryptionKey, generateEncryptionKey, generateSigningKey, SigningKey } from './keys';
 
-import QRCode from 'qrcode'
+import QRCode from 'qrcode';
 
-export async function verifierWorld(simulated: boolean) {
+export async function verifierWorld (simulated: boolean) {
     let state = await initializeVerifier(simulated);
     const event = async (e) => {
         const pre = state;
         state = await verifierEvent(state, e);
-        console.log("Verifier Event", e.type, e, state);
+        console.log('Verifier Event', e.type, e, state);
     };
-    console.log("Verifier initial state", state);
+    console.log('Verifier initial state', state);
     await prepareSiopRequest(state, event);
     await receiveSiopResponse(state, event);
 }
@@ -49,10 +49,12 @@ interface VerifierState {
         idTokenRaw: string;
         idTokenDecrypted: string;
         idTokenVerified: any;
-    }
+    };
 }
 const initializeVerifier = async (simulated: boolean): Promise<VerifierState> => {
-    let ek = await generateEncryptionKey(), sk = await generateSigningKey(), did = await generateDid({
+    const ek = await generateEncryptionKey();
+    const sk = await generateSigningKey();
+    const did = await generateDid({
         encryptionPublicKey: ek.publicJwk,
         signingPublicKey: sk.publicJwk
     });
@@ -60,50 +62,50 @@ const initializeVerifier = async (simulated: boolean): Promise<VerifierState> =>
         simulated,
         ek,
         sk,
-        did,
+        did
     };
 };
 
-async function verifierEvent(state: VerifierState, event: any): Promise<VerifierState> {
-    if (event.type === "siop-request-created") {
+async function verifierEvent (state: VerifierState, event: any): Promise<VerifierState> {
+    if (event.type === 'siop-request-created') {
         return { ...state, siopRequest: event.siopRequest };
     }
-    if (event.type === "siop-response-received") {
+    if (event.type === 'siop-response-received') {
         return { ...state, siopResponse: event.siopResponse };
     }
     return state;
 }
 
-async function prepareSiopRequest(state: VerifierState, event: (e: any) => Promise<void>) {
+async function prepareSiopRequest (state: VerifierState, event: (e: any) => Promise<void>) {
     const siopState = base64url.encode(crypto.randomBytes(16));
     const siopRequestHeader = {
         kid: state.did + '#signing-key-1'
     };
     const siopRequestBody = {
         state: siopState,
-        "iss": state.did,
-        "response_type": "id_token",
-        "client_id": `${serverBase}/siop`,
-        "scope": "did_authn",
-        "response_mode": "form_post",
-        "nonce": base64url.encode(crypto.randomBytes(16)),
-        "registration": {
-            "id_token_signed_response_alg": ["ES256K"],
-            "client_uri": serverBase
+        'iss': state.did,
+        'response_type': 'id_token',
+        'client_id': `${serverBase}/siop`,
+        'scope': 'did_authn',
+        'response_mode': 'form_post',
+        'nonce': base64url.encode(crypto.randomBytes(16)),
+        'registration': {
+            'id_token_signed_response_alg': ['ES256K'],
+            'client_uri': serverBase
         }
     };
     const siopRequest = await state.sk.sign(siopRequestHeader, siopRequestBody);
     const siopRequestCreated = await axios.post(`${serverBase}/siop/begin`, {
-        siopRequest,
+        siopRequest
     });
     const siopRequestQrCodeUrl = 'openid://?' + qs.encode({
-        response_type: "id_token",
-        scope: "did_authn",
+        response_type: 'id_token',
+        scope: 'did_authn',
         request_uri: serverBase + '/siop/' + siopRequestBody.state,
         client_id: siopRequestBody.client_id
     });
     await event({
-        type: "siop-request-created",
+        type: 'siop-request-created',
         siopRequest: {
             payload: siopRequestBody,
             jwt: siopRequest,
@@ -113,20 +115,20 @@ async function prepareSiopRequest(state: VerifierState, event: (e: any) => Promi
     });
     if (state.simulated) {
         simulatedInteractions.push({
-            "type": "display-qr-code",
-            "who": "verifier",
-            "url": siopRequestQrCodeUrl
+            'type': 'display-qr-code',
+            'who': 'verifier',
+            'url': siopRequestQrCodeUrl
         });
     } else {
-        const canvas = document.getElementById('qrcode-canvas')
-        QRCode.toCanvas(canvas, siopRequestQrCodeUrl, { scale: 20 }, function (error) {
-            if (error) console.error(error)
+        const canvas = document.getElementById('qrcode-canvas');
+        QRCode.toCanvas(canvas, siopRequestQrCodeUrl, { scale: 20 }, (error) => {
+            if (error) console.error(error);
             console.log('success!');
-        })
+        });
     }
 
 }
-async function receiveSiopResponse(state: VerifierState, event: (e: any) => Promise<void>) {
+async function receiveSiopResponse (state: VerifierState, event: (e: any) => Promise<void>) {
     const POLLING_RATE_MS = 500; // Obviously replace this with websockets, SSE, etc
     let responseRetrieved;
     do {
@@ -139,7 +141,7 @@ async function receiveSiopResponse(state: VerifierState, event: (e: any) => Prom
     if (idTokenVerified.valid) {
         const idToken = idTokenVerified.payload;
         await event({
-            type: "siop-response-received",
+            type: 'siop-response-received',
             siopResponse: {
                 idTokenRaw: idTokenRetrieved,
                 idTokenDecrypted: idTokenRetrievedDecrypted,

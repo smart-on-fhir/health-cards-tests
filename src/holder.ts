@@ -32,7 +32,9 @@ interface HolderState {
 }
 
 const initializeHolder = async (simulated: boolean): Promise<HolderState> => {
-    let ek = await generateEncryptionKey(), sk = await generateSigningKey(), did = await generateDid({
+    const ek = await generateEncryptionKey();
+    const sk = await generateSigningKey();
+    const did = await generateDid({
         encryptionPublicKey: ek.publicJwk,
         signingPublicKey: sk.publicJwk
     });
@@ -60,7 +62,7 @@ async function scanOneCode (): Promise<string> {
         console.log('Scanning in', videoElement);
         let qrScanner = new QrScanner(videoElement, result => {
            console.log('decoded qr code:', result);
-           if (!result.length) {return;}
+           if (!result.length) { return; }
            qrScanner.destroy();
            qrScanner = null;
            resolve(result);

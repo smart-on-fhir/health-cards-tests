@@ -1,4 +1,4 @@
-export const  sampleVc = {
+export const sampleVc = {
   '@context': [
     'https://www.w3.org/2018/credentials/v1'
   ],
