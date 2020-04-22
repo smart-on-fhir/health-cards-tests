@@ -17,50 +17,61 @@ const port = 8080; // default port to listen
 
 const fhirBase = 'https://hapi.fhir.org/baseR4';
 
-async function resolveDid (did: string) {
-  const parsedDid = await Did.create(did, 'did:ion:');
-  const operationWithMockedAnchorTime: AnchoredOperationModel = {
-      didUniqueSuffix: parsedDid.uniqueSuffix,
-      type: OperationType.Create,
-      transactionTime: 0,
-      transactionNumber: 0,
-      operationIndex: 0,
-      operationBuffer: parsedDid.createOperation.operationBuffer
+async function resolveDid(did: string) {
+    const parsedDid = await Did.create(did, 'did:ion:');
+    const operationWithMockedAnchorTime: AnchoredOperationModel = {
+        didUniqueSuffix: parsedDid.uniqueSuffix,
+        type: OperationType.Create,
+        transactionTime: 0,
+        transactionNumber: 0,
+        operationIndex: 0,
+        operationBuffer: parsedDid.createOperation.operationBuffer
     };
 
-  const processor = new OperationProcessor();
+    const processor = new OperationProcessor();
 
-  const newDidState = await processor.apply(operationWithMockedAnchorTime, undefined);
-  const document = DocumentComposer.transformToExternalDocument(newDidState, did);
-  return document;
+    const newDidState = await processor.apply(operationWithMockedAnchorTime, undefined);
+    const document = DocumentComposer.transformToExternalDocument(newDidState, did);
+    return document;
 }
 
 const client = {
-  get: async (url: string) => (await axios.get(fhirBase + '/' + url)).data
+    get: async (url: string) => (await axios.get(fhirBase + '/' + url)).data
 };
 
-const siopCache: Record<string,{
+const siopCache: Record<string, {
     ttl: number,
     siopRequest: string,
     siopResponse: Promise<object>,
     siopResponseDeferred: {
-        resolve: (object)=>undefined;
-        reject: (any)=>undefined;
-    }}> = { };
+        resolve: (object) => undefined;
+        reject: (any) => undefined;
+    }
+}> = {};
+
+const vcCache: Record<string, {
+    ttl: number,
+    vcs: string[]
+}> = {};
+
 const ttlMs = 1000 * 60 * 15; // 15 minute ttl
-function enforceTtl (cache: Record<string, {ttl: number}>) {
+function enforceTtl(cache: Record<string, { ttl: number }>) {
     const now = new Date().getTime();
-    Object.entries(cache).forEach(([k,{ ttl }]) => {
+    Object.entries(cache).forEach(([k, { ttl }]) => {
         if (ttl < now) {
             delete cache[k];
         }
     });
 }
-setInterval(() => enforceTtl(siopCache), 1000 * 60);
+setInterval(() => {
+    enforceTtl(siopCache);
+    enforceTtl(vcCache)
+}, 1000 * 60);
+
+
 
 app.post('/api/siop/begin', async (req, res) => {
     const id: string = (JWT.decode(req.body.siopRequest) as any).state;
-
 
     let resolve, reject;
     siopCache[id] = {
@@ -100,11 +111,29 @@ app.post('/api/siop', async (req, res) => {
 });
 
 app.get('/api/did/:did', async (req, res) => {
-    const didLong = req.params.did + '?-ion-initial-state=' + req.query['-ion-initial-state'];
+    const didLong = decodeURIComponent(req.params.did)
     console.log('req', req.params, '-<', didLong);
     const didDoc = await resolveDid(didLong);
     res.json(didDoc.didDocument);
 });
+
+app.post('/api/lab/vcs/:did', async (req, res) => {
+    const did = decodeURIComponent(req.params.did)
+    const vcs = req.body.vcs
+    const entry = {
+        vcs,
+        ttl: new Date().getTime() + ttlMs
+    }
+    vcCache[did] = entry
+    console.log("VC cache", vcCache)
+    res.send('Received VC for DID');
+});
+
+app.get('/api/lab/vcs/:did', async (req, res) => {
+    const did = decodeURIComponent(req.params.did)
+    res.json(vcCache[did])
+});
+
 
 app.use(express.static('dist/static', {
     extensions: ['html']
@@ -112,5 +141,5 @@ app.use(express.static('dist/static', {
 
 // start the Express server
 app.listen(port, () => {
-  console.log(`server started at http://localhost:${port}`);
+    console.log(`server started at http://localhost:${port}`);
 });

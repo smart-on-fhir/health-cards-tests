@@ -4,6 +4,7 @@ export const sampleVc = {
   ],
   'type': [
     'VerifiableCredential',
+    'vc-health-passport-stamp-covid19-serology',
     'https://example.com#fhir-backed-vc',
     'https://example.com#vc-presentation-context-online',
     'https://example.com#health-passport-stamp',

@@ -2,7 +2,7 @@
     "compilerOptions": {
         "module": "commonjs",
         "esModuleInterop": true,
-        "target": "es6",
+        "target": "es2019",
         "noImplicitAny": false,
         "moduleResolution": "node",
         "sourceMap": true,
@@ -11,7 +11,6 @@
         "paths": {
         },
         "resolveJsonModule": true,
-
     },
     "include": [
         "src/server.ts"

@@ -13,15 +13,15 @@ export async function verifyJws (jws: string) {
 }
 const ENCRYPTION_KEY_TYPE = 'JwsVerificationKey2020'; // TODO fix this once sidetree allows encryption key types
 
-export async function encryptFor (jws: string, did: string, ek: EncryptionKey) {
-    const didDoc = (await axios.get(resolveUrl + did)).data;
+export async function encryptFor (jws: string, did: string) {
+    const didDoc = (await axios.get(resolveUrl + encodeURIComponent(did))).data;
     const encryptionKey = didDoc.publicKey.filter(k => k.type === ENCRYPTION_KEY_TYPE)[0];
-    let ekBad = await generateEncryptionKey(encryptionKey.publicKeyJwk);
-    return ekBad.encrypt({ kid: encryptionKey.kid }, jws);
+    let ek = await generateEncryptionKey(encryptionKey.publicKeyJwk);
+    return ek.encrypt({ kid: encryptionKey.kid }, jws);
 }
 const resolveKeyId = async (kid: string): Promise<JsonWebKey> => {
     const fragment = '#' + kid.split('#')[1];
-    const didDoc = (await axios.get(resolveUrl + kid)).data;
+    const didDoc = (await axios.get(resolveUrl + encodeURIComponent(kid))).data;
     return didDoc.publicKey.filter(k => k.id === fragment)[0].publicKeyJwk;
 };
 export async function generateDid ({ signingPublicKey, encryptionPublicKey }) {
