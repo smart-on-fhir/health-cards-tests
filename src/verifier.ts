@@ -1,13 +1,12 @@
 import axios from 'axios';
 import base64url from 'base64url';
 import * as crypto from 'crypto';
+import QRCode from 'qrcode';
 import qs from 'querystring';
 import { serverBase } from './config';
 import { generateDid, verifyJws } from './dids';
 import { EncryptionKey, generateEncryptionKey, generateSigningKey, SigningKey } from './keys';
 
-import QRCode from 'qrcode';
-import { removeAllListeners } from 'cluster';
 
 export enum ClaimType {
     CovidSerology = 'vc-health-passport-stamp-covid19-serology',

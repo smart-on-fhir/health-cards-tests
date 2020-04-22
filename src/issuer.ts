@@ -30,7 +30,7 @@ const issueVcToHolder = async (state: VerifierState, event: any): Promise<void> 
         vcs: [vcEncrypted]                
     })
 
-    event({
+    await event({
         type: 'credential-ready'
     })
 

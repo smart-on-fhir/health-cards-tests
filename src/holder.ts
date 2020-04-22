@@ -41,7 +41,6 @@ interface SiopInteraction {
     simulateBarcodeScanFrom?: 'verifier' | 'issuer'
 }
 
-type ClaimType2 = "vc-health-passport-stamp-covid19-serology" | "vc-health-passport-stamp"
 interface HolderState {
     simulated: boolean;
     ek: EncryptionKey;
