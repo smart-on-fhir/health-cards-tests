@@ -8,8 +8,8 @@ import { EncryptionKey, generateEncryptionKey, generateSigningKey, SigningKey } 
 
 import QRCode from 'qrcode';
 
-export async function verifierWorld (simulated: boolean) {
-    let state = await initializeVerifier(simulated);
+export async function verifierWorld (simulated: boolean, role = 'verifier') {
+    let state = await initializeVerifier(simulated, role);
     const event = async (e) => {
         const pre = state;
         state = await verifierEvent(state, e);
@@ -39,6 +39,7 @@ interface VerifierState {
     ek: EncryptionKey;
     sk: SigningKey;
     did: string;
+    role: string;
     simulated: boolean;
     siopRequest?: {
         siopRequestPayload: any;
@@ -52,7 +53,7 @@ interface VerifierState {
         idTokenVerified: any;
     };
 }
-const initializeVerifier = async (simulated: boolean): Promise<VerifierState> => {
+export const initializeVerifier = async (simulated: boolean, role: string): Promise<VerifierState> => {
     const ek = await generateEncryptionKey();
     const sk = await generateSigningKey();
     const did = await generateDid({
@@ -63,11 +64,12 @@ const initializeVerifier = async (simulated: boolean): Promise<VerifierState> =>
         simulated,
         ek,
         sk,
-        did
+        did,
+        role
     };
 };
 
-async function verifierEvent (state: VerifierState, event: any): Promise<VerifierState> {
+export async function verifierEvent (state: VerifierState, event: any): Promise<VerifierState> {
     if (event.type === 'siop-request-created') {
         return { ...state, siopRequest: event.siopRequest };
     }
@@ -77,7 +79,7 @@ async function verifierEvent (state: VerifierState, event: any): Promise<Verifie
     return state;
 }
 
-async function prepareSiopRequest (state: VerifierState, event: (e: any) => Promise<void>) {
+export async function prepareSiopRequest (state: VerifierState, event: (e: any) => Promise<void>) {
     const siopState = base64url.encode(crypto.randomBytes(16));
     const siopRequestHeader = {
         kid: state.did + '#signing-key-1'
@@ -117,7 +119,7 @@ async function prepareSiopRequest (state: VerifierState, event: (e: any) => Prom
     if (state.simulated) {
         simulatedInteractions.push({
             'type': 'display-qr-code',
-            'who': 'verifier',
+            'who': state.role,
             'url': siopRequestQrCodeUrl
         });
     } else {
@@ -129,7 +131,8 @@ async function prepareSiopRequest (state: VerifierState, event: (e: any) => Prom
     }
 
 }
-async function receiveSiopResponse (state: VerifierState, event: (e: any) => Promise<void>) {
+
+export async function receiveSiopResponse (state: VerifierState, event: (e: any) => Promise<void>) {
     const POLLING_RATE_MS = 500; // Obviously replace this with websockets, SSE, etc
     let responseRetrieved;
     do {
