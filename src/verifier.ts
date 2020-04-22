@@ -44,7 +44,6 @@ interface VerifierState {
         siopRequestPayload: any;
         siopRequestPayloadSigned: string;
         siopRequestQrCodeUrl: string;
-        siopRequestReady: boolean;
         siopResponsePollingUrl: string;
     };
     siopResponse?: {
@@ -111,7 +110,6 @@ async function prepareSiopRequest (state: VerifierState, event: (e: any) => Prom
         siopRequest: {
             siopRequestPayload,
             siopRequestPayloadSigned,
-            siopRequestReady: siopRequestCreated.status === 200,
             siopRequestQrCodeUrl,
             siopResponsePollingUrl: siopRequestCreated.data.responsePollingUrl
         }

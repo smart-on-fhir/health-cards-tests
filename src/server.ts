@@ -39,7 +39,14 @@ const client = {
   get: async (url: string) => (await axios.get(fhirBase + '/' + url)).data
 };
 
-const siopCache: Record<string,{ttl: number, siopRequest: string, siopResponse?: any}> = { };
+const siopCache: Record<string,{
+    ttl: number,
+    siopRequest: string,
+    siopResponse: Promise<object>,
+    siopResponseDeferred: {
+        resolve: (object)=>undefined;
+        reject: (any)=>undefined;
+    }}> = { };
 const ttlMs = 1000 * 60 * 15; // 15 minute ttl
 function enforceTtl (cache: Record<string, {ttl: number}>) {
     const now = new Date().getTime();
@@ -54,10 +61,18 @@ setInterval(() => enforceTtl(siopCache), 1000 * 60);
 app.post('/api/siop/begin', async (req, res) => {
     const id: string = (JWT.decode(req.body.siopRequest) as any).state;
 
+
+    let resolve, reject;
     siopCache[id] = {
         siopRequest: req.body.siopRequest,
-        siopResponse: null,
-        ttl: new Date().getTime() + ttlMs
+        siopResponse: new Promise((resolveFn, rejectFn) => {
+            resolve = resolveFn;
+            reject = rejectFn
+        }),
+        siopResponseDeferred: {
+            resolve, reject
+        },
+        ttl: new Date().getTime() + ttlMs,
     };
     console.log(id, siopCache[id]);
 
@@ -69,7 +84,7 @@ app.post('/api/siop/begin', async (req, res) => {
 
 app.get('/api/siop/:id/response', async (req, res) => {
     const r = siopCache[req.params.id];
-    res.send(r.siopResponse);
+    res.send(await r.siopResponse)
 });
 
 app.get('/api/siop/:id', async (req, res) => {
@@ -80,7 +95,7 @@ app.get('/api/siop/:id', async (req, res) => {
 app.post('/api/siop', async (req, res) => {
     const body = qs.parse(req.body.toString());
     const state = body.state as string;
-    siopCache[state].siopResponse = body;
+    siopCache[state].siopResponseDeferred.resolve(body);
     res.send('Received SIOP Response');
 });
 
