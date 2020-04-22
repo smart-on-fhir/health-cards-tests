@@ -140,6 +140,7 @@ async function receiveSiopRequest(state: HolderState, event: (e: any) => Promise
     } else {
         qrCodeUrl = await scanOneCode();
     }
+    console.log("We have an interaction", qrCodeUrl, state, event)
     let qrCodeParams = qs.parse(qrCodeUrl.split('?')[1]);
     let requestUri = qrCodeParams.request_uri as string;
     const siopRequestRaw = (await axios.get(requestUri)).data;
