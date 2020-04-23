@@ -13,8 +13,9 @@ export async function holderWorld(simulated) {
     let qrCodeUrl;
     let interaction;
 
-    const dispatch = async (e) => {
+    const dispatch = async (ePromise) => {
         const pre = state;
+        const e = await ePromise
         state = await holderEvent(state, e);
         console.log('Holder event', e.type, e, state);
     };
@@ -25,10 +26,11 @@ export async function holderWorld(simulated) {
     interaction = currentInteraction(state)
     qrCodeUrl = (await simulatedOccurrence({ who: interaction.simulateBarcodeScanFrom, type: 'display-qr-code' })).url;
 
-    await dispatch(await receiveSiopRequest(qrCodeUrl, state))
-    await dispatch(await prepareSiopResponse(state))
 
-    await dispatch(await simulatedOccurrence({ who: 'issuer', type: 'notify-credential-ready' }))
+    await dispatch(receiveSiopRequest(qrCodeUrl, state))
+    await dispatch(prepareSiopResponse(state))
+
+    await dispatch(simulatedOccurrence({ who: 'issuer', type: 'notify-credential-ready' }))
     await dispatch(retrieveVcs(state))
 
 
@@ -36,8 +38,8 @@ export async function holderWorld(simulated) {
 
     interaction = currentInteraction(state)
     qrCodeUrl = (await simulatedOccurrence({ who: interaction.simulateBarcodeScanFrom, type: 'display-qr-code' })).url;
-    await dispatch(await receiveSiopRequest(qrCodeUrl, state))
-    await dispatch(await prepareSiopResponse(state))
+    await dispatch(receiveSiopRequest(qrCodeUrl, state))
+    await dispatch(prepareSiopResponse(state))
 
 }
 
