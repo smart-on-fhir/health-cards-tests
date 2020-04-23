@@ -18,7 +18,7 @@ const port = 8080; // default port to listen
 const fhirBase = 'https://hapi.fhir.org/baseR4';
 
 async function resolveDid(did: string) {
-    const parsedDid = await Did.create(did, 'did:ion:');
+    const parsedDid = await Did.create(did, 'ion');
     const operationWithMockedAnchorTime: AnchoredOperationModel = {
         didUniqueSuffix: parsedDid.uniqueSuffix,
         type: OperationType.Create,
