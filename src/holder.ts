@@ -140,7 +140,6 @@ async function receiveSiopRequest(state: HolderState, event: (e: any) => Promise
     } else {
         qrCodeUrl = await scanOneCode();
     }
-    console.log("We have an interaction", qrCodeUrl, state, event)
     let qrCodeParams = qs.parse(qrCodeUrl.split('?')[1]);
     let requestUri = qrCodeParams.request_uri as string;
     const siopRequestRaw = (await axios.get(requestUri)).data;
@@ -217,7 +216,6 @@ async function prepareSiopResponse(state: HolderState, event: (e: any) => Promis
 async function retrieveVcs(state: HolderState, event) {
     const vcs = (await axios.get(`${serverBase}/lab/vcs/${encodeURIComponent(state.did)}`)).data.vcs
     const vcRetrieved = vcs[0]
-    console.log("WOrking on gc retrieve", vcRetrieved)
     const vcDecrypted = await state.ek.decrypt(vcs[0]);
     const vcVerified = await verifyJws(vcDecrypted);
 

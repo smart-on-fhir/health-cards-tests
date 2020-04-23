@@ -85,7 +85,6 @@ app.post('/api/siop/begin', async (req, res) => {
         },
         ttl: new Date().getTime() + ttlMs,
     };
-    console.log(id, siopCache[id]);
 
     res.json({
         responsePollingUrl: `/siop/${id}/response`,
@@ -112,7 +111,6 @@ app.post('/api/siop', async (req, res) => {
 
 app.get('/api/did/:did', async (req, res) => {
     const didLong = decodeURIComponent(req.params.did)
-    console.log('req', req.params, '-<', didLong);
     const didDoc = await resolveDid(didLong);
     res.json(didDoc.didDocument);
 });
@@ -125,7 +123,6 @@ app.post('/api/lab/vcs/:did', async (req, res) => {
         ttl: new Date().getTime() + ttlMs
     }
     vcCache[did] = entry
-    console.log("VC cache", vcCache)
     res.send('Received VC for DID');
 });
 
