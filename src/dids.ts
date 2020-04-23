@@ -65,9 +65,16 @@ export async function generateDid ({ signingPublicKey, encryptionPublicKey }) {
     };
     const suffixDataCanonical = JSON.stringify(suffixData);
     const suffixDataEncoded = base64url.encode(suffixDataCanonical);
-    const suffix = base64url.encode(hash(Buffer.from(suffixDataEncoded)));
+    const suffix = base64url.encode(hash(Buffer.from(suffixDataCanonical)));
     const didShort = `did:ion:${suffix}`;
-    const didLong = `did:ion:${suffix}?-ion-initial-state=${suffixDataEncoded}.${deltaEncoded}`;
+    const createOperation = {
+        type: 'create',
+        suffix_data: suffixDataEncoded,
+        delta: deltaEncoded
+    };
+    const createOperationCanonical = JSON.stringify(createOperation);
+    const createOperationEncoded = base64url.encode(createOperationCanonical);
+    const didLong = `did:ion:${suffix}?-ion-initial-state=${createOperationEncoded}`;
     return didLong;
 }
 const jwtHeader = (jwt) => JSON.parse(base64url.decode(jwt.split('.')[0]));
