@@ -144,7 +144,6 @@ async function receiveSiopRequest(state: HolderState, event: (e: any) => Promise
     let qrCodeParams = qs.parse(qrCodeUrl.split('?')[1]);
     let requestUri = qrCodeParams.request_uri as string;
     const siopRequestRaw = (await axios.get(requestUri)).data;
-    console.log("Got req raw", siopRequestRaw)
     const siopRequestVerified = await verifyJws(siopRequestRaw);
     if (siopRequestVerified.valid) {
         await event({
