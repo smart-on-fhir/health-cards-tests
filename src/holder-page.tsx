@@ -55,6 +55,7 @@ const App: React.FC<{ initialState: HolderState }> = (props) => {
     const dispatchToHolder = async (ePromise) => {
         const e = await ePromise
         const holder = await holderEvent(state.holder, e)
+        console.log("Dispatched", e, holder)
         setState(state => ({ ...state, holder }))
     }
 
@@ -68,6 +69,7 @@ const App: React.FC<{ initialState: HolderState }> = (props) => {
     }
 
     const onScanned = async (qrCodeUrl: string) => {
+        console.log("Scanned", qrCodeUrl)
         await dispatchToHolder(receiveSiopRequest(qrCodeUrl, state.holder));
     }
 
@@ -76,7 +78,9 @@ const App: React.FC<{ initialState: HolderState }> = (props) => {
     }
 
     return <>
-        {interaction && interaction.status === "need-qrcode" && <QRScanner onScanned={onScanned} label="Lab" simulatedScan={currentInteraction(state.holder)} />}
+        <a target="_blank" href="./issuer.html">Open Lab Demo</a> {" | "}
+        <a target="_blank" href="./verifier.html">Open Verifier Demo</a> <br/>
+        {interaction && interaction.status === "need-qrcode" && <QRScanner onScanned={onScanned} label="Lab"/>}
         <button onClick={connectTo('issuer')}>Connect to Lab</button> <br />
         <button onClick={onApproval('issuer')} disabled={!(interaction &&  state.holder.interactions.length == 1 && interaction.status === "need-approval")}>Approve sharing my identity</button> <br />
         <button onClick={retrieveVcClick}>Get Health Card from Lab</button> 
@@ -88,8 +92,8 @@ const App: React.FC<{ initialState: HolderState }> = (props) => {
 }
 
 export default async function main() {
-    issuerWorld(true)
-    verifierWorld(true)
+    //issuerWorld(true)
+    //verifierWorld(true)
     const state = await initializeHolder(false);
     ReactDOM.render(
         <App initialState={state} />,
