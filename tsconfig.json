@@ -8,9 +8,9 @@
         "sourceMap": true,
         "outDir": "dist",
         "baseUrl": ".",
-        "paths": {
-        },
+        "paths": { },
         "resolveJsonModule": true,
+        "jsx": "react"
     },
     "include": [
         "src/server.ts"

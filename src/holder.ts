@@ -6,42 +6,49 @@ import { encryptFor, generateDid, verifyJws } from './dids';
 import { sampleVc } from './fixtures';
 import { EncryptionKey, generateEncryptionKey, generateSigningKey, SigningKey } from './keys';
 import { simulatedOccurrence, ClaimType } from './verifier';
-import QrScanner from 'qr-scanner';
 import { serverBase } from './config';
-QrScanner.WORKER_PATH = 'qr-scanner-worker.min.js';
 
 export async function holderWorld(simulated) {
     let state = await initializeHolder(simulated);
-    const event = async (e) => {
+    let qrCodeUrl;
+    let interaction;
+
+    const dispatch = async (e) => {
         const pre = state;
         state = await holderEvent(state, e);
         console.log('Holder event', e.type, e, state);
     };
     console.log('Holder initial state', state);
 
-    await event({ 'type': 'begin-interaction', who: 'issuer' })
-    await receiveSiopRequest(state, event);
-    await prepareSiopResponse(state, event);
+    await dispatch({ 'type': 'begin-interaction', who: 'issuer' })
 
-    if (simulated) {
-        await simulatedOccurrence({ who: 'issuer', type: 'notify-credential-ready' })
-        await retrieveVcs(state, event)
-    }
+    interaction = currentInteraction(state)
+    qrCodeUrl = (await simulatedOccurrence({ who: interaction.simulateBarcodeScanFrom, type: 'display-qr-code' })).url;
+
+    await dispatch(await receiveSiopRequest(qrCodeUrl, state))
+    await dispatch(await prepareSiopResponse(state))
+
+    await dispatch(await simulatedOccurrence({ who: 'issuer', type: 'notify-credential-ready' }))
+    await dispatch(retrieveVcs(state))
 
 
-    await event({ 'type': 'begin-interaction', who: 'verifier' })
-    await receiveSiopRequest(state, event);
-    await prepareSiopResponse(state, event);
+    await dispatch({ 'type': 'begin-interaction', who: 'verifier' })
+
+    interaction = currentInteraction(state)
+    qrCodeUrl = (await simulatedOccurrence({ who: interaction.simulateBarcodeScanFrom, type: 'display-qr-code' })).url;
+    await dispatch(await receiveSiopRequest(qrCodeUrl, state))
+    await dispatch(await prepareSiopResponse(state))
 
 }
 
-interface SiopInteraction {
+export interface SiopInteraction {
     siopRequest?: any;
     siopResponse?: any;
     simulateBarcodeScanFrom?: 'verifier' | 'issuer'
+    status: 'need-qrcode' | 'need-request' | 'need-approval' | 'complete'
 }
 
-interface HolderState {
+export interface HolderState {
     simulated: boolean;
     ek: EncryptionKey;
     sk: SigningKey;
@@ -54,10 +61,10 @@ interface HolderState {
     }[]
 }
 
-const currentInteraction = (state: HolderState): SiopInteraction =>
+export const currentInteraction = (state: HolderState): SiopInteraction =>
     state.interactions.filter(i => !i.siopResponse)[0]
 
-const initializeHolder = async (simulated: boolean): Promise<HolderState> => {
+export const initializeHolder = async (simulated: boolean): Promise<HolderState> => {
     const ek = await generateEncryptionKey();
     const sk = await generateSigningKey();
     const did = await generateDid({
@@ -73,12 +80,13 @@ const initializeHolder = async (simulated: boolean): Promise<HolderState> => {
         vcStore: []
     };
 };
-async function holderEvent(state: HolderState, event: any): Promise<HolderState> {
+export async function holderEvent(state: HolderState, event: any): Promise<HolderState> {
     if (event.type === 'begin-interaction') {
         return {
             ...state,
             interactions: [...(state.interactions), {
-                simulateBarcodeScanFrom: state.simulated ? event.who : undefined
+                simulateBarcodeScanFrom: event.who,
+                status: 'need-qrcode'
             }]
         }
     }
@@ -88,7 +96,8 @@ async function holderEvent(state: HolderState, event: any): Promise<HolderState>
             ...state,
             interactions: [...state.interactions.slice(0, -1), {
                 ...interaction,
-                siopRequest: event.siopRequest
+                siopRequest: event.siopRequest,
+                status: "need-approval"
             }]
         };
     }
@@ -98,7 +107,8 @@ async function holderEvent(state: HolderState, event: any): Promise<HolderState>
             ...state,
             interactions: [...state.interactions.slice(0, -1), {
                 ...currentInteraction,
-                siopResponse: event.siopResponse
+                siopResponse: event.siopResponse,
+                status: "complete"
             }]
         };
     }
@@ -116,36 +126,13 @@ async function holderEvent(state: HolderState, event: any): Promise<HolderState>
     return state;
 }
 
-async function scanOneCode(): Promise<string> {
-    return new Promise((resolve) => {
-        const videoElement = window.document.getElementById('scanner-video') as HTMLVideoElement;
-        console.log('Scanning in', videoElement);
-        let qrScanner = new QrScanner(videoElement, result => {
-            console.log('decoded qr code:', result);
-            if (!result.length) { return; }
-            qrScanner.destroy();
-            qrScanner = null;
-            resolve(result);
-            videoElement.remove();
-        });
-        qrScanner.start();
-    });
-}
-
-async function receiveSiopRequest(state: HolderState, event: (e: any) => Promise<void>) {
-    let qrCodeUrl;
-    const interaction = currentInteraction(state)
-    if (state.simulated) {
-        qrCodeUrl = (await simulatedOccurrence({ who: interaction.simulateBarcodeScanFrom, type: 'display-qr-code' })).url;
-    } else {
-        qrCodeUrl = await scanOneCode();
-    }
+export async function receiveSiopRequest(qrCodeUrl: string, state: HolderState) {
     let qrCodeParams = qs.parse(qrCodeUrl.split('?')[1]);
     let requestUri = qrCodeParams.request_uri as string;
     const siopRequestRaw = (await axios.get(requestUri)).data;
     const siopRequestVerified = await verifyJws(siopRequestRaw);
     if (siopRequestVerified.valid) {
-        await event({
+        return ({
             type: 'siop-request-received',
             siopRequest: siopRequestVerified.payload
         });
@@ -168,7 +155,7 @@ const presentationForEssentialClaims = (vcStore: HolderState["vcStore"], claims:
         .entries(id_token || {})
         .filter(([k, v]) => v.essential)
         .map(([k, v]) => claimsForType(k as ClaimType, vcStore)[0])
-        // TODO call flatMap to include all claims rather than 1st
+    // TODO call flatMap to include all claims rather than 1st
 
     if (!essential.length) return {};
 
@@ -179,7 +166,7 @@ const presentationForEssentialClaims = (vcStore: HolderState["vcStore"], claims:
     }
 }
 
-async function prepareSiopResponse(state: HolderState, event: (e: any) => Promise<void>) {
+export async function prepareSiopResponse(state: HolderState) {
     const interaction = currentInteraction(state)
     const idTokenHeader = {
         'kid': state.did + '#signing-key-1'
@@ -201,7 +188,7 @@ async function prepareSiopResponse(state: HolderState, event: (e: any) => Promis
     };
     const responseUrl = interaction.siopRequest.client_id;
     const siopResponseCreated = await axios.post(responseUrl, qs.stringify(siopResponse));
-    await event({
+    return ({
         type: 'siop-response-submitted',
         siopResponse: {
             idTokenPayload,
@@ -213,11 +200,11 @@ async function prepareSiopResponse(state: HolderState, event: (e: any) => Promis
     });
 }
 
-async function retrieveVcs(state: HolderState, event) {
+export async function retrieveVcs(state: HolderState) {
     const vcs = (await axios.get(`${serverBase}/lab/vcs/${encodeURIComponent(state.did)}`)).data.vcs
     const vcRetrieved = vcs[0]
     const vcDecrypted = await state.ek.decrypt(vcs[0]);
     const vcVerified = await verifyJws(vcDecrypted);
 
-    await event({ 'type': 'vc-retrieved', vc: vcDecrypted, verified: vcVerified.valid })
+    return ({ 'type': 'vc-retrieved', vc: vcDecrypted, verified: vcVerified.valid })
 }
