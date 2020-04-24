@@ -13,16 +13,17 @@ export enum ClaimType {
     ImmunizationCard = 'vc-health-passport-stamp',
 }
 
-export async function verifierWorld(simulated: boolean, role = 'verifier') {
-    let state = await initializeVerifier({ simulated, role, claimsRequired: [ClaimType.CovidSerology] });
-    const event = async (e) => {
+export async function verifierWorld(role = 'verifier') {
+    let state = await initializeVerifier({ role, claimsRequired: [ClaimType.CovidSerology] });
+    const dispatch = async (ePromise) => {
+        const e = await ePromise;
         const pre = state;
-        state = await verifierEvent(state, e);
+        state = await verifierReducer(state, e);
         console.log('Verifier Event', e.type, e, state);
     };
     console.log('Verifier initial state', state);
-    await prepareSiopRequest(state, event);
-    await receiveSiopResponse(state, event);
+    await dispatch(prepareSiopRequest(state));
+    await dispatch(receiveSiopResponse(state));
 }
 
 // Cheap-o polling-based event simuation for the occasional
@@ -34,12 +35,12 @@ export const simulate = (e) => {
 }
 export const simulatedOccurrence = async ({ who, type }, rateMs = 200) => {
     while (true) {
-        await new Promise((resolve) => setTimeout(resolve, rateMs));
         const matches = simulatedInteractions
             .filter(e => e.who === who && e.type === type);
         if (matches.length) {
             return matches[0];
         }
+        await new Promise((resolve) => setTimeout(resolve, rateMs));
     }
 };
 
@@ -48,7 +49,6 @@ export interface VerifierState {
     sk: SigningKey;
     did: string;
     config: {
-        simulated: boolean;
         role: string;
         claimsRequired: ClaimType[]
     };
@@ -82,7 +82,7 @@ export const initializeVerifier = async (config: VerifierState["config"]): Promi
     };
 };
 
-export async function verifierEvent(state: VerifierState, event: any): Promise<VerifierState> {
+export async function verifierReducer(state: VerifierState, event: any): Promise<VerifierState> {
     if (event.type === 'siop-request-created') {
         return { ...state, siopRequest: event.siopRequest };
     }
@@ -92,7 +92,7 @@ export async function verifierEvent(state: VerifierState, event: any): Promise<V
     return state;
 }
 
-export async function prepareSiopRequest(state: VerifierState, event: (e: any) => Promise<void>) {
+export async function prepareSiopRequest(state: VerifierState) {
     const siopState = base64url.encode(crypto.randomBytes(16));
     const siopRequestHeader = {
         kid: state.did + '#signing-key-1'
@@ -126,7 +126,20 @@ export async function prepareSiopRequest(state: VerifierState, event: (e: any) =
         request_uri: serverBase + '/siop/' + siopRequestPayload.state,
         client_id: siopRequestPayload.client_id
     });
-    await event({
+
+    simulate({
+        'type': 'display-qr-code',
+        'who': state.config.role,
+        'url': siopRequestQrCodeUrl
+    });
+
+    const canvas = document.getElementById('qrcode-canvas');
+    canvas && QRCode.toCanvas(canvas, siopRequestQrCodeUrl, { scale: 20 }, (error) => {
+        if (error) console.error(error);
+        console.log('success!');
+    });
+
+    return ({
         type: 'siop-request-created',
         siopRequest: {
             siopRequestPayload,
@@ -135,23 +148,10 @@ export async function prepareSiopRequest(state: VerifierState, event: (e: any) =
             siopResponsePollingUrl: siopRequestCreated.data.responsePollingUrl
         }
     });
-    if (state.config.simulated) {
-        simulate({
-            'type': 'display-qr-code',
-            'who': state.config.role,
-            'url': siopRequestQrCodeUrl
-        });
-    } else {
-        const canvas = document.getElementById('qrcode-canvas');
-        QRCode.toCanvas(canvas, siopRequestQrCodeUrl, { scale: 20 }, (error) => {
-            if (error) console.error(error);
-            console.log('success!');
-        });
-    }
 
 }
 
-export async function receiveSiopResponse(state: VerifierState, event: (e: any) => Promise<void>) {
+export async function receiveSiopResponse(state: VerifierState) {
     const POLLING_RATE_MS = 500; // Obviously replace this with websockets, SSE, etc
     let responseRetrieved;
     do {
@@ -163,7 +163,7 @@ export async function receiveSiopResponse(state: VerifierState, event: (e: any) 
     const idTokenVerified = await verifyJws(idTokenRetrievedDecrypted);
     if (idTokenVerified.valid) {
         const idToken = idTokenVerified.payload;
-        await event({
+        return ({
             type: 'siop-response-received',
             siopResponse: {
                 idTokenEncrypted: idTokenRetrieved,

@@ -4,7 +4,7 @@ import { holderWorld } from './holder';
 import { verifierWorld } from './verifier';
 
 export default async function main () {
-    await Promise.all([issuerWorld(true), holderWorld(true), verifierWorld(true)]);
+    await Promise.all([issuerWorld(), holderWorld(), verifierWorld()]);
 }
 
 main().then(r => console.log('Resolved,', r));

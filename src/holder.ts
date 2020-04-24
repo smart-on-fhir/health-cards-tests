@@ -8,15 +8,15 @@ import { EncryptionKey, generateEncryptionKey, generateSigningKey, SigningKey } 
 import { simulatedOccurrence, ClaimType } from './verifier';
 import { serverBase } from './config';
 
-export async function holderWorld(simulated) {
-    let state = await initializeHolder(simulated);
+export async function holderWorld() {
+    let state = await initializeHolder();
     let qrCodeUrl;
     let interaction;
 
     const dispatch = async (ePromise) => {
         const pre = state;
         const e = await ePromise
-        state = await holderEvent(state, e);
+        state = await holderReducer(state, e);
         console.log('Holder event', e.type, e, state);
     };
     console.log('Holder initial state', state);
@@ -37,7 +37,9 @@ export async function holderWorld(simulated) {
     await dispatch({ 'type': 'begin-interaction', who: 'verifier' })
 
     interaction = currentInteraction(state)
+    console.log("auto-holder waiting on barcode", state)
     qrCodeUrl = (await simulatedOccurrence({ who: interaction.simulateBarcodeScanFrom, type: 'display-qr-code' })).url;
+    console.log("auto-holder waiting on barcode", state)
     await dispatch(receiveSiopRequest(qrCodeUrl, state))
     await dispatch(prepareSiopResponse(state))
 
@@ -51,7 +53,6 @@ export interface SiopInteraction {
 }
 
 export interface HolderState {
-    simulated: boolean;
     ek: EncryptionKey;
     sk: SigningKey;
     did: string;
@@ -66,7 +67,7 @@ export interface HolderState {
 export const currentInteraction = (state: HolderState): SiopInteraction =>
     state.interactions.filter(i => !i.siopResponse)[0]
 
-export const initializeHolder = async (simulated: boolean): Promise<HolderState> => {
+export const initializeHolder = async (): Promise<HolderState> => {
     const ek = await generateEncryptionKey();
     const sk = await generateSigningKey();
     const did = await generateDid({
@@ -74,7 +75,6 @@ export const initializeHolder = async (simulated: boolean): Promise<HolderState>
         signingPublicKey: sk.publicJwk
     });
     return {
-        simulated,
         ek,
         sk,
         did,
@@ -82,7 +82,7 @@ export const initializeHolder = async (simulated: boolean): Promise<HolderState>
         vcStore: []
     };
 };
-export async function holderEvent(state: HolderState, event: any): Promise<HolderState> {
+export async function holderReducer(state: HolderState, event: any): Promise<HolderState> {
     if (event.type === 'begin-interaction') {
         return {
             ...state,

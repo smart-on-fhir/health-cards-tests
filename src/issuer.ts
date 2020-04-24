@@ -1,4 +1,4 @@
-import { initializeVerifier, prepareSiopRequest, receiveSiopResponse, verifierEvent, VerifierState, simulatedOccurrence, simulate } from './verifier';
+import { initializeVerifier, prepareSiopRequest, receiveSiopResponse, verifierReducer, VerifierState, simulatedOccurrence, simulate } from './verifier';
 import { sampleVc } from './fixtures';
 import axios from 'axios';
 import { serverBase } from './config';
@@ -6,20 +6,26 @@ import { serverBase } from './config';
 import { encryptFor, generateDid, verifyJws } from './dids';
 import Axios from 'axios';
 
-export async function issuerWorld (simulated: boolean) {
-    let state = await initializeVerifier({simulated, role: 'issuer', claimsRequired: []});
-    const event = async (e) => {
+export async function issuerWorld () {
+    let state = await initializeVerifier({role: 'issuer', claimsRequired: []});
+    const dispatch = async (ePromise) => {
+        const e = await ePromise;
         const pre = state;
-        state = await issuerEvent(state, e);
+        state = await issuerReducer(state, e);
         console.log('Issuer Event', e.type, e, state);
     };
     console.log('Issuer initial state', state);
-    await prepareSiopRequest(state, event);
-    await receiveSiopResponse(state, event);
-    await issueVcToHolder(state, event);
+    await dispatch(prepareSiopRequest(state));
+    await dispatch(receiveSiopResponse(state));
+    await dispatch(issueVcToHolder(state));
+    simulate({
+        'type': 'notify-credential-ready',
+        'who': state.config.role,
+    });
+
 }
 
-const issueVcToHolder = async (state: VerifierState, event: any): Promise<void> => {
+const issueVcToHolder = async (state: VerifierState): Promise<any> => {
     const vcPayload = JSON.parse(JSON.stringify(sampleVc))
     const subjectDid = state.siopResponse.idTokenPayload.did
     vcPayload.credentialSubject.id =  subjectDid
@@ -29,23 +35,15 @@ const issueVcToHolder = async (state: VerifierState, event: any): Promise<void> 
     const vcCreated = await axios.post(`${serverBase}/lab/vcs/${encodeURIComponent(subjectDid)}`, {
         vcs: [vcEncrypted]                
     })
+    
 
-    await event({
+    return({
         type: 'credential-ready'
     })
 
-    if (state.config.simulated) {
-        simulate({
-            'type': 'notify-credential-ready',
-            'who': state.config.role,
-        });
-    }
- 
-
-    return
 }
 
-export async function issuerEvent (state: VerifierState, event: any): Promise<VerifierState> {
+export async function issuerReducer (state: VerifierState, event: any): Promise<VerifierState> {
     if (event.type === 'credential-ready') {
         return {
             ...state,
@@ -53,6 +51,6 @@ export async function issuerEvent (state: VerifierState, event: any): Promise<Ve
         }
     }
 
-    return await verifierEvent.call(null, ...arguments);
+    return await verifierReducer.call(null, ...arguments);
 }
 
