@@ -10,41 +10,37 @@ QrScanner.WORKER_PATH = 'qr-scanner-worker.min.js';
 const SIMULATED_SCAN = true
 
 interface State {
-    qrCode?: string;
 }
 
 const QRScanner: React.FC<{ label: string, onScanned: (s: string) => void, simulatedScan?: SiopInteraction }> = (props) => {
     const videoRef = useRef()
     useEffect(() => {
         let qrScanner = new QrScanner(videoRef.current, result => {
-            if (!result.length) { return; }
-            props.onScanned(result)
+            result.length && props.onScanned(result)
         });
         qrScanner.start();
 
         return function cancel() {
             qrScanner.destroy();
             qrScanner = null;
-            console.log("Descriyed scanner")
         }
     }, [videoRef])
 
     useEffect(() => {
         if (props.simulatedScan) {
-            const fakeEvent = simulatedOccurrence({
+            simulatedOccurrence({
                 who: props.simulatedScan.simulateBarcodeScanFrom,
                 type: 'display-qr-code'
-            })
-            fakeEvent.then(({ url }) => props.onScanned(url))
+            }).then(({ url }) => props.onScanned(url))
         }
     }, [])
 
     return <>
         <span>Scan barcode for {props.label}</span><br />
-        <video ref={videoRef} style={{ width: "100%", height: "100%" }}></video>
+        <video ref={videoRef} style={{ width: "25vmin", height: "25vmin" }}></video>
+        <br/>
     </>
 }
-
 
 const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean }> = (props) => {
     const [holderState, setHolderState] = useState<HolderState>(props.initialState)
@@ -74,6 +70,9 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean }
         await dispatchToHolder(prepareSiopResponse(holderState));
     }
 
+    const showIssuerApproval = (interaction && holderState.interactions.length == 1 && interaction.status === "need-approval")
+    const showVerifierApproval = (interaction && holderState.interactions.length == 2 && interaction.status === "need-approval")
+
     return <>
         {!props.simulatedBarcodeScan ? <><a href=".?simulate-barcode">Simulate barcode scans</a> {" | "}</> : ""}
         <a target="_blank" href="./issuer">Open Lab Demo</a> {" | "}
@@ -83,11 +82,11 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean }
             label="Lab"
             simulatedScan={props.simulatedBarcodeScan ? interaction : null}/>}
         <button onClick={connectTo('issuer')}>Connect to Lab</button> <br />
-        <button onClick={onApproval('issuer')} disabled={!(interaction &&  holderState.interactions.length == 1 && interaction.status === "need-approval")}>Approve sharing my identity</button> <br />
+        <button onClick={onApproval('issuer')} disabled={!showIssuerApproval}>Approve sharing my identity</button> <br />
         <button onClick={retrieveVcClick}>Get Health Card from Lab</button> 
         {" "} Currently in VC Store: {holderState.vcStore.length}<br />
         <button onClick={connectTo('verifier')}>Present Health Card</button> <br />
-        <button onClick={onApproval('verifier')} disabled={!(interaction && holderState.interactions.length ==2 && interaction.status === "need-approval")}>Approving sharing my health card</button> <br />
+        <button onClick={onApproval('verifier')} disabled={!showVerifierApproval}>Approving sharing my health card</button> <br />
         <pre> {JSON.stringify(holderState, null, 2)} </pre>
     </>
 }
