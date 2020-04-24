@@ -75,6 +75,7 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean }
     }
 
     return <>
+        {!props.simulatedBarcodeScan ? <><a href=".?simulate-barcode">Simulate barcode scans</a> {" | "}</> : ""}
         <a target="_blank" href="./issuer">Open Lab Demo</a> {" | "}
         <a target="_blank" href="./verifier">Open Verifier Demo</a> <br/>
         {interaction && interaction.status === "need-qrcode" && <QRScanner 
