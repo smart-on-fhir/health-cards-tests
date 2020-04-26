@@ -24,7 +24,7 @@ export async function holderWorld() {
     await dispatch({ 'type': 'begin-interaction', who: 'issuer' })
 
     interaction = currentInteraction(state)
-    qrCodeUrl = (await simulatedOccurrence({ who: interaction.simulateBarcodeScanFrom, type: 'display-qr-code' })).url;
+    qrCodeUrl = (await simulatedOccurrence({ who: interaction.siopPartnerRole, type: 'display-qr-code' })).url;
 
 
     await dispatch(receiveSiopRequest(qrCodeUrl, state))
@@ -38,7 +38,7 @@ export async function holderWorld() {
 
     interaction = currentInteraction(state)
     console.log("auto-holder waiting on barcode", state)
-    qrCodeUrl = (await simulatedOccurrence({ who: interaction.simulateBarcodeScanFrom, type: 'display-qr-code' })).url;
+    qrCodeUrl = (await simulatedOccurrence({ who: interaction.siopPartnerRole, type: 'display-qr-code' })).url;
     console.log("auto-holder waiting on barcode", state)
     await dispatch(receiveSiopRequest(qrCodeUrl, state))
     await dispatch(prepareSiopResponse(state))
@@ -48,8 +48,8 @@ export async function holderWorld() {
 export interface SiopInteraction {
     siopRequest?: any;
     siopResponse?: any;
-    simulateBarcodeScanFrom?: 'verifier' | 'issuer'
-    status: 'need-qrcode' | 'need-request' | 'need-approval' | 'complete'
+    siopPartnerRole?: 'verifier' | 'issuer'
+    status: 'need-qrcode' | 'need-request' | 'need-approval' | 'need-redirect' | 'complete'
 }
 
 export interface HolderState {
@@ -87,7 +87,7 @@ export async function holderReducer(state: HolderState, event: any): Promise<Hol
         return {
             ...state,
             interactions: [...(state.interactions), {
-                simulateBarcodeScanFrom: event.who,
+                siopPartnerRole: event.who,
                 status: 'need-qrcode'
             }]
         }
@@ -103,16 +103,39 @@ export async function holderReducer(state: HolderState, event: any): Promise<Hol
             }]
         };
     }
-    if (event.type === 'siop-response-submitted') {
+    if (event.type === 'siop-response-prepared') {
         const currentInteraction = state.interactions[state.interactions.length - 1]
-        return {
-            ...state,
-            interactions: [...state.interactions.slice(0, -1), {
-                ...currentInteraction,
-                siopResponse: event.siopResponse,
-                status: "complete"
-            }]
-        };
+        if (event.needRedirect) {
+            return {
+                ...state,
+                interactions: [...state.interactions.slice(0, -1), {
+                    ...currentInteraction,
+                    siopResponse: event.siopResponse,
+                    status: "need-redirect"
+                }]
+            };
+        } else {
+            return {
+                ...state,
+                interactions: [...state.interactions.slice(0, -1), {
+                    ...currentInteraction,
+                    siopResponse: event.siopResponse,
+                    status: "complete"
+                }]
+            };
+
+        }
+    }
+    if (event.type === 'siop-response-complete') {
+            return {
+                ...state,
+                interactions: [...state.interactions.slice(0, -1), {
+                    ...(state.interactions.slice(-1)[0]),
+                    status: "complete"
+                }]
+            };
+
+
     }
     if (event.type === 'vc-retrieved') {
         return {
@@ -189,16 +212,19 @@ export async function prepareSiopResponse(state: HolderState) {
         id_token: idTokenEncrypted
     };
     const responseUrl = interaction.siopRequest.client_id;
-    const siopResponseCreated = await axios.post(responseUrl, qs.stringify(siopResponse));
+
+    if (interaction.siopRequest.response_mode === 'form_post') {
+        const siopResponseCreated = await axios.post(responseUrl, qs.stringify(siopResponse));
+    }
     return ({
-        type: 'siop-response-submitted',
+        type: 'siop-response-prepared',
         siopResponse: {
             idTokenPayload,
             idTokenSigned,
             idTokenEncrypted,
             formPostBody: siopResponse,
-            success: siopResponseCreated.status === 200
-        }
+        },
+        needRedirect: interaction.siopRequest.response_mode === 'fragment'
     });
 }
 

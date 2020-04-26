@@ -10,7 +10,7 @@ export type EncryptionResult = string;
 export type SignatureResult = string;
 export type VerificationResult = { valid: true, payload: any } | { valid: false };
 
-export function encodeSection (data: any): string {
+export function encodeSection(data: any): string {
     return base64url.encode(JSON.stringify(data));
 }
 
@@ -18,32 +18,43 @@ export interface EncryptionKey {
     encrypt: (header: Header, payload: string) => Promise<EncryptionResult>;
     decrypt: (jwe: string) => Promise<string>;
     publicJwk: JsonWebKey;
+    privateJwk: JsonWebKey;
 }
 export interface SigningKey {
     sign: (header: Header, payload: Payload) => Promise<SignatureResult>;
     verify: (jws: string) => Promise<VerificationResult>;
     publicJwk: JsonWebKey;
+    privateJwk: JsonWebKey;
 }
-export async function generateEncryptionKey (input?: JsonWebKey): Promise<EncryptionKey> {
+export async function generateEncryptionKey(inputPublic?: JsonWebKey, inputPrivate?: JsonWebKey): Promise<EncryptionKey> {
     let publicKey: CryptoKey | null = null;
     let privateKey: CryptoKey | null = null;
-    if (input) {
-        publicKey = await window.crypto.subtle.importKey('jwk', input, {
+    if (inputPublic) {
+        publicKey = await window.crypto.subtle.importKey('jwk', inputPublic, {
             name: 'RSA-OAEP',
             hash: { name: 'SHA-1' }
-        }, true, ['wrapKey']);
+        }, true, ['encrypt', 'wrapKey']);
+        if (inputPrivate) {
+            privateKey = await window.crypto.subtle.importKey('jwk', inputPrivate, {
+                name: 'RSA-OAEP',
+                hash: { name: 'SHA-1' }
+            }, true, ['decrypt', 'unwrapKey']);
+        }
     } else {
         const k = await window.crypto.subtle.generateKey({
             name: 'RSA-OAEP',
             modulusLength: 2048,
             publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
             hash: { name: 'SHA-1' }
-        }, false, // non-extractable
-            ['encrypt', 'decrypt', 'wrapKey', 'unwrapKey']);
+        }, true, // extractable
+            ['encrypt', 'wrapKey', 'decrypt', 'unwrapKey']);
         publicKey = k.publicKey;
         privateKey = k.privateKey;
     }
+
     const publicJwk = await window.crypto.subtle.exportKey('jwk', publicKey);
+    const privateJwk = privateKey ? await window.crypto.subtle.exportKey('jwk', privateKey) : null;
+
     const cryptographer = new Jose.WebCryptographer();
     cryptographer.setKeyEncryptionAlgorithm('RSA-OAEP');
     cryptographer.setContentEncryptionAlgorithm('A128CBC-HS256');
@@ -63,36 +74,58 @@ export async function generateEncryptionKey (input?: JsonWebKey): Promise<Encryp
             Object.entries(header).forEach(([k, v]) => encrypter.addHeader(k, v));
             return encrypter.encrypt(input);
         },
-        publicJwk
+        publicJwk,
+        privateJwk
     };
 }
-export async function generateSigningKey (input?: JsonWebKey): Promise<SigningKey> {
+export async function generateSigningKey(inputPublic?: JsonWebKey, inputPrivate?: JsonWebKey): Promise<SigningKey> {
     let publicKey;
     let privateKey;
     let publicJwk;
-    if (input) {
-        let uncompressed = new Uint8Array(Buffer.from([0x04, ...base64url.toBuffer(input.x), ...base64url.toBuffer(input.y)]));
+    let privateJwk;
+
+    if (inputPublic) {
+        let uncompressed = new Uint8Array(Buffer.from([0x04, ...base64url.toBuffer(inputPublic.x), ...base64url.toBuffer(inputPublic.y)]));
         publicKey = Buffer.from(uncompressed);
-    } else {
-        do {
-            privateKey = randomBytes(32);
-        } while (!secp256k1.privateKeyVerify(privateKey));
-        publicKey = secp256k1.publicKeyCreate(privateKey, false); // uncompressed
         publicJwk = {
             'kty': 'EC',
             'crv': 'secp256k1',
             'x': base64url.encode(publicKey.slice(1, 33)),
             'y': base64url.encode(publicKey.slice(33, 65))
         };
-        let uncompressed = new Uint8Array(Buffer.from([0x04, ...base64url.toBuffer(publicJwk.x), ...base64url.toBuffer(publicJwk.y)]));
-        publicKey = Buffer.from(uncompressed);
+
+        if (inputPrivate) {
+            privateKey = new Uint8Array(base64url.toBuffer(inputPrivate.d))
+            console.log("PK", privateKey)
+        }
+    } else {
+        do {
+            privateKey = randomBytes(32);
+        } while (!secp256k1.privateKeyVerify(privateKey));
+        console.log("PK", privateKey)
+        publicKey = secp256k1.publicKeyCreate(privateKey, false); // uncompressed
     }
-    publicJwk = {
-        'kty': 'EC',
-        'crv': 'secp256k1',
-        'x': base64url.encode(publicKey.slice(1, 33)),
-        'y': base64url.encode(publicKey.slice(33, 65))
-    };
+        publicJwk = publicKey ? {
+            'kty': 'EC',
+            'crv': 'secp256k1',
+            'x': base64url.encode(publicKey.slice(1, 33)),
+            'y': base64url.encode(publicKey.slice(33, 65))
+        } : null;
+             privateJwk = privateKey ? {
+                'kty': 'EC',
+                'crv': 'secp256k1',
+                'x': base64url.encode(publicKey.slice(1, 33)),
+                'y': base64url.encode(publicKey.slice(33, 65)),
+                'd': base64url.encode(privateKey),
+            }: null;
+
+
+
+
+
+
+
+
     return {
         sign: async (header, payload) => {
             const headerToSign = { ...header, alg: 'ES256K' };
@@ -115,6 +148,7 @@ export async function generateSigningKey (input?: JsonWebKey): Promise<SigningKe
                 payload: valid ? JSON.parse(base64url.decode(parts[1])) : undefined
             };
         },
-        publicJwk
+        publicJwk,
+        privateJwk
     };
 }

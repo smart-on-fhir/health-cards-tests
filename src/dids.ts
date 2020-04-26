@@ -7,8 +7,11 @@ import { EncryptionKey, generateEncryptionKey, generateSigningKey } from './keys
 
 export async function verifyJws (jws: string) {
     let signingKid = jwtHeader(jws).kid;
+    console.log("JWT JEAder", signingKid);
     let signingKeyJwt = await resolveKeyId(signingKid);
+    console.log("JWT", signingKeyJwt);
     let sk = await generateSigningKey(signingKeyJwt);
+    console.log("sk", sk);
     return sk.verify(jws);
 }
 const ENCRYPTION_KEY_TYPE = 'JwsVerificationKey2020'; // TODO fix this once sidetree allows encryption key types

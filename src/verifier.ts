@@ -13,8 +13,8 @@ export enum ClaimType {
     ImmunizationCard = 'vc-health-passport-stamp',
 }
 
-export async function verifierWorld(role = 'verifier') {
-    let state = await initializeVerifier({ role, claimsRequired: [ClaimType.CovidSerology] });
+export async function verifierWorld(role = 'verifier', requestMode: SiopRequestMode = 'form_post', reset = false) {
+    let state = await initializeVerifier({ role, claimsRequired: [ClaimType.CovidSerology], requestMode, reset });
     const dispatch = async (ePromise) => {
         const e = await ePromise;
         const pre = state;
@@ -22,8 +22,61 @@ export async function verifierWorld(role = 'verifier') {
         console.log('Verifier Event', e.type, e, state);
     };
     console.log('Verifier initial state', state);
-    await dispatch(prepareSiopRequest(state));
-    await dispatch(receiveSiopResponse(state));
+
+    if (!state.siopRequest) {
+        await dispatch(prepareSiopRequest(state));
+        displayRequest(state)
+    }
+
+    if (!state.siopResponse) {
+        if (state.config.requestMode === 'form_post') {
+            await dispatch(receiveSiopResponse(state));
+        }
+    }
+
+    if (state.fragment?.id_token) {
+        displayThanks(state)
+    } 
+
+}
+
+function displayThanks(state) {
+    const link = document.getElementById('redirect-link');
+    if (link) {
+        window['clickRedirect'] = function () {
+            window.localStorage[state.config.role + '_state'] = JSON.stringify(state)
+            window.close()
+        }
+        link.innerHTML = "Thanks for sharing your COVID card! You're confirmed. <button  onclick=\"clickRedirect()\">Close</button>";
+    }
+}
+
+export function displayRequest(state) {
+    console.log("Display req", state.siopRequest)
+    simulate({
+        'type': 'display-qr-code',
+        'who': state.config.role,
+        'url': state.siopRequest.siopRequestQrCodeUrl
+    });
+
+    const canvas = document.getElementById('qrcode-canvas');
+    if (canvas) {
+        QRCode.toCanvas(canvas, state.siopRequest.siopRequestQrCodeUrl, { scale: 20 }, (error) => {
+            if (error) console.error(error);
+            console.log('success!');
+        });
+    }
+
+    const link = document.getElementById('redirect-link');
+    if (link) {
+        link.innerHTML = "<button  onclick=\"clickRedirect()\">Connect to Health Wallet</button>";
+    }
+
+    window['clickRedirect'] = function () {
+        window.localStorage[state.config.role + '_state'] = JSON.stringify(state)
+        window.opener.postMessage(state.siopRequest.siopRequestQrCodeUrl, "*")
+        window.close()
+    }
 }
 
 // Cheap-o polling-based event simuation for the occasional
@@ -44,13 +97,17 @@ export const simulatedOccurrence = async ({ who, type }, rateMs = 200) => {
     }
 };
 
+export type SiopRequestMode = 'form_post' | 'fragment';
+
 export interface VerifierState {
     ek: EncryptionKey;
     sk: SigningKey;
     did: string;
     config: {
         role: string;
-        claimsRequired: ClaimType[]
+        claimsRequired: ClaimType[],
+        reset?: boolean;
+        requestMode: SiopRequestMode
     };
     siopRequest?: {
         siopRequestPayload: any;
@@ -66,8 +123,31 @@ export interface VerifierState {
         };
     };
     issuedCredentials?: string[];
+    fragment?: {
+        id_token: string;
+        state: string;
+    };
 }
 export const initializeVerifier = async (config: VerifierState["config"]): Promise<VerifierState> => {
+    const stateKey = `${config.role}_state`
+    const existingState = window.localStorage[stateKey]
+
+    if (existingState && config.reset !== true) {
+        const existingStateParsed = JSON.parse(existingState)
+        const fragment_parts = qs.decode(window.location.hash.slice(1))
+        return {
+            ...existingStateParsed,
+            config,
+            ek: await generateEncryptionKey(existingStateParsed.ek.publicJwk, existingStateParsed.ek.privateJwk),
+            sk: await generateSigningKey(existingStateParsed.sk.publicJwk, existingStateParsed.sk.privateJwk),
+            did: existingStateParsed.did,
+            fragment: {
+                id_token: fragment_parts.id_token as string,
+                state: fragment_parts.state as string,
+            }
+        }
+    }
+
     const ek = await generateEncryptionKey();
     const sk = await generateSigningKey();
     const did = await generateDid({
@@ -97,11 +177,13 @@ export async function prepareSiopRequest(state: VerifierState) {
     const siopRequestHeader = {
         kid: state.did + '#signing-key-1'
     };
+    // TODO read window.location from state rather than browser global
+    const responseUrl =  state.config.requestMode === 'form_post' ? `${serverBase}/siop` : window.location.href.split('?')[0]
     const siopRequestPayload = {
         state: siopState,
         'iss': state.did,
         'response_type': 'id_token',
-        'client_id': `${serverBase}/siop`,
+        'client_id': responseUrl,
         'claims': state.config.claimsRequired.length == 0 ? undefined : {
             'id_token': state.config.claimsRequired.reduce((acc, next) => ({
                 ...acc,
@@ -109,7 +191,7 @@ export async function prepareSiopRequest(state: VerifierState) {
             }), {})
         },
         'scope': 'did_authn',
-        'response_mode': 'form_post',
+        'response_mode': state.config.requestMode,
         'nonce': base64url.encode(crypto.randomBytes(16)),
         'registration': {
             'id_token_signed_response_alg': ['ES256K'],
@@ -125,18 +207,6 @@ export async function prepareSiopRequest(state: VerifierState) {
         scope: 'did_authn',
         request_uri: serverBase + '/siop/' + siopRequestPayload.state,
         client_id: siopRequestPayload.client_id
-    });
-
-    simulate({
-        'type': 'display-qr-code',
-        'who': state.config.role,
-        'url': siopRequestQrCodeUrl
-    });
-
-    const canvas = document.getElementById('qrcode-canvas');
-    canvas && QRCode.toCanvas(canvas, siopRequestQrCodeUrl, { scale: 20 }, (error) => {
-        if (error) console.error(error);
-        console.log('success!');
     });
 
     return ({
@@ -155,9 +225,16 @@ export async function receiveSiopResponse(state: VerifierState) {
     const POLLING_RATE_MS = 500; // Obviously replace this with websockets, SSE, etc
     let responseRetrieved;
     do {
-        responseRetrieved = await axios.get(serverBase + state.siopRequest.siopResponsePollingUrl);
+        if (state.config.requestMode === 'form_post') {
+            responseRetrieved = await axios.get(serverBase + state.siopRequest.siopResponsePollingUrl);
+        } else if (state.config.requestMode === 'fragment') {
+            responseRetrieved = {
+                data: state.fragment
+            }
+        }
         await new Promise((resolve) => setTimeout(resolve, POLLING_RATE_MS));
     } while (!responseRetrieved.data);
+
     const idTokenRetrieved = responseRetrieved.data.id_token;
     const idTokenRetrievedDecrypted = await state.ek.decrypt(idTokenRetrieved);
     const idTokenVerified = await verifyJws(idTokenRetrievedDecrypted);
