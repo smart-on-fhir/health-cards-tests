@@ -11,8 +11,8 @@
     "dev-ui": "npm run qr-static && parcel watch ./src/*.html --out-dir dist/static",
     "lint-ui": "tslint -c tslint.json -p tsconfig.ui.json",
     "lint": "tslint -c tslint.json -p tsconfig.json",
-    "qr-static": "cp node_modules/qr-scanner/qr-scanner-worker.min.js* dist/static",
-    "build-ui": "npm run qr-static && parcel build ./src/*.html --out-dir dist/static",
+    "cp-static": "cp -r node_modules/qr-scanner/qr-scanner-worker.min.js*  src/img/ dist/static",
+    "build-ui": "npm run cp-static && parcel build ./src/*.html --out-dir dist/static",
     "build": "tsc",
     "start": "node ./dist/src/server",
     "test": "echo \"Error: no test specified\" && exit 1"
