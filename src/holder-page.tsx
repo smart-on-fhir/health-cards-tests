@@ -194,7 +194,14 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean }
                             Debugging Details
                     </CardTitle>
                         <CardSubtitle className="text-muted">Just for developers to see what's going on</CardSubtitle>
-                        <pre> {JSON.stringify(holderState, null, 2)} </pre>
+                        <pre> {JSON.stringify({...holderState, ek: {
+                            ...holderState.ek,
+                            privateJwk: "redacted"
+                        }, sk: {
+                            ...holderState.sk,
+                            privateJwk: "redacted"
+                        }
+                        }, null, 2)} </pre>
                     </Card>
 
                 </RS.Col>
