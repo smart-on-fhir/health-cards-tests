@@ -17,8 +17,8 @@ const SIMULATED_SCAN = true
 interface State {
 }
 
-type RedirectMode = "qr" | "window-open" | "simulated"
-const OpenidUrlFinder: React.FC<{ label: string; redirectMode: RedirectMode; onReady: (s: string) => void; interaction: SiopInteraction }> = (props) => {
+type RedirectMode = "qr" | "window-open" 
+const SiopRequestReceiver: React.FC<{ label: string; redirectMode: RedirectMode; onReady: (s: string) => void; interaction: SiopInteraction }> = (props) => {
     const videoRef = useRef()
     useEffect(() => {
         if (!videoRef.current) { return; }
@@ -31,16 +31,6 @@ const OpenidUrlFinder: React.FC<{ label: string; redirectMode: RedirectMode; onR
             qrScanner = null;
         }
     }, [videoRef])
-
-    useEffect(() => {
-        if (props.redirectMode === "simulated") {
-            simulatedOccurrence({
-                who: props.interaction.siopPartnerRole,
-                type: 'display-qr-code'
-            }).then(({ url }) => props.onReady(url))
-        }
-        return;
-    }, [])
 
     useEffect(() => {
         if (props.redirectMode === "window-open") {
@@ -89,7 +79,6 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean }
         const e = await ePromise
         const holder = await holderReducer(holderState, e)
         setHolderState(state => holder)
-        console.log("HS", holder, e)
     }
 
     const connectTo = who => async () => {
@@ -98,13 +87,11 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean }
 
     const retrieveVcClick = async () => {
         const onMessage = async ({ data, source }) => {
-
             await dispatchToHolder(retrieveVcs(holderState))
-            cleanup()
+            window.removeEventListener("message", onMessage)
         }
-        const registered = window.addEventListener("message", onMessage)
+        window.addEventListener("message", onMessage)
         window.open("./issuer.html")
-        const cleanup = () => window.removeEventListener("message", onMessage)
     }
 
     const onScanned = async (qrCodeUrl: string) => {
@@ -152,9 +139,9 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean }
                 </Collapse></RS.Container>
         </RS.Navbar>
                             {siopAtNeedQr.length > 0 &&
-                                <OpenidUrlFinder
+                                <SiopRequestReceiver
                                     onReady={onScanned}
-                                    redirectMode={props.simulatedBarcodeScan ? "simulated" : "window-open"}
+                                    redirectMode="window-open"
                                     label={siopAtNeedQr[0].siopPartnerRole}
                                     interaction={siopAtNeedQr[0]} />}
                                     
@@ -189,9 +176,8 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean }
                         <Card style={{ border: ".25em dashed grey", padding: ".5em", marginBottom: "1em" }}>
                             <CardTitle style={{ fontWeight: "bolder" }}>
                                 COVID Card
-                    </CardTitle>
+                        </CardTitle>
                             <CardSubtitle className="text-muted">You don't have a COVID card in your wallet yet.</CardSubtitle>
-                            <CardText></CardText>
 
                            <Button disabled className="mb-1" color="info">
                                 {current_step > 1 && '✓ '} 1. Set up your Health Wallet</Button>
@@ -217,15 +203,6 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean }
         </RS.Container>
     </div>
 }
-/*
-        {!props.simulatedBarcodeScan ? <><a href=".?simulate-barcode">Simulate barcode scans</a> {" | "}</> : ""}
-        <a target="_blank" href="./issuer">Open Lab Demo</a> {" | "}
-        <a target="_blank" href="./verifier">Open Verifier Demo</a> <br />
-        {" "} Currently in VC Store: {holderState.vcStore.length}<br />
-        <button onClick={connectTo('verifier')}>Present Health Card</button> <br />
-        <button onClick={onApproval('verifier')} disabled={!showVerifierApproval}>Approving sharing my health card</button> <br />
-
-*/
 
 export default async function main() {
     const simulatedBarcodeScan = !!window.location.search.match(/simulate-barcode/)
