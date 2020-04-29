@@ -87,7 +87,7 @@ const SiopApprovalModal: React.FC<SiopApprovalProps | null> = (props) => {
     }
 
     const focusCallback = useCallback(b => {
-        setTimeout(() => b.focus())
+        setTimeout(() => b && b.focus())
     }, [])
 
     return <>
