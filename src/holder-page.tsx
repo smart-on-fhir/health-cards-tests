@@ -268,7 +268,6 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean }
 
 export default async function main() {
     const simulatedBarcodeScan = !!window.location.search.match(/simulate-barcode/)
-    console.log("Simulated", simulatedBarcodeScan)
     if (simulatedBarcodeScan) {
         issuerWorld()
         verifierWorld()

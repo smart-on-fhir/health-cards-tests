@@ -96,13 +96,11 @@ export async function generateSigningKey(inputPublic?: JsonWebKey, inputPrivate?
 
         if (inputPrivate) {
             privateKey = new Uint8Array(base64url.toBuffer(inputPrivate.d))
-            console.log("PK", privateKey)
         }
     } else {
         do {
             privateKey = randomBytes(32);
         } while (!secp256k1.privateKeyVerify(privateKey));
-        console.log("PK", privateKey)
         publicKey = secp256k1.publicKeyCreate(privateKey, false); // uncompressed
     }
         publicJwk = publicKey ? {

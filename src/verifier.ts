@@ -49,7 +49,6 @@ function displayThanks(state) {
 }
 
 export function displayRequest(state) {
-    console.log("Display req", state.siopRequest)
     simulate({
         'type': 'display-qr-code',
         'who': state.config.role,
