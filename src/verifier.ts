@@ -11,7 +11,7 @@ import { EncryptionKey, generateEncryptionKey, generateSigningKey, SigningKey } 
 export type ClaimType = 'vc-health-passport-stamp-covid19-serology' | 'vc-health-passport-stamp'
 
 export async function verifierWorld(role = 'verifier', requestMode: SiopRequestMode = 'form_post', reset = false) {
-    let state = await initializeVerifier({ role, claimsRequired: ["vc-health-passport-stamp-covid19-serology"], requestMode, reset });
+    let state = await initializeVerifier({ role, claimsRequired: ["vc-health-passport-stamp-covid19-serology"], requestMode, reset, displayQr: false });
     const dispatch = async (ePromise) => {
         const e = await ePromise;
         const pre = state;
@@ -57,7 +57,7 @@ export function displayRequest(state) {
     });
 
     const canvas = document.getElementById('qrcode-canvas');
-    if (canvas) {
+    if (canvas && state.config.displayQr) {
         QRCode.toCanvas(canvas, state.siopRequest.siopRequestQrCodeUrl, { scale: 20 }, (error) => {
             if (error) console.error(error);
             console.log('success!');
@@ -104,7 +104,8 @@ export interface VerifierState {
         role: string;
         claimsRequired: ClaimType[],
         reset?: boolean;
-        requestMode: SiopRequestMode
+        requestMode: SiopRequestMode,
+        displayQr: boolean;
     };
     siopRequest?: {
         siopRequestPayload: any;

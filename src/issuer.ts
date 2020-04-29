@@ -7,7 +7,7 @@ import { encryptFor, generateDid, verifyJws } from './dids';
 import Axios from 'axios';
 
 export async function issuerWorld(requestMode: SiopRequestMode  = 'form_post', reset = false) {
-    let state = await initializeVerifier({ role: 'issuer', claimsRequired: [], requestMode: requestMode, reset});
+    let state = await initializeVerifier({ role: 'issuer', claimsRequired: [], requestMode: requestMode, reset, displayQr: false});
     const dispatch = async (ePromise) => {
         const e = await ePromise;
         const pre = state;
