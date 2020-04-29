@@ -8,13 +8,10 @@ import { generateDid, verifyJws } from './dids';
 import { EncryptionKey, generateEncryptionKey, generateSigningKey, SigningKey } from './keys';
 
 
-export enum ClaimType {
-    CovidSerology = 'vc-health-passport-stamp-covid19-serology',
-    ImmunizationCard = 'vc-health-passport-stamp',
-}
+export type ClaimType = 'vc-health-passport-stamp-covid19-serology' | 'vc-health-passport-stamp'
 
 export async function verifierWorld(role = 'verifier', requestMode: SiopRequestMode = 'form_post', reset = false) {
-    let state = await initializeVerifier({ role, claimsRequired: [ClaimType.CovidSerology], requestMode, reset });
+    let state = await initializeVerifier({ role, claimsRequired: ["vc-health-passport-stamp-covid19-serology"], requestMode, reset });
     const dispatch = async (ePromise) => {
         const e = await ePromise;
         const pre = state;

@@ -37,9 +37,7 @@ export async function holderWorld() {
     await dispatch({ 'type': 'begin-interaction', who: 'verifier' })
 
     interaction = currentInteraction(state)
-    console.log("auto-holder waiting on barcode", state)
     qrCodeUrl = (await simulatedOccurrence({ who: interaction.siopPartnerRole, type: 'display-qr-code' })).url;
-    console.log("auto-holder waiting on barcode", state)
     await dispatch(receiveSiopRequest(qrCodeUrl, state))
     await dispatch(prepareSiopResponse(state))
 
@@ -141,7 +139,7 @@ export async function holderReducer(state: HolderState, event: any): Promise<Hol
         return {
             ...state,
             vcStore: [...state.vcStore, {
-                type: ClaimType.CovidSerology, // TODO inspect VC for type
+                type: "vc-health-passport-stamp-covid19-serology", // TODO inspect VC for type
                 vc: event.vc
             }]
         }

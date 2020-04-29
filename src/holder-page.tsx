@@ -1,7 +1,7 @@
 import { holderWorld, currentInteraction, initializeHolder, HolderState, holderReducer, receiveSiopRequest, retrieveVcs, prepareSiopResponse, SiopInteraction } from './holder';
-import { simulatedOccurrence, verifierWorld } from './verifier'
+import { simulatedOccurrence, verifierWorld, ClaimType } from './verifier'
 import { issuerWorld } from './issuer'
-import React, { useState, useEffect, useReducer, useRef } from 'react';
+import React, { useState, useEffect, useReducer, useRef, Ref, DOMElement, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import * as RS from 'reactstrap';
 import { Navbar, NavbarBrand, NavItem, DropdownItem, DropdownMenu, UncontrolledDropdown, NavbarToggler, Nav, NavbarText, Collapse, NavLink, DropdownToggle, Card, Button, CardSubtitle, CardTitle, CardText } from 'reactstrap';
@@ -12,12 +12,9 @@ import querystring from 'querystring';
 import QrScanner from 'qr-scanner';
 QrScanner.WORKER_PATH = 'qr-scanner-worker.min.js';
 
-const SIMULATED_SCAN = true
+interface State { }
 
-interface State {
-}
-
-type RedirectMode = "qr" | "window-open" 
+type RedirectMode = "qr" | "window-open"
 const SiopRequestReceiver: React.FC<{ label: string; redirectMode: RedirectMode; onReady: (s: string) => void; interaction: SiopInteraction }> = (props) => {
     const videoRef = useRef()
     useEffect(() => {
@@ -56,13 +53,78 @@ const SiopRequestReceiver: React.FC<{ label: string; redirectMode: RedirectMode;
         </>
 }
 
+interface SiopApprovalProps {
+    share: ClaimType[];
+    with: string;
+    onApproval: () => void;
+    onDenial: () => void;
+}
+
+const parseSiopApprovalProps = (holderState: HolderState, onApproval: any, onDenial: any): SiopApprovalProps | null => {
+    const siopAtNeedApproval = holderState.interactions.filter(i => i.status === 'need-approval').slice(-1)
+    if (siopAtNeedApproval.length === 0) {
+        return null
+    }
+
+    let req = siopAtNeedApproval[0]
+    let claims = Object
+        .keys(req.siopRequest?.claims?.id_token || {}) as ClaimType[]
+
+    //TODO replace this with SIOP registratation data + whitelist based lookup
+    const issuerName = req.siopPartnerRole === 'issuer' ? 'Lab' : 'Employer'
+
+    return {
+        share: claims,
+        with: req.siopPartnerRole,
+        onApproval: onApproval(req.siopPartnerRole),
+        onDenial: onDenial(req.siopPartnerRole)
+    }
+}
+const SiopApprovalModal: React.FC<SiopApprovalProps | null> = (props) => {
+
+    if (!props.onApproval) {
+        return null
+    }
+
+    const focusCallback = useCallback(b => {
+        setTimeout(() => b.focus())
+    }, [])
+
+    return <>
+        <RS.Modal isOpen={true} >
+            <RS.ModalHeader>Share with {props.with}?</RS.ModalHeader>
+            <RS.ModalBody>The following details will be shared:
+        <ul>
+                    <li><b>Your ID Card:</b> allows secure communications</li>
+                    {props.share.includes("vc-health-passport-stamp-covid19-serology") && <li>
+                        <b>Your COVID Card:</b> labs and vaccines for COVID-19
+            </li>
+                    }
+                    {props.share.includes("vc-health-passport-stamp") && <li>
+                        <b>Your Immunizations Card:</b> full vaccine history
+            </li>
+                    }
+                </ul>
+            </RS.ModalBody>
+            <RS.ModalFooter>
+                <Button color="danger" onClick={props.onDenial}>Do not share</Button>
+                <Button innerRef={focusCallback}
+                    color="success"
+                    onClick={props.onApproval}>
+                    Share {props.share.length > 0 ? "these cards" : "this card"}
+                </Button>
+            </RS.ModalFooter>
+        </RS.Modal>
+    </>
+}
+
 const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean }> = (props) => {
     const [holderState, setHolderState] = useState<HolderState>(props.initialState)
     const [state, setState] = useState<State>({})
 
     const issuerInteractions = holderState.interactions.filter(i => i.siopPartnerRole === 'issuer').slice(-1)
     const issuerInteraction = issuerInteractions.length ? issuerInteractions[0] : null
-    
+
     const verifierInteractions = holderState.interactions.filter(i => i.siopPartnerRole === 'verifier').slice(-1)
     const verifierInteraction = verifierInteractions.length ? verifierInteractions[0] : null
 
@@ -102,8 +164,9 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean }
         await dispatchToHolder(prepareSiopResponse(holderState));
     }
 
-    const showIssuerApproval = (issuerInteraction && holderState.interactions.length == 1 && issuerInteraction.status === "need-approval")
-    const showVerifierApproval = (issuerInteraction && holderState.interactions.length == 2 && issuerInteraction.status === "need-approval")
+    const onDenial = who => async () => {
+        await dispatchToHolder({ type: "siop-response-complete" });
+    }
 
     const [isOpen, setIsOpen] = useState(false);
     const toggle = () => setIsOpen(!isOpen);
@@ -119,8 +182,6 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean }
     }
 
     const siopAtNeedQr = issuerInteractions.concat(verifierInteractions).filter(i => i.status === 'need-qrcode').slice(-1)
-    const siopAtNeedApproval = issuerInteractions.concat(verifierInteractions).filter(i => i.status === 'need-approval').slice(-1)
-    console.log("SIP", siopAtNeedQr)
 
     return <div style={{ paddingTop: "5em" }}>
         <RS.Navbar expand="" className="navbar-dark bg-info fixed-top">
@@ -130,7 +191,7 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean }
                             Health Wallet Demo
                     </NavbarBrand>
                 <NavbarToggler onClick={toggle}></NavbarToggler>
-                <Collapse navbar isOpen={isOpen}> 
+                <Collapse navbar isOpen={isOpen}>
                     <Nav navbar>
                         <NavLink href="#" onClick={connectTo('verifier')}> Open Employer Portal</NavLink>
                         <NavbarText>Help</NavbarText>
@@ -138,20 +199,13 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean }
                     </Nav>
                 </Collapse></RS.Container>
         </RS.Navbar>
-                            {siopAtNeedQr.length > 0 &&
-                                <SiopRequestReceiver
-                                    onReady={onScanned}
-                                    redirectMode="window-open"
-                                    label={siopAtNeedQr[0].siopPartnerRole}
-                                    interaction={siopAtNeedQr[0]} />}
-                                    
-                            {siopAtNeedApproval.length > 0 && <RS.Modal isOpen={true} >
-                                <RS.ModalBody>Share your details?</RS.ModalBody>
-                                <RS.ModalFooter>
-                                    <Button onClick={onApproval(siopAtNeedApproval[0].siopPartnerRole)} >Approve sharing my details</Button>
-                                </RS.ModalFooter>
-                            </RS.Modal>}
- 
+        {siopAtNeedQr.length > 0 &&
+            <SiopRequestReceiver
+                onReady={onScanned}
+                redirectMode="window-open"
+                label={siopAtNeedQr[0].siopPartnerRole}
+                interaction={siopAtNeedQr[0]} />}
+        <SiopApprovalModal  {...parseSiopApprovalProps(holderState, onApproval, onDenial)} />
 
         <RS.Container >
             <RS.Row>
@@ -179,7 +233,7 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean }
                         </CardTitle>
                             <CardSubtitle className="text-muted">You don't have a COVID card in your wallet yet.</CardSubtitle>
 
-                           <Button disabled className="mb-1" color="info">
+                            <Button disabled className="mb-1" color="info">
                                 {current_step > 1 && '✓ '} 1. Set up your Health Wallet</Button>
                             <Button disabled={current_step !== 2} onClick={connectTo('issuer')} className="mb-1" color={current_step == 2 ? 'success' : 'info'}>
                                 {current_step > 2 && '✓ '}
@@ -194,13 +248,14 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean }
                             Debugging Details
                     </CardTitle>
                         <CardSubtitle className="text-muted">Just for developers to see what's going on</CardSubtitle>
-                        <pre> {JSON.stringify({...holderState, ek: {
-                            ...holderState.ek,
-                            privateJwk: "redacted"
-                        }, sk: {
-                            ...holderState.sk,
-                            privateJwk: "redacted"
-                        }
+                        <pre> {JSON.stringify({
+                            ...holderState, ek: {
+                                ...holderState.ek,
+                                privateJwk: "redacted"
+                            }, sk: {
+                                ...holderState.sk,
+                                privateJwk: "redacted"
+                            }
                         }, null, 2)} </pre>
                     </Card>
 
