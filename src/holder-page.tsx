@@ -14,7 +14,7 @@ QrScanner.WORKER_PATH = 'qr-scanner-worker.min.js';
 
 
 type RedirectMode = "qr" | "window-open"
-const SiopRequestReceiver: React.FC<{ label: string; redirectMode: RedirectMode; onReady: (s: string) => void; interaction: SiopInteraction, issuerStartUrl: string}> = (props) => {
+const SiopRequestReceiver: React.FC<{ label: string; redirectMode: RedirectMode; onReady: (s: string) => void; interaction: SiopInteraction, startUrl: string}> = (props) => {
     const videoRef = useRef()
     useEffect(() => {
         if (!videoRef.current) { return; }
@@ -34,7 +34,7 @@ const SiopRequestReceiver: React.FC<{ label: string; redirectMode: RedirectMode;
                 props.onReady(data)
             }
             const registered = window.addEventListener("message", onMessage)
-            const opened = window.open(props.issuerStartUrl)
+            const opened = window.open(props.startUrl)
             return () => {
                 window.removeEventListener("message", onMessage)
             }
@@ -212,7 +212,8 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean, 
                 onReady={onScanned}
                 redirectMode="window-open"
                 label={siopAtNeedQr[0].siopPartnerRole}
-                issuerStartUrl={props.issuer.issuerStartUrl}
+                startUrl={siopAtNeedQr[0].siopPartnerRole === 'issuer' ? 
+                 props.issuer.issuerStartUrl: props.verifier.verifierStartUrl}
                 interaction={siopAtNeedQr[0]} />}
         <SiopApprovalModal  {...parseSiopApprovalProps(holderState, onApproval, onDenial)} />
 
@@ -267,9 +268,7 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean, 
                             }
                         }, null, 2)} </pre>
                     </Card>
-
                 </RS.Col>
-
             </RS.Row>
         </RS.Container>
     </div>
