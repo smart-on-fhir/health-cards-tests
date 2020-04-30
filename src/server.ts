@@ -63,11 +63,12 @@ function enforceTtl(cache: Record<string, { ttl: number }>) {
         }
     });
 }
+/*
 setInterval(() => {
     enforceTtl(siopCache);
     enforceTtl(vcCache)
 }, 1000 * 60);
-
+*/
 
 
 app.post('/api/siop/begin', async (req, res) => {
