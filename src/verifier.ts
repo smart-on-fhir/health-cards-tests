@@ -141,7 +141,7 @@ export const initializeVerifier = async (config: VerifierState["config"]): Promi
             fragment: {
                 id_token: fragment_parts.id_token as string,
                 state: fragment_parts.state as string,
-            }
+            },
         }
     }
 

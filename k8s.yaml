@@ -23,9 +23,17 @@ spec:
           serviceName: siop
           servicePort: 80
         path: /(.*)
+  - host: c19.cards
+    http:
+      paths:
+      - backend:
+          serviceName: siop
+          servicePort: 80
+        path: /(.*)
   tls:
   - hosts:
     - siop.argo.run
+    - c19.cards
     secretName: tls-secret
 status:
   loadBalancer:

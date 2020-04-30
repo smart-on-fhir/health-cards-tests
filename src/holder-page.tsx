@@ -12,10 +12,9 @@ import querystring from 'querystring';
 import QrScanner from 'qr-scanner';
 QrScanner.WORKER_PATH = 'qr-scanner-worker.min.js';
 
-interface State { }
 
 type RedirectMode = "qr" | "window-open"
-const SiopRequestReceiver: React.FC<{ label: string; redirectMode: RedirectMode; onReady: (s: string) => void; interaction: SiopInteraction }> = (props) => {
+const SiopRequestReceiver: React.FC<{ label: string; redirectMode: RedirectMode; onReady: (s: string) => void; interaction: SiopInteraction, issuerStartUrl: string}> = (props) => {
     const videoRef = useRef()
     useEffect(() => {
         if (!videoRef.current) { return; }
@@ -35,7 +34,7 @@ const SiopRequestReceiver: React.FC<{ label: string; redirectMode: RedirectMode;
                 props.onReady(data)
             }
             const registered = window.addEventListener("message", onMessage)
-            const opened = window.open(`${props.interaction.siopPartnerRole}.html?begin`)
+            const opened = window.open(props.issuerStartUrl)
             return () => {
                 window.removeEventListener("message", onMessage)
             }
@@ -118,9 +117,17 @@ const SiopApprovalModal: React.FC<SiopApprovalProps | null> = (props) => {
     </>
 }
 
-const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean }> = (props) => {
+interface IssuerProps {
+    issuerStartUrl: string;
+    issuerDownloadUrl: string;
+}
+interface VerifierProps{
+   verifierStartUrl: string;
+}
+
+
+const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean, issuer: IssuerProps, verifier: VerifierProps }> = (props) => {
     const [holderState, setHolderState] = useState<HolderState>(props.initialState)
-    const [state, setState] = useState<State>({})
 
     const issuerInteractions = holderState.interactions.filter(i => i.siopPartnerRole === 'issuer').slice(-1)
     const issuerInteraction = issuerInteractions.length ? issuerInteractions[0] : null
@@ -149,11 +156,12 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean }
 
     const retrieveVcClick = async () => {
         const onMessage = async ({ data, source }) => {
-            await dispatchToHolder(retrieveVcs(holderState))
+            const {vcs} = data
+            await dispatchToHolder(retrieveVcs(vcs, holderState))
             window.removeEventListener("message", onMessage)
         }
         window.addEventListener("message", onMessage)
-        window.open("./issuer.html")
+        window.open(props.issuer.issuerDownloadUrl)
     }
 
     const onScanned = async (qrCodeUrl: string) => {
@@ -204,6 +212,7 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean }
                 onReady={onScanned}
                 redirectMode="window-open"
                 label={siopAtNeedQr[0].siopPartnerRole}
+                issuerStartUrl={props.issuer.issuerStartUrl}
                 interaction={siopAtNeedQr[0]} />}
         <SiopApprovalModal  {...parseSiopApprovalProps(holderState, onApproval, onDenial)} />
 
@@ -273,8 +282,14 @@ export default async function main() {
         verifierWorld()
     }
     const state = await initializeHolder();
+    const queryProps = querystring.parse(window.location.search.slice(1))
+    const issuerStartUrl = queryProps.issuerStartUrl as string || `./issuer.html?begin`
+    const issuerDownloadUrl = queryProps.issuerDownloadUrl as string || `./issuer.html`
+    const verifierStartUrl = queryProps.verifierStartUrl as string || `./verifier.html?begin`
+    console.log("issuersta", issuerStartUrl)
+    
     ReactDOM.render(
-        <App initialState={state} simulatedBarcodeScan={simulatedBarcodeScan} />,
+        <App initialState={state} simulatedBarcodeScan={simulatedBarcodeScan} verifier={{verifierStartUrl}} issuer={{issuerStartUrl, issuerDownloadUrl}} />,
         document.getElementById('app')
     );
 }

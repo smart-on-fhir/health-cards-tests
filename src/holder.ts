@@ -31,7 +31,9 @@ export async function holderWorld() {
     await dispatch(prepareSiopResponse(state))
 
     await dispatch(simulatedOccurrence({ who: 'issuer', type: 'notify-credential-ready' }))
-    await dispatch(retrieveVcs(state))
+    
+    const vcs = (await axios.get(`${serverBase}/lab/vcs/${encodeURIComponent(state.did)}`)).data.vcs
+    await dispatch(retrieveVcs(vcs, state))
 
 
     await dispatch({ 'type': 'begin-interaction', who: 'verifier' })
@@ -226,9 +228,9 @@ export async function prepareSiopResponse(state: HolderState) {
     });
 }
 
-export async function retrieveVcs(state: HolderState) {
-    const vcs = (await axios.get(`${serverBase}/lab/vcs/${encodeURIComponent(state.did)}`)).data.vcs
+export async function retrieveVcs(vcs: any, state: HolderState) {
     const vcRetrieved = vcs[0]
+    console.log("Got", vcs)
     const vcDecrypted = await state.ek.decrypt(vcs[0]);
     const vcVerified = await verifyJws(vcDecrypted);
 

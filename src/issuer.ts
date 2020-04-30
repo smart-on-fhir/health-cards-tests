@@ -47,19 +47,19 @@ export function displayThanks(state) {
 }
 
 
-export function displayResponse(state) {
+export function displayResponse(state: VerifierState) {
     simulate({
         'type': 'notify-credential-ready',
         'who': state.config.role,
     });
-
 
     const link = document.getElementById('redirect-link');
     if (link) {
         window['clickRedirect'] = function () {
             window.localStorage[state.config.role + '_state'] = JSON.stringify(state)
             window.opener.postMessage({
-                "type": "credential-ready"
+                "type": "credential-ready",
+                "vcs": state.issuedCredentials
             }, "*")
             window.close()
         }
@@ -83,7 +83,8 @@ const issueVcToHolder = async (state: VerifierState): Promise<any> => {
 
 
     return ({
-        type: 'credential-ready'
+        type: 'credential-ready',
+        vcs: [vcEncrypted]
     })
 
 }
@@ -92,7 +93,7 @@ export async function issuerReducer(state: VerifierState, event: any): Promise<V
     if (event.type === 'credential-ready') {
         return {
             ...state,
-            issuedCredentials: [state.siopResponse.idTokenPayload.did]
+            issuedCredentials: event.vcs
         }
     }
 
