@@ -79,8 +79,8 @@ setInterval(() => {
 const smartConfig = '.well-known/smart-configuration.json'
 app.get('/api/fhir/' + smartConfig, (req, res) => {
 
-    const fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
-    const urlFor = relativePath => fullUrl.replace(smartConfig, relativePath)
+    const fullUrl = issuerState.config.serverBase
+    const urlFor = relativePath => fullUrl + '/fhir/' + relativePath
 
     res.json({
         "authorization_endpoint": urlFor("$authorize"),

@@ -171,7 +171,7 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean, 
     }
 
     const retrieveVcClick = async () => {
-        if (smartState.access_token) {
+        if (smartState?.access_token) {
             console.log("Go the access token route via smart")
             const credentials = (await axios.get(smartState.server + `/Patient/${smartState.patient}/$HealthWallet.issue`)).data
             const vcs = credentials.parameter.filter(p => p.name==='vc').map(p => p.valueString)

@@ -11,7 +11,6 @@ export async function verifyJws (jws: string, {
 }: KeyGenerators) {
     let signingKid = jwtHeader(jws).kid;
     let signingKeyJwt = await resolveKeyId(signingKid);
-    console.log("Verify jws")
     let sk = await generateSigningKey(signingKeyJwt);
     return sk.verify(jws);
 }

@@ -45,6 +45,8 @@ export async function prepareSiopRequest(state: VerifierState) {
         }
     };
     const siopRequestPayloadSigned = await state.sk.sign(siopRequestHeader, siopRequestPayload);
+    const testVerify = await verifyJws(siopRequestPayloadSigned, state.config.keyGenerators)
+    console.log("TV, ,", testVerify)
     const siopRequestCreated = await state.config.postRequest(`${serverBase}/siop/begin`, {
         siopRequest: siopRequestPayloadSigned
     });

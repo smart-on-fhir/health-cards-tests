@@ -174,7 +174,7 @@ export async function receiveSiopRequest(qrCodeUrl: string, state: HolderState) 
             siopRequest: siopRequestVerified.payload,
         });
     } else {
-        console.log("IVALID SIOP REQUEST", siopRequestRaw)
+        console.log("IVALID SIOP REQUEST", siopRequestRaw, siopRequestVerified)
     }
 }
 
