@@ -152,6 +152,16 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean, 
     const verifierInteractions = holderState.interactions.filter(i => i.siopPartnerRole === 'verifier').slice(-1)
     const verifierInteraction = verifierInteractions.length ? verifierInteractions[0] : null
 
+    useEffect(()=> {
+        if (smartState?.access_token && issuerInteraction?.siopResponse) {
+            const credentials = axios.get(smartState.server + `/Patient/${smartState.patient}/$HealthWallet.issue`)
+            credentials.then(response => {
+                const vcs = response.data.parameter.filter(p => p.name === 'vc').map(p => p.valueString)
+                dispatchToHolder(retrieveVcs(vcs, holderState))
+            })
+        }
+    }, [smartState, holderState.interactions])
+
     useEffect(() => {
         holderState.interactions.filter(i => i.status === 'need-redirect').forEach(i => {
             const redirectUrl = i.siopRequest.client_id + '#' + qs.encode(i.siopResponse.formPostBody)
@@ -171,13 +181,6 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean, 
     }
 
     const retrieveVcClick = async () => {
-        if (smartState?.access_token) {
-            console.log("Go the access token route via smart")
-            const credentials = (await axios.get(smartState.server + `/Patient/${smartState.patient}/$HealthWallet.issue`)).data
-            const vcs = credentials.parameter.filter(p => p.name==='vc').map(p => p.valueString)
-            await dispatchToHolder(retrieveVcs(vcs, holderState))
-            return
-        }
         const onMessage = async ({ data, source }) => {
             const { vcs } = data
             await dispatchToHolder(retrieveVcs(vcs, holderState))
@@ -244,7 +247,6 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean, 
         setSmartState({...accessTokenResponse, server} as SmartState)
         const siopParameters = (await axios.get(server + `/Patient/${accessTokenResponse.patient}/$HealthWallet.connect`)).data
         const siopUrl = siopParameters.parameter.filter(p => p.name === 'openidUrl').map(p => p.valueUrl)[0]
-        console.log("Siop with", siopUrl)
         await dispatchToHolder(receiveSiopRequest(siopUrl, holderState))
     }
 

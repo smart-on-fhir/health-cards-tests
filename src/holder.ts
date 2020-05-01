@@ -244,7 +244,6 @@ export async function prepareSiopResponse(state: HolderState) {
 
 export async function retrieveVcs(vcs: any, state: HolderState) {
     const vcRetrieved = vcs[0]
-    console.log("Got", vcs)
     const vcDecrypted = await state.ek.decrypt(vcs[0]);
     const vcVerified = await verifyJws(vcDecrypted, keyGenerators);
 
