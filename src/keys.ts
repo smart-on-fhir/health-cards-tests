@@ -4,28 +4,17 @@ import { Jose } from 'jose-jwe-jws';
 import secp256k1 from 'secp256k1';
 import { sha256 } from '../node_modules/did-jwt/src/Digest';
 
-export type Header = Record<string, string>;
-export type Payload = Record<string, any>;
-export type EncryptionResult = string;
-export type SignatureResult = string;
-export type VerificationResult = { valid: true, payload: any } | { valid: false };
+import { EncryptionKey, SigningKey, KeyGenerators } from './KeyTypes';
 
 export function encodeSection(data: any): string {
     return base64url.encode(JSON.stringify(data));
 }
 
-export interface EncryptionKey {
-    encrypt: (header: Header, payload: string) => Promise<EncryptionResult>;
-    decrypt: (jwe: string) => Promise<string>;
-    publicJwk: JsonWebKey;
-    privateJwk: JsonWebKey;
+export const keyGenerators: KeyGenerators = {
+    generateEncryptionKey,
+    generateSigningKey
 }
-export interface SigningKey {
-    sign: (header: Header, payload: Payload) => Promise<SignatureResult>;
-    verify: (jws: string) => Promise<VerificationResult>;
-    publicJwk: JsonWebKey;
-    privateJwk: JsonWebKey;
-}
+
 export async function generateEncryptionKey(inputPublic?: JsonWebKey, inputPrivate?: JsonWebKey): Promise<EncryptionKey> {
     let publicKey: CryptoKey | null = null;
     let privateKey: CryptoKey | null = null;
@@ -103,24 +92,19 @@ export async function generateSigningKey(inputPublic?: JsonWebKey, inputPrivate?
         } while (!secp256k1.privateKeyVerify(privateKey));
         publicKey = secp256k1.publicKeyCreate(privateKey, false); // uncompressed
     }
-        publicJwk = publicKey ? {
-            'kty': 'EC',
-            'crv': 'secp256k1',
-            'x': base64url.encode(publicKey.slice(1, 33)),
-            'y': base64url.encode(publicKey.slice(33, 65))
-        } : null;
-             privateJwk = privateKey ? {
-                'kty': 'EC',
-                'crv': 'secp256k1',
-                'x': base64url.encode(publicKey.slice(1, 33)),
-                'y': base64url.encode(publicKey.slice(33, 65)),
-                'd': base64url.encode(privateKey),
-            }: null;
-
-
-
-
-
+    publicJwk = publicKey ? {
+        'kty': 'EC',
+        'crv': 'secp256k1',
+        'x': base64url.encode(publicKey.slice(1, 33)),
+        'y': base64url.encode(publicKey.slice(33, 65))
+    } : null;
+    privateJwk = privateKey ? {
+        'kty': 'EC',
+        'crv': 'secp256k1',
+        'x': base64url.encode(publicKey.slice(1, 33)),
+        'y': base64url.encode(publicKey.slice(33, 65)),
+        'd': base64url.encode(privateKey),
+    } : null;
 
 
 

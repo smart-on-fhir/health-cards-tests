@@ -1,13 +1,20 @@
 import axios from 'axios';
 import cors from 'cors';
 import express from 'express';
+import base64url from 'base64url'
 import { JWT } from 'jose';
+import * as crypto from 'crypto';
 import qs from 'querystring';
 import OperationType from '../sidetree/lib/core/enums/OperationType';
 import AnchoredOperationModel from '../sidetree/lib/core/models/AnchoredOperationModel';
 import Did from '../sidetree/lib/core/versions/latest/Did';
 import DocumentComposer from '../sidetree/lib/core/versions/latest/DocumentComposer';
 import OperationProcessor from '../sidetree/lib/core/versions/latest/OperationProcessor';
+import { generateEncryptionKey, generateSigningKey, keyGenerators } from './keys-server'
+
+import { VerifierState } from "./VerifierState";
+import { generateDid, verifyJws } from './dids';
+import { issuerReducer, prepareSiopRequest, issueVcToHolder, parseSiopResponse } from './VerifierLogic';
 
 const app = express();
 app.use(express.raw({ type: 'application/x-www-form-urlencoded' }));
@@ -42,7 +49,7 @@ const client = {
 const siopCache: Record<string, {
     ttl: number,
     siopRequest: string,
-    siopResponse: Promise<object>,
+    siopResponse: Promise<any>,
     siopResponseDeferred: {
         resolve: (object) => undefined;
         reject: (any) => undefined;
@@ -69,9 +76,125 @@ setInterval(() => {
     enforceTtl(vcCache)
 }, 1000 * 60);
 */
+const smartConfig = '.well-known/smart-configuration.json'
+app.get('/api/fhir/' + smartConfig, (req, res) => {
+
+    const fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
+    const urlFor = relativePath => fullUrl.replace(smartConfig, relativePath)
+
+    res.json({
+        "authorization_endpoint": urlFor("$authorize"),
+        "token_endpoint": urlFor("$token"),
+        "token_endpoint_auth_methods_supported": ["client_secret_basic"],
+        "scopes_supported": ["launch/patient", "patient/*.*", "user/*.*", "offline_access"],
+        "response_types_supported": ["code", "refresh_token"],
+        "capabilities": ["launch-ehr", "client-public", "client-confidential-symmetric", "context-ehr-patient"]
+    })
+})
 
 
-app.post('/api/siop/begin', async (req, res) => {
+const SAMPLE_PATIENT_ID = "sample-123"
+app.get('/api/fhir/[\$]authorize', (req, res) => {
+    const state = req.query.state as string
+    const redirect_uri = req.query.redirect_uri as string
+    const scope = req.query.scope as string
+    res.redirect(redirect_uri + '?' + qs.encode({
+        state,
+        code: JSON.stringify({
+            patient: SAMPLE_PATIENT_ID,
+            scope
+        })
+    }))
+})
+
+app.post('/api/fhir/[\$]token', (req, res) => {
+    const { code } = qs.parse(req.body.toString())
+    console.log("Code", code)
+    const authorizeState = JSON.parse(code as string)
+    res.json({
+        "access_token": base64url.encode(crypto.randomBytes(32)),
+        "token_type": "bearer",
+        "expires_in": 3600,
+        ...authorizeState
+    })
+})
+
+let patientToSiopResponse = {}
+app.get('/api/fhir/Patient/:patientID/[\$]HealthWallet.connect', async (req, res) => {
+    await dispatchToIssuer(prepareSiopRequest(issuerState))
+
+    patientToSiopResponse[req.params.patientID] = issuerState.siopRequest.siopRequestPayload.state
+    const openidUrl = issuerState.siopRequest.siopRequestQrCodeUrl
+    res.json({
+        "resourceType": "Parameters",
+        "parameter": [{
+            "name": "openidUrl",
+            "valueUrl": openidUrl
+        }]
+    })
+})
+
+app.get('/api/fhir/Patient/:patientID/[\$]HealthWallet.issue', async (req, res) => {
+
+    const state = patientToSiopResponse[req.params.patientID]
+
+    console.log("STATE", state)
+    const siopResponse = await siopCache[state].siopResponse
+    const id_token = siopResponse.id_token
+
+    let withResponse = await issuerReducer(issuerState, await parseSiopResponse(id_token, issuerState))
+    console.log("withResponse", withResponse)
+    const afterIssued = await issuerReducer(withResponse, await issueVcToHolder(withResponse))
+
+    console.log("AFter issued", afterIssued)
+    res.json({
+        "resourceType": "Parameters",
+        "parameter": [{
+            "name": "vc",
+            "valueString": afterIssued.issuedCredentials[0]
+        }]
+    })
+})
+
+
+
+const initializeIssuer = async (): Promise<VerifierState> => {
+    const ek = await generateEncryptionKey();
+    const sk = await generateSigningKey();
+    const did = await generateDid({
+        encryptionPublicKey: ek.publicJwk,
+        signingPublicKey: sk.publicJwk
+    });
+    return {
+        config: {
+            serverBase: process.env.SERVER_BASE,
+            claimsRequired: [],
+            role: 'issuer',
+            requestMode: 'form_post',
+            skipPostToServer: true,
+            postRequest: async (url, body) => {
+                return new Promise(resolve => {
+                    siopBegin({ body }, { json: resolve })
+                })
+            },
+            keyGenerators
+        },
+        ek,
+        sk,
+        did,
+    };
+};
+
+let issuerState: VerifierState | null = null
+initializeIssuer().then(i => issuerState = i)
+
+const dispatchToIssuer = async (ePromise) => {
+    const e = await ePromise
+    issuerState = await issuerReducer(issuerState, e)
+}
+
+
+const siopBegin = async (req, res) => {
     const id: string = (JWT.decode(req.body.siopRequest) as any).state;
 
     let resolve, reject;
@@ -91,7 +214,8 @@ app.post('/api/siop/begin', async (req, res) => {
         responsePollingUrl: `/siop/${id}/response`,
         ...siopCache[id]
     });
-});
+}
+app.post('/api/siop/begin', siopBegin);
 
 app.get('/api/siop/:id/response', async (req, res) => {
     const r = siopCache[req.params.id];

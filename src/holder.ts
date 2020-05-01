@@ -4,9 +4,10 @@ import * as crypto from 'crypto';
 import qs from 'querystring';
 import { encryptFor, generateDid, verifyJws } from './dids';
 import { sampleVc } from './fixtures';
-import { EncryptionKey, generateEncryptionKey, generateSigningKey, SigningKey } from './keys';
+import { keyGenerators } from './keys';
 import { simulatedOccurrence, ClaimType } from './verifier';
 import { serverBase } from './config';
+import { EncryptionKey, SigningKey } from './KeyTypes';
 
 export async function holderWorld() {
     let state = await initializeHolder();
@@ -31,7 +32,7 @@ export async function holderWorld() {
     await dispatch(prepareSiopResponse(state))
 
     await dispatch(simulatedOccurrence({ who: 'issuer', type: 'notify-credential-ready' }))
-    
+
     const vcs = (await axios.get(`${serverBase}/lab/vcs/${encodeURIComponent(state.did)}`)).data.vcs
     await dispatch(retrieveVcs(vcs, state))
 
@@ -68,8 +69,8 @@ export const currentInteraction = (state: HolderState): SiopInteraction =>
     state.interactions.filter(i => !i.siopResponse)[0]
 
 export const initializeHolder = async (): Promise<HolderState> => {
-    const ek = await generateEncryptionKey();
-    const sk = await generateSigningKey();
+    const ek = await keyGenerators.generateEncryptionKey();
+    const sk = await keyGenerators.generateSigningKey();
     const did = await generateDid({
         encryptionPublicKey: ek.publicJwk,
         signingPublicKey: sk.publicJwk
@@ -94,14 +95,25 @@ export async function holderReducer(state: HolderState, event: any): Promise<Hol
     }
     if (event.type === 'siop-request-received') {
         const interaction = currentInteraction(state)
-        return {
-            ...state,
-            interactions: [...state.interactions.slice(0, -1), {
-                ...interaction,
-                siopRequest: event.siopRequest,
-                status: "need-approval"
-            }]
-        };
+        if (interaction) {
+            return {
+                ...state,
+                interactions: [...state.interactions.slice(0, -1), {
+                    ...interaction,
+                    siopRequest: event.siopRequest,
+                    status: "need-approval"
+                }]
+            };
+        } else {
+            return {
+                ...state,
+                interactions: [...state.interactions, {
+                    siopPartnerRole: 'issuer',
+                    siopRequest: event.siopRequest,
+                    status: "need-approval"
+                }]
+            }
+        }
     }
     if (event.type === 'siop-response-prepared') {
         const currentInteraction = state.interactions[state.interactions.length - 1]
@@ -127,13 +139,13 @@ export async function holderReducer(state: HolderState, event: any): Promise<Hol
         }
     }
     if (event.type === 'siop-response-complete') {
-            return {
-                ...state,
-                interactions: [...state.interactions.slice(0, -1), {
-                    ...(state.interactions.slice(-1)[0]),
-                    status: "complete"
-                }]
-            };
+        return {
+            ...state,
+            interactions: [...state.interactions.slice(0, -1), {
+                ...(state.interactions.slice(-1)[0]),
+                status: "complete"
+            }]
+        };
 
 
     }
@@ -155,12 +167,14 @@ export async function receiveSiopRequest(qrCodeUrl: string, state: HolderState) 
     let qrCodeParams = qs.parse(qrCodeUrl.split('?')[1]);
     let requestUri = qrCodeParams.request_uri as string;
     const siopRequestRaw = (await axios.get(requestUri)).data;
-    const siopRequestVerified = await verifyJws(siopRequestRaw);
+    const siopRequestVerified = await verifyJws(siopRequestRaw, keyGenerators);
     if (siopRequestVerified.valid) {
         return ({
             type: 'siop-request-received',
-            siopRequest: siopRequestVerified.payload
+            siopRequest: siopRequestVerified.payload,
         });
+    } else {
+        console.log("IVALID SIOP REQUEST", siopRequestRaw)
     }
 }
 
@@ -206,7 +220,7 @@ export async function prepareSiopResponse(state: HolderState) {
         ...presentationForEssentialClaims(state.vcStore, currentInteraction(state).siopRequest.claims)
     };
     const idTokenSigned = await state.sk.sign({ kid: state.did + '#signing-key-1' }, idTokenPayload);
-    const idTokenEncrypted = await encryptFor(idTokenSigned, interaction.siopRequest.iss);
+    const idTokenEncrypted = await encryptFor(idTokenSigned, interaction.siopRequest.iss, keyGenerators);
     const siopResponse = {
         state: interaction.siopRequest.state,
         id_token: idTokenEncrypted
@@ -232,7 +246,7 @@ export async function retrieveVcs(vcs: any, state: HolderState) {
     const vcRetrieved = vcs[0]
     console.log("Got", vcs)
     const vcDecrypted = await state.ek.decrypt(vcs[0]);
-    const vcVerified = await verifyJws(vcDecrypted);
+    const vcVerified = await verifyJws(vcDecrypted, keyGenerators);
 
     return ({ 'type': 'vc-retrieved', vc: vcDecrypted, verified: vcVerified.valid })
 }

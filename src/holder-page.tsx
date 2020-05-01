@@ -1,12 +1,15 @@
 import { holderWorld, currentInteraction, initializeHolder, HolderState, holderReducer, receiveSiopRequest, retrieveVcs, prepareSiopResponse, SiopInteraction } from './holder';
-import { simulatedOccurrence, verifierWorld, ClaimType } from './verifier'
+import { simulatedOccurrence, verifierWorld, ClaimType, receiveSiopResponse } from './verifier'
+import axios from 'axios';
 import { issuerWorld } from './issuer'
+import * as crypto from 'crypto';
+import base64url from 'base64url';
 import React, { useState, useEffect, useReducer, useRef, Ref, DOMElement, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import * as RS from 'reactstrap';
 import { Navbar, NavbarBrand, NavItem, DropdownItem, DropdownMenu, UncontrolledDropdown, NavbarToggler, Nav, NavbarText, Collapse, NavLink, DropdownToggle, Card, Button, CardSubtitle, CardTitle, CardText } from 'reactstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import querystring from 'querystring';
+import qs from 'querystring';
 
 
 import QrScanner from 'qr-scanner';
@@ -14,7 +17,7 @@ QrScanner.WORKER_PATH = 'qr-scanner-worker.min.js';
 
 
 type RedirectMode = "qr" | "window-open"
-const SiopRequestReceiver: React.FC<{ label: string; redirectMode: RedirectMode; onReady: (s: string) => void; interaction: SiopInteraction, startUrl: string}> = (props) => {
+const SiopRequestReceiver: React.FC<{ label: string; redirectMode: RedirectMode; onReady: (s: string) => void; interaction: SiopInteraction, startUrl: string }> = (props) => {
     const videoRef = useRef()
     useEffect(() => {
         if (!videoRef.current) { return; }
@@ -121,13 +124,27 @@ interface IssuerProps {
     issuerStartUrl: string;
     issuerDownloadUrl: string;
 }
-interface VerifierProps{
-   verifierStartUrl: string;
+interface VerifierProps {
+    verifierStartUrl: string;
 }
 
+interface OAuthProps {
+    client_id?: string;
+    client_secret?: string;
+    scope?: string;
+    server?: string;
+}
 
-const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean, issuer: IssuerProps, verifier: VerifierProps }> = (props) => {
+interface SmartState {
+    access_token: string;
+    patient: string;
+    server: string;
+}
+
+const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean, issuer: IssuerProps, verifier: VerifierProps, oauth: OAuthProps }> = (props) => {
     const [holderState, setHolderState] = useState<HolderState>(props.initialState)
+
+    const [smartState, setSmartState] = useState<SmartState | null>(null)
 
     const issuerInteractions = holderState.interactions.filter(i => i.siopPartnerRole === 'issuer').slice(-1)
     const issuerInteraction = issuerInteractions.length ? issuerInteractions[0] : null
@@ -135,10 +152,9 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean, 
     const verifierInteractions = holderState.interactions.filter(i => i.siopPartnerRole === 'verifier').slice(-1)
     const verifierInteraction = verifierInteractions.length ? verifierInteractions[0] : null
 
-
     useEffect(() => {
         holderState.interactions.filter(i => i.status === 'need-redirect').forEach(i => {
-            const redirectUrl = i.siopRequest.client_id + '#' + querystring.encode(i.siopResponse.formPostBody)
+            const redirectUrl = i.siopRequest.client_id + '#' + qs.encode(i.siopResponse.formPostBody)
             const opened = window.open(redirectUrl, "issuer")
             dispatchToHolder({ 'type': "siop-response-complete" })
         })
@@ -155,8 +171,15 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean, 
     }
 
     const retrieveVcClick = async () => {
+        if (smartState.access_token) {
+            console.log("Go the access token route via smart")
+            const credentials = (await axios.get(smartState.server + `/Patient/${smartState.patient}/$HealthWallet.issue`)).data
+            const vcs = credentials.parameter.filter(p => p.name==='vc').map(p => p.valueString)
+            await dispatchToHolder(retrieveVcs(vcs, holderState))
+            return
+        }
         const onMessage = async ({ data, source }) => {
-            const {vcs} = data
+            const { vcs } = data
             await dispatchToHolder(retrieveVcs(vcs, holderState))
             window.removeEventListener("message", onMessage)
         }
@@ -174,6 +197,55 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean, 
 
     const onDenial = who => async () => {
         await dispatchToHolder({ type: "siop-response-complete" });
+    }
+
+    const fhirConnect = async () => {
+        const state = base64url.encode(crypto.randomBytes(32))
+        const server = props.oauth?.server || './api/fhir'
+        const client_id = props.oauth?.client_id || 'sample_client_id'
+        const client_secret = props.oauth?.client_secret || 'sample_client_secret'
+        const scope = props.oauth?.scope || 'launch launch/patient patient/*.*'
+        const redirect_uri = window.location.origin + window.location.pathname + 'authorized.html'
+
+        const smartConfig = (await axios.get(server + '/.well-known/smart-configuration.json')).data
+
+        const authorize = smartConfig.authorization_endpoint
+        const token = smartConfig.token_endpoint
+        const authzWindow = window.open(authorize + '?' + qs.stringify({
+            scope,
+            state,
+            client_id,
+            response_type: 'code',
+            redirect_uri,
+            aud: server
+        }), '_blank')
+
+        const code: string = await new Promise((resolve) => {
+            window.addEventListener("message", function onAuth({ data, source, origin }) {
+                if (origin !== window.location.origin) return
+                if (source !== authzWindow) return
+                const dataParsed = qs.parse(data)
+                if (dataParsed.state !== state) return
+                window.removeEventListener("message", onAuth)
+                authzWindow.close()
+                resolve(dataParsed.code as string)
+            })
+        })
+        const headers = {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': `Basic ${Buffer.from(`${client_id}:${client_secret}`).toString("base64")}`
+        }
+        const accessTokenResponse = (await axios.post(token, qs.stringify({
+            grant_type: "authorization_code",
+            code,
+            redirect_uri
+        }), { headers })).data
+
+        setSmartState({...accessTokenResponse, server} as SmartState)
+        const siopParameters = (await axios.get(server + `/Patient/${accessTokenResponse.patient}/$HealthWallet.connect`)).data
+        const siopUrl = siopParameters.parameter.filter(p => p.name === 'openidUrl').map(p => p.valueUrl)[0]
+        console.log("Siop with", siopUrl)
+        await dispatchToHolder(receiveSiopRequest(siopUrl, holderState))
     }
 
     const [isOpen, setIsOpen] = useState(false);
@@ -201,6 +273,7 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean, 
                 <NavbarToggler onClick={toggle}></NavbarToggler>
                 <Collapse navbar isOpen={isOpen}>
                     <Nav navbar>
+                        <NavLink href="#" onClick={fhirConnect}> Connect to Lab via FHIR API</NavLink>
                         <NavLink href="#" onClick={connectTo('verifier')}> Open Employer Portal</NavLink>
                         <NavbarText>Help</NavbarText>
                         <NavbarText>About</NavbarText>
@@ -212,8 +285,8 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean, 
                 onReady={onScanned}
                 redirectMode="window-open"
                 label={siopAtNeedQr[0].siopPartnerRole}
-                startUrl={siopAtNeedQr[0].siopPartnerRole === 'issuer' ? 
-                 props.issuer.issuerStartUrl: props.verifier.verifierStartUrl}
+                startUrl={siopAtNeedQr[0].siopPartnerRole === 'issuer' ?
+                    props.issuer.issuerStartUrl : props.verifier.verifierStartUrl}
                 interaction={siopAtNeedQr[0]} />}
         <SiopApprovalModal  {...parseSiopApprovalProps(holderState, onApproval, onDenial)} />
 
@@ -281,14 +354,18 @@ export default async function main() {
         verifierWorld()
     }
     const state = await initializeHolder();
-    const queryProps = querystring.parse(window.location.search.slice(1))
+    const queryProps = qs.parse(window.location.search.slice(1))
     const issuerStartUrl = queryProps.issuerStartUrl as string || `./issuer.html?begin`
     const issuerDownloadUrl = queryProps.issuerDownloadUrl as string || `./issuer.html`
     const verifierStartUrl = queryProps.verifierStartUrl as string || `./verifier.html?begin`
     console.log("issuersta", issuerStartUrl)
-    
+
     ReactDOM.render(
-        <App initialState={state} simulatedBarcodeScan={simulatedBarcodeScan} verifier={{verifierStartUrl}} issuer={{issuerStartUrl, issuerDownloadUrl}} />,
+        <App initialState={state}
+            simulatedBarcodeScan={simulatedBarcodeScan}
+            verifier={{ verifierStartUrl }}
+            issuer={{ issuerStartUrl, issuerDownloadUrl }}
+            oauth={{}} />,
         document.getElementById('app')
     );
 }

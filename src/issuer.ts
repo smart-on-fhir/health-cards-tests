@@ -1,13 +1,23 @@
-import { initializeVerifier, prepareSiopRequest, receiveSiopResponse, verifierReducer, VerifierState, simulatedOccurrence, simulate, displayRequest, SiopRequestMode } from './verifier';
-import { sampleVc } from './fixtures';
+import { initializeVerifier, simulatedOccurrence, simulate, displayRequest, SiopRequestMode, receiveSiopResponse } from './verifier';
 import axios from 'axios';
 import { serverBase } from './config';
 
 import { encryptFor, generateDid, verifyJws } from './dids';
-import Axios from 'axios';
+import { VerifierState } from './VerifierState';
+import { keyGenerators } from './keys';
+import { prepareSiopRequest, verifierReducer, issuerReducer, issueVcToHolder } from './VerifierLogic';
 
 export async function issuerWorld(requestMode: SiopRequestMode  = 'form_post', reset = false) {
-    let state = await initializeVerifier({ role: 'issuer', claimsRequired: [], requestMode: requestMode, reset, displayQr: false});
+    let state = await initializeVerifier({
+        role: 'issuer',
+        claimsRequired: [],
+        requestMode: requestMode,
+        reset,
+        displayQr: false,
+        postRequest: async (url, r) => (await axios.post(url, r)).data,
+        serverBase,
+        keyGenerators
+    });
     const dispatch = async (ePromise) => {
         const e = await ePromise;
         const pre = state;
@@ -66,37 +76,5 @@ export function displayResponse(state: VerifierState) {
 
         link.innerHTML = "<button  onclick=\"clickRedirect()\">Download credential</button>";
     }
-}
-
-
-
-const issueVcToHolder = async (state: VerifierState): Promise<any> => {
-    const vcPayload = JSON.parse(JSON.stringify(sampleVc))
-    const subjectDid = state.siopResponse.idTokenPayload.did
-    vcPayload.credentialSubject.id = subjectDid
-
-    const vcSigned = await state.sk.sign({ kid: state.did + '#signing-key-1' }, vcPayload);
-    const vcEncrypted = await encryptFor(vcSigned, subjectDid)
-    const vcCreated = await axios.post(`${serverBase}/lab/vcs/${encodeURIComponent(subjectDid)}`, {
-        vcs: [vcEncrypted]
-    })
-
-
-    return ({
-        type: 'credential-ready',
-        vcs: [vcEncrypted]
-    })
-
-}
-
-export async function issuerReducer(state: VerifierState, event: any): Promise<VerifierState> {
-    if (event.type === 'credential-ready') {
-        return {
-            ...state,
-            issuedCredentials: event.vcs
-        }
-    }
-
-    return await verifierReducer.call(null, ...arguments);
 }
 

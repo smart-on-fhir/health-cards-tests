@@ -76,3 +76,6 @@ spec:
         image: argonautcontainerregistry.azurecr.io/siop:latest
         ports:
         - containerPort: 8080
+        env:
+        - name: SERVER_BASE
+          value: "https://c19.cards/api"
