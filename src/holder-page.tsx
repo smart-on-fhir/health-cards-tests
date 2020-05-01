@@ -310,7 +310,15 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean, 
                             COVID Card
                     </CardTitle>
                         <CardSubtitle className="text-muted">Your COVID results are ready to share</CardSubtitle>
-                        <CardText style={{ fontFamily: "monospace" }}> {holderState.vcStore[0].vc.slice(0, 100)}...</CardText>
+                        <CardText style={{ fontFamily: "monospace" }}>
+                            <pre>
+                            {holderState.vcStore[0].vc.slice(0,25)}...
+                            </pre>
+                            <pre>
+                            {JSON.stringify(holderState.vcStore[0], null)}
+                            </pre>
+                            
+                            </CardText>
                     </Card>}
 
                     {current_step < 4 &&

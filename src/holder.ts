@@ -61,7 +61,8 @@ export interface HolderState {
     interactions: SiopInteraction[];
     vcStore: {
         type: ClaimType,
-        vc: string
+        vc: string,
+        vcPayload: any;
     }[]
 }
 
@@ -154,7 +155,8 @@ export async function holderReducer(state: HolderState, event: any): Promise<Hol
             ...state,
             vcStore: [...state.vcStore, {
                 type: "vc-health-passport-stamp-covid19-serology", // TODO inspect VC for type
-                vc: event.vc
+                vc: event.vc,
+                vcPayload: event.vcPayload
             }]
         }
 
@@ -246,6 +248,7 @@ export async function retrieveVcs(vcs: any, state: HolderState) {
     const vcRetrieved = vcs[0]
     const vcDecrypted = await state.ek.decrypt(vcs[0]);
     const vcVerified = await verifyJws(vcDecrypted, keyGenerators);
-
-    return ({ 'type': 'vc-retrieved', vc: vcDecrypted, verified: vcVerified.valid })
+    if (vcVerified.valid){
+        return ({ 'type': 'vc-retrieved', vc: vcDecrypted, verified: vcVerified.valid, vcPayload: vcVerified.payload })
+    }
 }
