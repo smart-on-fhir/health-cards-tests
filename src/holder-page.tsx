@@ -153,7 +153,7 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean, 
     const verifierInteraction = verifierInteractions.length ? verifierInteractions[0] : null
 
     useEffect(()=> {
-        if (smartState?.access_token && issuerInteraction?.siopResponse) {
+        if (smartState?.access_token && issuerInteraction?.siopResponse && holderState.vcStore.length === 0) {
             const credentials = axios.get(smartState.server + `/Patient/${smartState.patient}/$HealthWallet.issue`)
             credentials.then(response => {
                 const vcs = response.data.parameter.filter(p => p.name === 'vc').map(p => p.valueString)
@@ -174,6 +174,7 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean, 
         const e = await ePromise
         const holder = await holderReducer(holderState, e)
         setHolderState(state => holder)
+        console.log("Holder state", e, holder)
     }
 
     const connectTo = who => async () => {
@@ -195,6 +196,7 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean, 
     }
 
     const onApproval = who => async () => {
+        console.log("PRepare response to", who)
         await dispatchToHolder(prepareSiopResponse(holderState));
     }
 

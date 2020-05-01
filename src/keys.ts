@@ -77,7 +77,6 @@ export async function generateSigningKey(inputPublic?: JsonWebKey, inputPrivate?
     if (inputPublic) {
         let uncompressed = new Uint8Array(Buffer.from([0x04, ...base64url.toBuffer(inputPublic.x), ...base64url.toBuffer(inputPublic.y)]));
         publicKey = ec.keyFromPublic(uncompressed)
-        console.log("uncomp", uncompressed)
         publicJwk = inputPublic;
 
         if (inputPrivate) {
@@ -119,12 +118,10 @@ export async function generateSigningKey(inputPublic?: JsonWebKey, inputPrivate?
             const signature = parts[2];
             const signedContent = parts.slice(0, 2).join('.');
             const signatureBuffer = base64url.toBuffer(signature);
-            console.log("Signature", signatureBuffer)
             const valid = publicKey.verify(sha256(signedContent), {
                 r: signatureBuffer.slice(0, 32),
                 s: signatureBuffer.slice(32)
             });
-            console.log("VALD RES", valid)
             return {
                 valid,
                 payload: valid ? JSON.parse(base64url.decode(parts[1])) : undefined
