@@ -11,7 +11,7 @@ export async function issuerWorld(requestMode: SiopRequestMode  = 'form_post', r
     let state = await initializeVerifier({
         role: 'issuer',
         claimsRequired: [],
-        requestMode: requestMode,
+        requestMode,
         reset,
         displayQr: false,
         postRequest: async (url, r) => (await axios.post(url, r)).data,
@@ -35,7 +35,7 @@ export async function issuerWorld(requestMode: SiopRequestMode  = 'form_post', r
         await dispatch(receiveSiopResponse(state));
         await dispatch(issueVcToHolder(state));
     }
-    
+
     if (state.fragment?.id_token) {
         displayThanks(state)
     } else {
@@ -46,7 +46,7 @@ export async function issuerWorld(requestMode: SiopRequestMode  = 'form_post', r
 export function displayThanks(state) {
     const link = document.getElementById('redirect-link');
     if (link) {
-        window['clickRedirect'] = function () {
+        window['clickRedirect'] = () => {
             window.localStorage[state.config.role + '_state'] = JSON.stringify(state)
             window.close()
         }
@@ -65,7 +65,7 @@ export function displayResponse(state: VerifierState) {
 
     const link = document.getElementById('redirect-link');
     if (link) {
-        window['clickRedirect'] = function () {
+        window['clickRedirect'] = () => {
             window.localStorage[state.config.role + '_state'] = JSON.stringify(state)
             window.opener.postMessage({
                 "type": "credential-ready",

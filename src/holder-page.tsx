@@ -1,28 +1,37 @@
-import { holderWorld, currentInteraction, initializeHolder, HolderState, holderReducer, receiveSiopRequest, retrieveVcs, prepareSiopResponse, SiopInteraction } from './holder';
-import { simulatedOccurrence, verifierWorld, ClaimType, receiveSiopResponse } from './verifier'
 import axios from 'axios';
-import { issuerWorld } from './issuer'
-import * as crypto from 'crypto';
 import base64url from 'base64url';
-import React, { useState, useEffect, useReducer, useRef, Ref, DOMElement, useCallback } from 'react';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import * as crypto from 'crypto';
+import QrScanner from 'qr-scanner';
+import qs from 'querystring';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import * as RS from 'reactstrap';
-import { Navbar, NavbarBrand, NavItem, DropdownItem, DropdownMenu, UncontrolledDropdown, NavbarToggler, Nav, NavbarText, Collapse, NavLink, DropdownToggle, Card, Button, CardSubtitle, CardTitle, CardText } from 'reactstrap';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import qs from 'querystring';
+import { Button, Card, CardSubtitle, CardText, CardTitle, Collapse, Nav, NavbarBrand, NavbarText, NavbarToggler, NavLink } from 'reactstrap';
+import { holderReducer, HolderState, initializeHolder, prepareSiopResponse, receiveSiopRequest, retrieveVcs, SiopInteraction } from './holder';
+import { issuerWorld } from './issuer';
+import { ClaimType, verifierWorld } from './verifier';
 
 
-import QrScanner from 'qr-scanner';
 QrScanner.WORKER_PATH = 'qr-scanner-worker.min.js';
 
 
 type RedirectMode = "qr" | "window-open"
-const SiopRequestReceiver: React.FC<{ label: string; redirectMode: RedirectMode; onReady: (s: string) => void; interaction: SiopInteraction, startUrl: string }> = (props) => {
+interface SiopRequestReceiverProps {
+    label: string;
+    redirectMode: RedirectMode;
+    onReady: (s: string) => void;
+    interaction: SiopInteraction;
+    startUrl: string;
+}
+
+const SiopRequestReceiver: React.FC<SiopRequestReceiverProps> = (props) => {
     const videoRef = useRef()
     useEffect(() => {
         if (!videoRef.current) { return; }
         let qrScanner = new QrScanner(videoRef.current, result => {
-            result.length && props.onReady(result)
+            if (result.length)
+                props.onReady(result)
         });
         qrScanner.start();
         return function cancel() {
@@ -48,7 +57,7 @@ const SiopRequestReceiver: React.FC<{ label: string; redirectMode: RedirectMode;
 
     return props.redirectMode === "qr" ? <>
         <span>Scan barcode for {props.label}</span><br />
-        <video ref={videoRef} style={{ width: "25vmin", height: "25vmin" }}></video>
+        <video ref={videoRef} style={{ width: "25vmin", height: "25vmin" }}/>
         <br />
     </> : <>
             <span>Waiting for redirect...</span>
@@ -68,11 +77,11 @@ const parseSiopApprovalProps = (holderState: HolderState, onApproval: any, onDen
         return null
     }
 
-    let req = siopAtNeedApproval[0]
-    let claims = Object
+    const req = siopAtNeedApproval[0]
+    const claims = Object
         .keys(req.siopRequest?.claims?.id_token || {}) as ClaimType[]
 
-    //TODO replace this with SIOP registratation data + whitelist based lookup
+    // TODO replace this with SIOP registratation data + whitelist based lookup
     const issuerName = req.siopPartnerRole === 'issuer' ? 'Lab' : 'Employer'
 
     return {
@@ -141,7 +150,14 @@ interface SmartState {
     server: string;
 }
 
-const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean, issuer: IssuerProps, verifier: VerifierProps, oauth: OAuthProps }> = (props) => {
+interface AppProps {
+    initialState: HolderState;
+    simulatedBarcodeScan: boolean;
+    issuer: IssuerProps;
+    verifier: VerifierProps;
+    oauth: OAuthProps;
+}
+const App: React.FC<AppProps> = (props) => {
     const [holderState, setHolderState] = useState<HolderState>(props.initialState)
 
     const [smartState, setSmartState] = useState<SmartState | null>(null)
@@ -152,7 +168,7 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean, 
     const verifierInteractions = holderState.interactions.filter(i => i.siopPartnerRole === 'verifier').slice(-1)
     const verifierInteraction = verifierInteractions.length ? verifierInteractions[0] : null
 
-    useEffect(()=> {
+    useEffect(() => {
         if (smartState?.access_token && issuerInteraction?.siopResponse && holderState.vcStore.length === 0) {
             const credentials = axios.get(smartState.server + `/Patient/${smartState.patient}/$HealthWallet.issue`)
             credentials.then(response => {
@@ -246,7 +262,10 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean, 
             redirect_uri
         }), { headers })).data
 
-        setSmartState({...accessTokenResponse, server} as SmartState)
+
+        const newState: SmartState = {...accessTokenResponse, server}
+        setSmartState(newState)
+
         const siopParameters = (await axios.get(server + `/Patient/${accessTokenResponse.patient}/$HealthWallet.connect`)).data
         const siopUrl = siopParameters.parameter.filter(p => p.name === 'openidUrl').map(p => p.valueUrl)[0]
         await dispatchToHolder(receiveSiopRequest(siopUrl, holderState))
@@ -255,14 +274,15 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean, 
     const [isOpen, setIsOpen] = useState(false);
     const toggle = () => setIsOpen(!isOpen);
 
-    let current_step = 1;
+    let currentStep = 1;
+    /* tslint:disable-next-line:prefer-conditional-expression */
     if (issuerInteraction?.status !== 'complete') {
-        current_step = 2;
+        currentStep = 2;
     } else {
-        current_step = 3;
+        currentStep = 3;
     }
     if (holderState.vcStore.length) {
-        current_step = 4
+        currentStep = 4
     }
 
     const siopAtNeedQr = issuerInteractions.concat(verifierInteractions).filter(i => i.status === 'need-qrcode').slice(-1)
@@ -274,9 +294,9 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean, 
                     <img className="d-inline-block" style={{ maxHeight: "1em", maxWidth: "1em", marginRight: "10px" }} src="img/wallet.svg" />
                             Health Wallet Demo
                     </NavbarBrand>
-                <NavbarToggler onClick={toggle}></NavbarToggler>
-                <Collapse navbar isOpen={isOpen}>
-                    <Nav navbar>
+                <NavbarToggler onClick={toggle}/>
+                <Collapse navbar={true} isOpen={isOpen}>
+                    <Nav navbar={true}>
                         <NavLink href="#" onClick={fhirConnect}> Connect to Lab via FHIR API</NavLink>
                         <NavLink href="#" onClick={connectTo('verifier')}> Open Employer Portal</NavLink>
                         <NavbarText>Help</NavbarText>
@@ -305,36 +325,36 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean, 
                         <CardText style={{ fontFamily: "monospace" }}> {holderState.did.split('?')[0]}</CardText>
                     </Card>
 
-                    {current_step == 4 && <Card style={{ border: "1px solid grey", padding: ".5em", marginBottom: "1em" }}>
+                    {currentStep === 4 && <Card style={{ border: "1px solid grey", padding: ".5em", marginBottom: "1em" }}>
                         <CardTitle style={{ fontWeight: "bolder" }}>
                             COVID Card
                     </CardTitle>
                         <CardSubtitle className="text-muted">Your COVID results are ready to share</CardSubtitle>
                         <CardText style={{ fontFamily: "monospace" }}>
                             <pre>
-                            {holderState.vcStore[0].vc.slice(0,25)}...
+                            {holderState.vcStore[0].vc.slice(0, 25)}...
                             </pre>
                             <pre>
                             {JSON.stringify(holderState.vcStore[0], null)}
                             </pre>
-                            
+
                             </CardText>
                     </Card>}
 
-                    {current_step < 4 &&
+                    {currentStep < 4 &&
                         <Card style={{ border: ".25em dashed grey", padding: ".5em", marginBottom: "1em" }}>
                             <CardTitle style={{ fontWeight: "bolder" }}>
                                 COVID Card
                         </CardTitle>
                             <CardSubtitle className="text-muted">You don't have a COVID card in your wallet yet.</CardSubtitle>
 
-                            <Button disabled className="mb-1" color="info">
-                                {current_step > 1 && '✓ '} 1. Set up your Health Wallet</Button>
-                            <Button disabled={current_step !== 2} onClick={connectTo('issuer')} className="mb-1" color={current_step == 2 ? 'success' : 'info'}>
-                                {current_step > 2 && '✓ '}
+                            <Button disabled={true} className="mb-1" color="info">
+                                {currentStep > 1 && '✓ '} 1. Set up your Health Wallet</Button>
+                            <Button disabled={currentStep !== 2} onClick={connectTo('issuer')} className="mb-1" color={currentStep === 2 ? 'success' : 'info'}>
+                                {currentStep > 2 && '✓ '}
                              2. Find a lab and get tested</Button>
-                            <Button disabled={current_step !== 3} onClick={retrieveVcClick} className="mb-1" color={current_step == 3 ? 'success' : 'info'} >
-                                {current_step > 3 && '✓ '}
+                            <Button disabled={currentStep !== 3} onClick={retrieveVcClick} className="mb-1" color={currentStep === 3 ? 'success' : 'info'} >
+                                {currentStep > 3 && '✓ '}
                             3. Save COVID card to wallet</Button>
                         </Card>
                     }
@@ -344,10 +364,12 @@ const App: React.FC<{ initialState: HolderState, simulatedBarcodeScan: boolean, 
                     </CardTitle>
                         <CardSubtitle className="text-muted">Just for developers to see what's going on</CardSubtitle>
                         <pre> {JSON.stringify({
-                            ...holderState, ek: {
+                            ...holderState,
+                            ek: {
                                 ...holderState.ek,
                                 privateJwk: "redacted"
-                            }, sk: {
+                            },
+                            sk: {
                                 ...holderState.sk,
                                 privateJwk: "redacted"
                             }

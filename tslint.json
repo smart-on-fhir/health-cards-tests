@@ -1,5 +1,5 @@
 {
-  "extends": "tslint-config-standard",
+  "extends": ["tslint:latest", "tslint-react"],
   "linterOptions": {
     "exclude": [
       "node_modules/**",
@@ -8,42 +8,22 @@
   },
   "defaultSeverity": "error",
   "rules": {
+      "no-console": [false],
+      "string-literals": [false],
+      "no-submodule-imports": [false],
+      "no-duplicate-imports": [false],
+      "no-string-literal": [false],
       "max-line-length": [
           true,
           160
       ],
       "ter-indent": false,
-      "no-floating-promises": false,
-      "completed-docs": [
-          false,
-          {
-              "classes": {"visibilities": ["exported"]},
-              "enums": {"visibilities": ["exported"]},
-              "functions": {"visibilities": ["exported"]},
-              "interfaces": {"visibilities": ["exported"]},
-              "methods": {"privacies": ["public", "protected"], 
-                  "locations": ["all"]},
-              "properties": {"privacies": ["public", "protected"], 
-                  "locations": ["all"]},
-              "types": {"visibilities": ["all"]}
-          }
-      ],
-      "jsdoc-format": [
-          true,
-          "check-multiline-start"
-      ],
       "variable-name": [
-        true, 
+        true,
         "check-format",
-        "allow-leading-underscore"
-      ],
-      "semicolon": [
-        true,
-        "always"
-      ],
-      "only-arrow-functions": [
-        true,
-        "allow-named-functions"
+        "allow-leading-underscore",
+        "allow-snake-case",
+        "allow-pascal-case"
       ],
       "await-promise": [false]
   }

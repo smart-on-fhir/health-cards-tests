@@ -1,7 +1,7 @@
 import axios from 'axios';
 import cors from 'cors';
 import express from 'express';
-import base64url from 'base64url'
+import base64url from 'base64url';
 import { JWT } from 'jose';
 import * as crypto from 'crypto';
 import qs from 'querystring';
@@ -10,9 +10,9 @@ import AnchoredOperationModel from '../sidetree/lib/core/models/AnchoredOperatio
 import Did from '../sidetree/lib/core/versions/latest/Did';
 import DocumentComposer from '../sidetree/lib/core/versions/latest/DocumentComposer';
 import OperationProcessor from '../sidetree/lib/core/versions/latest/OperationProcessor';
-import { generateEncryptionKey, generateSigningKey, keyGenerators } from './keys-server'
+import { generateEncryptionKey, generateSigningKey, keyGenerators } from './keys-server';
 
-import { VerifierState } from "./VerifierState";
+import { VerifierState } from './VerifierState';
 import { generateDid, verifyJws } from './dids';
 import { issuerReducer, prepareSiopRequest, issueVcToHolder, parseSiopResponse } from './VerifierLogic';
 
@@ -24,7 +24,7 @@ const port = 8080; // default port to listen
 
 const fhirBase = 'https://hapi.fhir.org/baseR4';
 
-async function resolveDid(did: string) {
+async function resolveDid (did: string) {
     const parsedDid = await Did.create(did, 'ion');
     const operationWithMockedAnchorTime: AnchoredOperationModel = {
         didUniqueSuffix: parsedDid.uniqueSuffix,
@@ -62,7 +62,7 @@ const vcCache: Record<string, {
 }> = {};
 
 const ttlMs = 1000 * 60 * 15; // 15 minute ttl
-function enforceTtl(cache: Record<string, { ttl: number }>) {
+function enforceTtl (cache: Record<string, { ttl: number }>) {
     const now = new Date().getTime();
     Object.entries(cache).forEach(([k, { ttl }]) => {
         if (ttl < now) {
@@ -76,87 +76,84 @@ setInterval(() => {
     enforceTtl(vcCache)
 }, 1000 * 60);
 */
-const smartConfig = '.well-known/smart-configuration.json'
+const smartConfig = '.well-known/smart-configuration.json';
 app.get('/api/fhir/' + smartConfig, (req, res) => {
 
-    const fullUrl = issuerState.config.serverBase
-    const urlFor = relativePath => fullUrl + '/fhir/' + relativePath
+    const fullUrl = issuerState.config.serverBase;
+    const urlFor = relativePath => fullUrl + '/fhir/' + relativePath;
 
     res.json({
-        "authorization_endpoint": urlFor("$authorize"),
-        "token_endpoint": urlFor("$token"),
-        "token_endpoint_auth_methods_supported": ["client_secret_basic"],
-        "scopes_supported": ["launch/patient", "patient/*.*", "user/*.*", "offline_access"],
-        "response_types_supported": ["code", "refresh_token"],
-        "capabilities": ["launch-ehr", "client-public", "client-confidential-symmetric", "context-ehr-patient"]
-    })
-})
+        'authorization_endpoint': urlFor('$authorize'),
+        'token_endpoint': urlFor('$token'),
+        'token_endpoint_auth_methods_supported': ['client_secret_basic'],
+        'scopes_supported': ['launch/patient', 'patient/*.*', 'user/*.*', 'offline_access'],
+        'response_types_supported': ['code', 'refresh_token'],
+        'capabilities': ['launch-ehr', 'client-public', 'client-confidential-symmetric', 'context-ehr-patient']
+    });
+});
 
-
-const SAMPLE_PATIENT_ID = "sample-123"
+const SAMPLE_PATIENT_ID = 'sample-123';
 app.get('/api/fhir/[\$]authorize', (req, res) => {
-    const state = req.query.state as string
-    const redirect_uri = req.query.redirect_uri as string
-    const scope = req.query.scope as string
-    res.redirect(redirect_uri + '?' + qs.encode({
+    const state = req.query.state as string;
+    const redirectUri = req.query.redirect_uri as string;
+    const scope = req.query.scope as string;
+    res.redirect(redirectUri + '?' + qs.encode({
         state,
         code: JSON.stringify({
             patient: SAMPLE_PATIENT_ID,
             scope
         })
-    }))
-})
+    }));
+});
 
 app.post('/api/fhir/[\$]token', (req, res) => {
-    const { code } = qs.parse(req.body.toString())
-    console.log("Code", code)
-    const authorizeState = JSON.parse(code as string)
+    const { code } = qs.parse(req.body.toString());
+    console.log('Code', code);
+    const authorizeState = JSON.parse(code as string);
     res.json({
-        "access_token": base64url.encode(crypto.randomBytes(32)),
-        "token_type": "bearer",
-        "expires_in": 3600,
+        'access_token': base64url.encode(crypto.randomBytes(32)),
+        'token_type': 'bearer',
+        'expires_in': 3600,
         ...authorizeState
-    })
-})
+    });
+});
 
-let patientToSiopResponse = {}
+const patientToSiopResponse = {};
 app.get('/api/fhir/Patient/:patientID/[\$]HealthWallet.connect', async (req, res) => {
-    await dispatchToIssuer(prepareSiopRequest(issuerState))
+    await dispatchToIssuer(prepareSiopRequest(issuerState));
 
-    patientToSiopResponse[req.params.patientID] = issuerState.siopRequest.siopRequestPayload.state
-    const openidUrl = issuerState.siopRequest.siopRequestQrCodeUrl
+    patientToSiopResponse[req.params.patientID] = issuerState.siopRequest.siopRequestPayload.state;
+    const openidUrl = issuerState.siopRequest.siopRequestQrCodeUrl;
     res.json({
-        "resourceType": "Parameters",
-        "parameter": [{
-            "name": "openidUrl",
-            "valueUrl": openidUrl
+        'resourceType': 'Parameters',
+        'parameter': [{
+            'name': 'openidUrl',
+            'valueUrl': openidUrl
         }]
-    })
-})
+    });
+});
 
 app.get('/api/fhir/Patient/:patientID/[\$]HealthWallet.issue', async (req, res) => {
 
-    const state = patientToSiopResponse[req.params.patientID]
+    const state = patientToSiopResponse[req.params.patientID];
 
-    console.log("STATE", state)
-    const siopResponse = await siopCache[state].siopResponse
-    const id_token = siopResponse.id_token
+    console.log('STATE', state);
+    const siopResponse = await siopCache[state].siopResponse;
+    const id_token = siopResponse.id_token;
 
-    let withResponse = await issuerReducer(issuerState, await parseSiopResponse(id_token, issuerState))
-    console.log("withResponse", withResponse)
-    const afterIssued = await issuerReducer(withResponse, await issueVcToHolder(withResponse))
+    const withResponse = await issuerReducer(issuerState, await parseSiopResponse(id_token, issuerState));
+    console.log('withResponse', withResponse);
+    const afterIssued = await issuerReducer(withResponse, await issueVcToHolder(withResponse));
 
-    console.log("AFter issued", afterIssued)
+    console.log('AFter issued', afterIssued);
     res.json({
-        "resourceType": "Parameters",
-        "parameter": [{
-            "name": "vc",
-            "valueString": afterIssued.issuedCredentials[0]
+        'resourceType': 'Parameters',
+        'parameter': [{
+            'name': 'vc',
+            'valueString': afterIssued.issuedCredentials[0]
         }]
-    })
-})
-
-
+    });
+});
 
 const initializeIssuer = async (): Promise<VerifierState> => {
     const ek = await generateEncryptionKey();
@@ -174,52 +171,53 @@ const initializeIssuer = async (): Promise<VerifierState> => {
             skipPostToServer: true,
             postRequest: async (url, body) => {
                 return new Promise(resolve => {
-                    siopBegin({ body }, { json: resolve })
-                })
+                    siopBegin({ body }, { json: resolve });
+                });
             },
             keyGenerators
         },
         ek,
         sk,
-        did,
+        did
     };
 };
 
-let issuerState: VerifierState | null = null
-initializeIssuer().then(i => issuerState = i)
+let issuerState: VerifierState | null = null;
+initializeIssuer().then(i => issuerState = i);
 
 const dispatchToIssuer = async (ePromise) => {
-    const e = await ePromise
-    issuerState = await issuerReducer(issuerState, e)
-}
-
+    const e = await ePromise;
+    issuerState = await issuerReducer(issuerState, e);
+};
 
 const siopBegin = async (req, res) => {
     const id: string = (JWT.decode(req.body.siopRequest) as any).state;
 
-    let resolve, reject;
+    let resolve;
+    let reject;
+
     siopCache[id] = {
         siopRequest: req.body.siopRequest,
         siopResponse: new Promise((resolveFn, rejectFn) => {
             resolve = resolveFn;
-            reject = rejectFn
+            reject = rejectFn;
         }),
         siopResponseDeferred: {
             resolve, reject
         },
-        ttl: new Date().getTime() + ttlMs,
+        ttl: new Date().getTime() + ttlMs
     };
 
     res.json({
         responsePollingUrl: `/siop/${id}/response`,
         ...siopCache[id]
     });
-}
+};
 app.post('/api/siop/begin', siopBegin);
 
 app.get('/api/siop/:id/response', async (req, res) => {
     const r = siopCache[req.params.id];
-    res.send(await r.siopResponse)
+    res.send(await r.siopResponse);
 });
 
 app.get('/api/siop/:id', async (req, res) => {
@@ -235,27 +233,26 @@ app.post('/api/siop', async (req, res) => {
 });
 
 app.get('/api/did/:did', async (req, res) => {
-    const didLong = decodeURIComponent(req.params.did)
+    const didLong = decodeURIComponent(req.params.did);
     const didDoc = await resolveDid(didLong);
     res.json(didDoc.didDocument);
 });
 
 app.post('/api/lab/vcs/:did', async (req, res) => {
-    const did = decodeURIComponent(req.params.did)
-    const vcs = req.body.vcs
+    const did = decodeURIComponent(req.params.did);
+    const vcs = req.body.vcs;
     const entry = {
         vcs,
         ttl: new Date().getTime() + ttlMs
-    }
-    vcCache[did] = entry
+    };
+    vcCache[did] = entry;
     res.send('Received VC for DID');
 });
 
 app.get('/api/lab/vcs/:did', async (req, res) => {
-    const did = decodeURIComponent(req.params.did)
-    res.json(vcCache[did])
+    const did = decodeURIComponent(req.params.did);
+    res.json(vcCache[did]);
 });
-
 
 app.use(express.static('dist/static', {
     extensions: ['html']

@@ -3,11 +3,11 @@ import qs from 'querystring';
 import { serverBase } from './config';
 import { VerifierState } from './VerifierState';
 import { sampleVc } from './fixtures';
-import * as crypto from 'crypto'
+import * as crypto from 'crypto';
 import { encryptFor, verifyJws } from './dids';
 import axios from 'axios';
 
-export async function verifierReducer(state: VerifierState, event: any): Promise<VerifierState> {
+export async function verifierReducer (state: VerifierState, event: any): Promise<VerifierState> {
     if (event.type === 'siop-request-created') {
         return { ...state, siopRequest: event.siopRequest };
     }
@@ -15,10 +15,10 @@ export async function verifierReducer(state: VerifierState, event: any): Promise
         return { ...state, siopResponse: event.siopResponse };
     }
 
-    console.log("Unrecogized event type", event)
+    console.log('Unrecogized event type', event);
     return state;
 }
-export async function prepareSiopRequest(state: VerifierState) {
+export async function prepareSiopRequest (state: VerifierState) {
     const siopState = base64url.encode(crypto.randomBytes(16));
     const siopRequestHeader = {
         kid: state.did + '#signing-key-1'
@@ -30,7 +30,7 @@ export async function prepareSiopRequest(state: VerifierState) {
         'iss': state.did,
         'response_type': 'id_token',
         'client_id': responseUrl,
-        'claims': state.config.claimsRequired.length == 0 ? undefined : {
+        'claims': state.config.claimsRequired.length === 0 ? undefined : {
             'id_token': state.config.claimsRequired.reduce((acc, next) => ({
                 ...acc,
                 [next]: { 'essential': true }
@@ -45,8 +45,7 @@ export async function prepareSiopRequest(state: VerifierState) {
         }
     };
     const siopRequestPayloadSigned = await state.sk.sign(siopRequestHeader, siopRequestPayload);
-    const testVerify = await verifyJws(siopRequestPayloadSigned, state.config.keyGenerators)
-    console.log("TV, ,", testVerify)
+    const testVerify = await verifyJws(siopRequestPayloadSigned, state.config.keyGenerators);
     const siopRequestCreated = await state.config.postRequest(`${serverBase}/siop/begin`, {
         siopRequest: siopRequestPayloadSigned
     });
@@ -68,27 +67,27 @@ export async function prepareSiopRequest(state: VerifierState) {
 }
 
 export const issueVcToHolder = async (state: VerifierState): Promise<any> => {
-    const vcPayload = JSON.parse(JSON.stringify(sampleVc))
-    const subjectDid = state.siopResponse.idTokenPayload.did
-    vcPayload.credentialSubject.id = subjectDid
+    const vcPayload = JSON.parse(JSON.stringify(sampleVc));
+    const subjectDid = state.siopResponse.idTokenPayload.did;
+    vcPayload.credentialSubject.id = subjectDid;
 
     const vcSigned = await state.sk.sign({ kid: state.did + '#signing-key-1' }, vcPayload);
-    const vcEncrypted = await encryptFor(vcSigned, subjectDid, state.config.keyGenerators)
+    const vcEncrypted = await encryptFor(vcSigned, subjectDid, state.config.keyGenerators);
 
     if (!state.config.skipPostToServer) {
         const vcCreated = await axios.post(`${serverBase}/lab/vcs/${encodeURIComponent(subjectDid)}`, {
             vcs: [vcEncrypted]
-        })
+        });
     }
 
     return ({
         type: 'credential-ready',
         vcs: [vcEncrypted]
-    })
+    });
 
-}
+};
 
-export async function parseSiopResponse(idTokenRetrieved: string, state: VerifierState) {
+export async function parseSiopResponse (idTokenRetrieved: string, state: VerifierState) {
     const idTokenRetrievedDecrypted = await state.ek.decrypt(idTokenRetrieved);
     const idTokenVerified = await verifyJws(idTokenRetrievedDecrypted, state.config.keyGenerators);
     if (idTokenVerified.valid) {
@@ -104,36 +103,13 @@ export async function parseSiopResponse(idTokenRetrieved: string, state: Verifie
     }
 }
 
-
-export async function issuerReducer(state: VerifierState, event: any): Promise<VerifierState> {
-    console.log("Reduce in", event)
+export async function issuerReducer (state: VerifierState, event: any): Promise<VerifierState> {
     if (event.type === 'credential-ready') {
         return {
             ...state,
             issuedCredentials: event.vcs
-        }
+        };
     }
 
-    return await verifierReducer.call(null, ...arguments);
+    return verifierReducer.call(null, ...arguments);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

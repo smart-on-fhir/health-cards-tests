@@ -22,7 +22,6 @@ export interface SigningKey {
 }
 
 export interface KeyGenerators {
-    generateSigningKey: (inputPublic?: JsonWebKey, inputPrivate?: JsonWebKey)=> Promise<SigningKey> 
-    generateEncryptionKey: (inputPublic?: JsonWebKey, inputPrivate?: JsonWebKey) => Promise<EncryptionKey>
+    generateSigningKey: (inputPublic?: JsonWebKey, inputPrivate?: JsonWebKey) => Promise<SigningKey>;
+    generateEncryptionKey: (inputPublic?: JsonWebKey, inputPrivate?: JsonWebKey) => Promise<EncryptionKey>;
 }
-

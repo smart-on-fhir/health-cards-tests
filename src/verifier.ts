@@ -8,13 +8,12 @@ import { generateEncryptionKey, generateSigningKey, keyGenerators } from './keys
 import { VerifierState } from './VerifierState';
 import { verifierReducer, prepareSiopRequest, parseSiopResponse } from './VerifierLogic';
 
+export type ClaimType = 'vc-health-passport-stamp-covid19-serology' | 'vc-health-passport-stamp';
 
-export type ClaimType = 'vc-health-passport-stamp-covid19-serology' | 'vc-health-passport-stamp'
-
-export async function verifierWorld(role = 'verifier', requestMode: SiopRequestMode = 'form_post', reset = false) {
+export async function verifierWorld (role = 'verifier', requestMode: SiopRequestMode = 'form_post', reset = false) {
     let state = await initializeVerifier({
         role,
-        claimsRequired: ["vc-health-passport-stamp-covid19-serology"],
+        claimsRequired: ['vc-health-passport-stamp-covid19-serology'],
         requestMode,
         reset,
         displayQr: false,
@@ -33,7 +32,7 @@ export async function verifierWorld(role = 'verifier', requestMode: SiopRequestM
 
     if (!state.siopRequest) {
         await dispatch(prepareSiopRequest(state));
-        displayRequest(state)
+        displayRequest(state);
     }
 
     if (!state.siopResponse) {
@@ -43,23 +42,23 @@ export async function verifierWorld(role = 'verifier', requestMode: SiopRequestM
     }
 
     if (state.fragment?.id_token) {
-        displayThanks(state)
-    } 
+        displayThanks(state);
+    }
 
 }
 
-function displayThanks(state) {
+function displayThanks (state) {
     const link = document.getElementById('redirect-link');
     if (link) {
-        window['clickRedirect'] = function () {
-            window.localStorage[state.config.role + '_state'] = JSON.stringify(state)
-            window.close()
-        }
+        window['clickRedirect'] = () => {
+            window.localStorage[state.config.role + '_state'] = JSON.stringify(state);
+            window.close();
+        };
         link.innerHTML = "Thanks for sharing your COVID card! You're confirmed. <button  onclick=\"clickRedirect()\">Close</button>";
     }
 }
 
-export function displayRequest(state) {
+export function displayRequest (state) {
     simulate({
         'type': 'display-qr-code',
         'who': state.config.role,
@@ -76,14 +75,14 @@ export function displayRequest(state) {
 
     const link = document.getElementById('redirect-link');
     if (link) {
-        link.innerHTML = "<button  onclick=\"clickRedirect()\">Connect to Health Wallet</button>";
+        link.innerHTML = '<button  onclick="clickRedirect()">Connect to Health Wallet</button>';
     }
 
-    window['clickRedirect'] = function () {
-        window.localStorage[state.config.role + '_state'] = JSON.stringify(state)
-        window.opener.postMessage(state.siopRequest.siopRequestQrCodeUrl, "*")
-        window.close()
-    }
+    window['clickRedirect'] = () => {
+        window.localStorage[state.config.role + '_state'] = JSON.stringify(state);
+        window.opener.postMessage(state.siopRequest.siopRequestQrCodeUrl, '*');
+        window.close();
+    };
 }
 
 // Cheap-o polling-based event simuation for the occasional
@@ -91,8 +90,8 @@ export function displayRequest(state) {
 // (these are things where the user would act, in real life)
 const simulatedInteractions = [];
 export const simulate = (e) => {
-    simulatedInteractions.push(e)
-}
+    simulatedInteractions.push(e);
+};
 export const simulatedOccurrence = async ({ who, type }, rateMs = 200) => {
     while (true) {
         const matches = simulatedInteractions
@@ -106,13 +105,13 @@ export const simulatedOccurrence = async ({ who, type }, rateMs = 200) => {
 
 export type SiopRequestMode = 'form_post' | 'fragment';
 
-export const initializeVerifier = async (config: VerifierState["config"]): Promise<VerifierState> => {
-    const stateKey = `${config.role}_state`
-    const existingState = window.localStorage[stateKey]
+export const initializeVerifier = async (config: VerifierState['config']): Promise<VerifierState> => {
+    const stateKey = `${config.role}_state`;
+    const existingState = window.localStorage[stateKey];
 
     if (existingState && config.reset !== true) {
-        const existingStateParsed = JSON.parse(existingState)
-        const fragment_parts = qs.decode(window.location.hash.slice(1))
+        const existingStateParsed = JSON.parse(existingState);
+        const fragmentParts = qs.decode(window.location.hash.slice(1));
         return {
             ...existingStateParsed,
             config,
@@ -120,10 +119,10 @@ export const initializeVerifier = async (config: VerifierState["config"]): Promi
             sk: await generateSigningKey(existingStateParsed.sk.publicJwk, existingStateParsed.sk.privateJwk),
             did: existingStateParsed.did,
             fragment: {
-                id_token: fragment_parts.id_token as string,
-                state: fragment_parts.state as string,
-            },
-        }
+                id_token: fragmentParts.id_token as string,
+                state: fragmentParts.state as string
+            }
+        };
     }
 
     const ek = await generateEncryptionKey();
@@ -136,11 +135,11 @@ export const initializeVerifier = async (config: VerifierState["config"]): Promi
         config,
         ek,
         sk,
-        did,
+        did
     };
 };
 
-export async function receiveSiopResponse(state: VerifierState) {
+export async function receiveSiopResponse (state: VerifierState) {
     const POLLING_RATE_MS = 500; // Obviously replace this with websockets, SSE, etc
     let responseRetrieved;
     do {
@@ -149,12 +148,11 @@ export async function receiveSiopResponse(state: VerifierState) {
         } else if (state.config.requestMode === 'fragment') {
             responseRetrieved = {
                 data: state.fragment
-            }
+            };
         }
         await new Promise((resolve) => setTimeout(resolve, POLLING_RATE_MS));
     } while (!responseRetrieved.data);
 
-    return parseSiopResponse(responseRetrieved.data.id_token, state)
+    return parseSiopResponse(responseRetrieved.data.id_token, state);
 
 }
-

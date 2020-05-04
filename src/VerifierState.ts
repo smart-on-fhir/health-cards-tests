@@ -1,4 +1,4 @@
-import { EncryptionKey, SigningKey, KeyGenerators } from "./KeyTypes";
+import { EncryptionKey, SigningKey, KeyGenerators } from './KeyTypes';
 import { ClaimType, SiopRequestMode } from './verifier';
 export interface VerifierState {
     ek: EncryptionKey;

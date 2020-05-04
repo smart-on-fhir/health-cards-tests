@@ -1,22 +1,23 @@
 import base64url from 'base64url';
-import { randomBytes } from 'crypto';
 import { Jose } from 'jose-jwe-jws';
-import { sha256 } from '../node_modules/did-jwt/src/Digest';
 import { EncryptionKey, SigningKey, KeyGenerators } from './KeyTypes';
 
-var EC = require('elliptic').ec;
-var ec = new EC('secp256k1');
+import elliptic from 'elliptic'
+import sha256 from './sha256';
 
-export function encodeSection(data: any): string {
+const EC = elliptic.ec;
+const ec = new EC('secp256k1');
+
+export function encodeSection (data: any): string {
     return base64url.encode(JSON.stringify(data));
 }
 
 export const keyGenerators: KeyGenerators = {
     generateEncryptionKey,
     generateSigningKey
-}
+};
 
-export async function generateEncryptionKey(inputPublic?: JsonWebKey, inputPrivate?: JsonWebKey): Promise<EncryptionKey> {
+export async function generateEncryptionKey (inputPublic?: JsonWebKey, inputPrivate?: JsonWebKey): Promise<EncryptionKey> {
     let publicKey: CryptoKey | null = null;
     let privateKey: CryptoKey | null = null;
     if (inputPublic) {
@@ -55,7 +56,6 @@ export async function generateEncryptionKey(inputPublic?: JsonWebKey, inputPriva
                 throw new Error('Cannot decrypt with a public key');
             }
             const decrypter = new Jose.JoseJWE.Decrypter(cryptographer, Promise.resolve(privateKey));
-            const publicJwk: JsonWebKey = await window.crypto.subtle.exportKey('jwk', publicKey);
             return decrypter.decrypt(payload);
         },
         encrypt: async (header, payload) => {
@@ -68,38 +68,36 @@ export async function generateEncryptionKey(inputPublic?: JsonWebKey, inputPriva
         privateJwk
     };
 }
-export async function generateSigningKey(inputPublic?: JsonWebKey, inputPrivate?: JsonWebKey): Promise<SigningKey> {
+export async function generateSigningKey (inputPublic?: JsonWebKey, inputPrivate?: JsonWebKey): Promise<SigningKey> {
     let publicKey;
     let privateKey;
     let publicJwk;
     let privateJwk;
 
     if (inputPublic) {
-        let uncompressed = new Uint8Array(Buffer.from([0x04, ...base64url.toBuffer(inputPublic.x), ...base64url.toBuffer(inputPublic.y)]));
-        publicKey = ec.keyFromPublic(uncompressed)
+        const uncompressed = new Uint8Array(Buffer.from([0x04, ...base64url.toBuffer(inputPublic.x), ...base64url.toBuffer(inputPublic.y)]));
+        publicKey = ec.keyFromPublic(uncompressed);
         publicJwk = inputPublic;
 
         if (inputPrivate) {
-            window['ec'] = ec
-            privateKey = ec.keyFromPrivate(Buffer.from(inputPrivate.d))
+            privateKey = ec.keyFromPrivate(Buffer.from(inputPrivate.d));
         }
     } else {
         privateKey = ec.genKeyPair();
-        publicKey = privateKey.getPublic()
+        publicKey = privateKey.getPublic();
 
         publicJwk = {
             'kty': 'EC',
             'crv': 'secp256k1',
             'x': base64url.encode(publicKey.getX().toArrayLike(Buffer)),
-            'y': base64url.encode(publicKey.getY().toArrayLike(Buffer)),
+            'y': base64url.encode(publicKey.getY().toArrayLike(Buffer))
         };
-        
+
         privateJwk = {
             ...publicJwk,
-            'd': base64url.encode(privateKey.getPrivate().toArrayLike(Buffer)),
+            'd': base64url.encode(privateKey.getPrivate().toArrayLike(Buffer))
         };
     }
-
 
     return {
         sign: async (header, payload) => {
@@ -109,7 +107,7 @@ export async function generateSigningKey(inputPublic?: JsonWebKey, inputPrivate?
                 encodeSection(payload)
             ].join('.');
             const signature = privateKey.sign(sha256(signingInput));
-            const signatureCombined = Uint8Array.from([...signature.r.toArrayLike(Buffer) as Uint8Array, ...signature.s.toArrayLike(Buffer) as Uint8Array])
+            const signatureCombined = Uint8Array.from([...signature.r.toArrayLike(Buffer) as Uint8Array, ...signature.s.toArrayLike(Buffer) as Uint8Array]);
             const jwt = [signingInput, base64url.encode(Buffer.from(signatureCombined))].join('.');
             return jwt;
         },

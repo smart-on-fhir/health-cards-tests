@@ -3,23 +3,23 @@ import base64url from 'base64url';
 import * as crypto from 'crypto';
 import multihashes from 'multihashes';
 import { resolveUrl } from './config';
-import { EncryptionKey, KeyGenerators } from "./KeyTypes";
+import { EncryptionKey, KeyGenerators } from './KeyTypes';
 
 export async function verifyJws (jws: string, {
     generateEncryptionKey,
     generateSigningKey
 }: KeyGenerators) {
-    let signingKid = jwtHeader(jws).kid;
-    let signingKeyJwt = await resolveKeyId(signingKid);
-    let sk = await generateSigningKey(signingKeyJwt);
+    const signingKid = jwtHeader(jws).kid;
+    const signingKeyJwt = await resolveKeyId(signingKid);
+    const sk = await generateSigningKey(signingKeyJwt);
     return sk.verify(jws);
 }
 const ENCRYPTION_KEY_TYPE = 'JwsVerificationKey2020'; // TODO fix this once sidetree allows encryption key types
 
-export async function encryptFor (jws: string, did: string, {generateEncryptionKey}: KeyGenerators) {
+export async function encryptFor (jws: string, did: string, { generateEncryptionKey }: KeyGenerators) {
     const didDoc = (await axios.get(resolveUrl + encodeURIComponent(did))).data;
     const encryptionKey = didDoc.publicKey.filter(k => k.type === ENCRYPTION_KEY_TYPE)[0];
-    let ek = await generateEncryptionKey(encryptionKey.publicKeyJwk);
+    const ek = await generateEncryptionKey(encryptionKey.publicKeyJwk);
     return ek.encrypt({ kid: encryptionKey.kid }, jws);
 }
 const resolveKeyId = async (kid: string): Promise<JsonWebKey> => {
@@ -48,7 +48,7 @@ export async function generateDid ({ signingPublicKey, encryptionPublicKey }) {
                 publicKeys: [{
                     id: 'signing-key-1',
                     usage: ['ops', 'general', 'auth'],
-                        type: 'EcdsaSecp256k1VerificationKey2019',
+                    type: 'EcdsaSecp256k1VerificationKey2019',
                     jwk: signingPublicKey
                 }, {
                     id: 'encryption-key-1',

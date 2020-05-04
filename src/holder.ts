@@ -117,12 +117,12 @@ export async function holderReducer(state: HolderState, event: any): Promise<Hol
         }
     }
     if (event.type === 'siop-response-prepared') {
-        const currentInteraction = state.interactions[state.interactions.length - 1]
+        const interaction = currentInteraction(state)
         if (event.needRedirect) {
             return {
                 ...state,
                 interactions: [...state.interactions.slice(0, -1), {
-                    ...currentInteraction,
+                    ...interaction,
                     siopResponse: event.siopResponse,
                     status: "need-redirect"
                 }]
@@ -131,7 +131,7 @@ export async function holderReducer(state: HolderState, event: any): Promise<Hol
             return {
                 ...state,
                 interactions: [...state.interactions.slice(0, -1), {
-                    ...currentInteraction,
+                    ...interaction,
                     siopResponse: event.siopResponse,
                     status: "complete"
                 }]
@@ -166,8 +166,8 @@ export async function holderReducer(state: HolderState, event: any): Promise<Hol
 }
 
 export async function receiveSiopRequest(qrCodeUrl: string, state: HolderState) {
-    let qrCodeParams = qs.parse(qrCodeUrl.split('?')[1]);
-    let requestUri = qrCodeParams.request_uri as string;
+    const qrCodeParams = qs.parse(qrCodeUrl.split('?')[1]);
+    const requestUri = qrCodeParams.request_uri as string;
     const siopRequestRaw = (await axios.get(requestUri)).data;
     const siopRequestVerified = await verifyJws(siopRequestRaw, keyGenerators);
     if (siopRequestVerified.valid) {
