@@ -333,12 +333,12 @@ const App: React.FC<AppProps> = (props) => {
                     </CardTitle>
                         <CardSubtitle className="text-muted">Your COVID results are ready to share</CardSubtitle>
                         <CardText style={{ fontFamily: "monospace" }}>
-                            <pre>
-                            {holderState.vcStore[0].vc.slice(0, 25)}...
-                            </pre>
-                            <pre>
-                            {JSON.stringify(holderState.vcStore[0], null)}
-                            </pre>
+                            <div>
+                            {holderState.vcStore[0].vcSigned.slice(0, 25)}...
+                            </div>
+                            <div>
+                            {JSON.stringify(holderState.vcStore[0].vcPayload, null).slice(0,100)}...
+                            </div>
 
                             </CardText>
                     </Card>}

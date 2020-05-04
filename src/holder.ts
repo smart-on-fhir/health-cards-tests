@@ -60,7 +60,7 @@ export interface HolderState {
     interactions: SiopInteraction[];
     vcStore: {
         type: ClaimType,
-        vc: string,
+        vcSigned: string,
         vcPayload: any;
     }[]
 }
@@ -154,7 +154,7 @@ export async function holderReducer(state: HolderState, event: any): Promise<Hol
             ...state,
             vcStore: [...state.vcStore, {
                 type: "vc-health-passport-stamp-covid19-serology", // TODO inspect VC for type
-                vc: event.vc,
+                vcSigned: event.vc,
                 vcPayload: event.vcPayload
             }]
         }
@@ -180,7 +180,7 @@ export async function receiveSiopRequest(qrCodeUrl: string, state: HolderState) 
 }
 
 const claimsForType = (k: ClaimType, vcStore: HolderState["vcStore"]) => {
-    return vcStore.filter(({ type }) => type === k).map(({ vc }) => vc)
+    return vcStore.filter(({ type }) => type === k).map(({ vcSigned }) => vcSigned)
 }
 
 const presentationForEssentialClaims = (vcStore: HolderState["vcStore"], claims: {

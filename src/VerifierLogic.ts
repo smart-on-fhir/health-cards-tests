@@ -6,6 +6,8 @@ import { serverBase } from './config';
 import { encryptFor, verifyJws } from './dids';
 import sampleVc from './fixtures/vc-payload.json';
 import { VerifierState } from './VerifierState';
+import * as CredentialManager from './CredentialManager'
+import deepcopy from 'deepcopy'
 
 
 export async function verifierReducer (state: VerifierState, event: any): Promise<VerifierState> {
@@ -68,9 +70,14 @@ export async function prepareSiopRequest (state: VerifierState) {
 }
 
 export const issueVcToHolder = async (state: VerifierState): Promise<any> => {
-    const vcPayload = JSON.parse(JSON.stringify(sampleVc));
+
+
     const subjectDid = state.siopResponse.idTokenPayload.did;
-    vcPayload.credentialSubject.id = subjectDid;
+    const examplePatient = sampleVc.credentialSubject.fhirBundle.entry[0].resource
+    const exampleClinicalResults = sampleVc.credentialSubject.fhirBundle.entry.slice(1).map(r => r.resource)
+
+    const vc = CredentialManager.createVc(state.did, subjectDid, examplePatient, exampleClinicalResults)
+    const vcPayload = CredentialManager.vcToJwtPayload(vc)
 
     const vcSigned = await state.sk.sign({ kid: state.did + '#signing-key-1' }, vcPayload);
     const vcEncrypted = await encryptFor(vcSigned, subjectDid, state.config.keyGenerators);
