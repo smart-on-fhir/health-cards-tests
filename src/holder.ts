@@ -2,12 +2,11 @@ import axios from 'axios';
 import base64url from 'base64url';
 import * as crypto from 'crypto';
 import qs from 'querystring';
-import { encryptFor, generateDid, verifyJws } from './dids';
-import { sampleVc } from './fixtures';
-import { keyGenerators } from './keys';
-import { simulatedOccurrence, ClaimType } from './verifier';
 import { serverBase } from './config';
+import { encryptFor, generateDid, verifyJws } from './dids';
+import { keyGenerators } from './keys';
 import { EncryptionKey, SigningKey } from './KeyTypes';
+import { ClaimType, simulatedOccurrence } from './verifier';
 
 export async function holderWorld() {
     let state = await initializeHolder();

@@ -1,11 +1,12 @@
+import axios from 'axios';
 import base64url from 'base64url';
+import * as crypto from 'crypto';
 import qs from 'querystring';
 import { serverBase } from './config';
-import { VerifierState } from './VerifierState';
-import { sampleVc } from './fixtures';
-import * as crypto from 'crypto';
 import { encryptFor, verifyJws } from './dids';
-import axios from 'axios';
+import sampleVc from './fixtures/vc-payload.json';
+import { VerifierState } from './VerifierState';
+
 
 export async function verifierReducer (state: VerifierState, event: any): Promise<VerifierState> {
     if (event.type === 'siop-request-created') {

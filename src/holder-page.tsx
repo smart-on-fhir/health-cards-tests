@@ -13,6 +13,8 @@ import { issuerWorld } from './issuer';
 import { ClaimType, verifierWorld } from './verifier';
 
 
+
+
 QrScanner.WORKER_PATH = 'qr-scanner-worker.min.js';
 
 
