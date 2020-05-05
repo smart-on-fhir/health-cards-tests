@@ -9,11 +9,11 @@ import { VerifierState, SiopResponseMode } from './VerifierState';
 import { verifierReducer, prepareSiopRequest, parseSiopResponse } from './VerifierLogic';
 
 
-export async function verifierWorld (role = 'verifier', requestMode: SiopResponseMode = 'form_post', reset = false) {
+export async function verifierWorld (role = 'verifier', responseMode: SiopResponseMode = 'form_post', reset = false) {
     let state = await initializeVerifier({
         role,
         claimsRequired: ['vc-health-passport-stamp-covid19-serology'],
-        responseMode: requestMode,
+        responseMode: responseMode,
         reset,
         displayQr: false,
         postRequest: async (url, r) => (await axios.post(url, r)).data,

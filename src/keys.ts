@@ -8,7 +8,7 @@ import sha256 from './sha256';
 const EC = elliptic.ec;
 const ec = new EC('secp256k1');
 
-export function encodeSection (data: any): string {
+export function encodeSection(data: any): string {
     return base64url.encode(JSON.stringify(data));
 }
 
@@ -17,7 +17,7 @@ export const keyGenerators: KeyGenerators = {
     generateSigningKey
 };
 
-export async function generateEncryptionKey (inputPublic?: JsonWebKey, inputPrivate?: JsonWebKey): Promise<EncryptionKey> {
+export async function generateEncryptionKey(inputPublic?: JsonWebKey, inputPrivate?: JsonWebKey): Promise<EncryptionKey> {
     let publicKey: CryptoKey | null = null;
     let privateKey: CryptoKey | null = null;
     if (inputPublic) {
@@ -68,7 +68,7 @@ export async function generateEncryptionKey (inputPublic?: JsonWebKey, inputPriv
         privateJwk
     };
 }
-export async function generateSigningKey (inputPublic?: JsonWebKey, inputPrivate?: JsonWebKey): Promise<SigningKey> {
+export async function generateSigningKey(inputPublic?: JsonWebKey, inputPrivate?: JsonWebKey): Promise<SigningKey> {
     let publicKey;
     let privateKey;
     let publicJwk;
@@ -80,18 +80,24 @@ export async function generateSigningKey (inputPublic?: JsonWebKey, inputPrivate
         publicJwk = inputPublic;
 
         if (inputPrivate) {
-            privateKey = ec.keyFromPrivate(Buffer.from(inputPrivate.d));
+            privateKey = ec.keyFromPrivate(base64url.toBuffer(inputPrivate.d));
+            privateJwk = {
+                ...publicJwk,
+                'd': base64url.encode(privateKey.getPrivate().toArrayLike(Buffer))
+            };
+
         }
     } else {
         privateKey = ec.genKeyPair();
-        publicKey = privateKey.getPublic();
 
         publicJwk = {
             'kty': 'EC',
             'crv': 'secp256k1',
-            'x': base64url.encode(publicKey.getX().toArrayLike(Buffer)),
-            'y': base64url.encode(publicKey.getY().toArrayLike(Buffer))
+            'x': base64url.encode(privateKey.getPublic().getX().toArrayLike(Buffer)),
+            'y': base64url.encode(privateKey.getPublic().getY().toArrayLike(Buffer))
         };
+
+        publicKey = ec.keyFromPublic(privateKey.getPublic());
 
         privateJwk = {
             ...publicJwk,
@@ -106,9 +112,10 @@ export async function generateSigningKey (inputPublic?: JsonWebKey, inputPrivate
                 encodeSection(headerToSign),
                 encodeSection(payload)
             ].join('.');
-            const signature = privateKey.sign(sha256(signingInput));
-            const signatureCombined = Uint8Array.from([...signature.r.toArrayLike(Buffer) as Uint8Array, ...signature.s.toArrayLike(Buffer) as Uint8Array]);
-            const jwt = [signingInput, base64url.encode(Buffer.from(signatureCombined))].join('.');
+            const hashOfInput = sha256(signingInput)
+            const signature = privateKey.sign(hashOfInput);
+            const signatureBuffer = Uint8Array.from([...signature.r.toArrayLike(Buffer) as Uint8Array, ...signature.s.toArrayLike(Buffer) as Uint8Array]);
+            const jwt = [signingInput, base64url.encode(Buffer.from(signatureBuffer))].join('.');
             return jwt;
         },
         verify: async (jwt) => {
@@ -116,7 +123,8 @@ export async function generateSigningKey (inputPublic?: JsonWebKey, inputPrivate
             const signature = parts[2];
             const signedContent = parts.slice(0, 2).join('.');
             const signatureBuffer = base64url.toBuffer(signature);
-            const valid = publicKey.verify(sha256(signedContent), {
+            const hashOfInput = sha256(signedContent)
+            const valid = publicKey.verify(hashOfInput, {
                 r: signatureBuffer.slice(0, 32),
                 s: signatureBuffer.slice(32)
             });

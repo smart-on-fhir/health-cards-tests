@@ -10,7 +10,8 @@ import * as RS from 'reactstrap';
 import { Button, Card, CardSubtitle, CardText, CardTitle, Collapse, Nav, NavbarBrand, NavbarText, NavbarToggler, NavLink } from 'reactstrap';
 import { holderReducer, HolderState, initializeHolder, prepareSiopResponse, receiveSiopRequest, retrieveVcs, SiopInteraction } from './holder';
 import { issuerWorld } from './issuer';
-import { ClaimType, verifierWorld } from './verifier';
+import { verifierWorld } from './verifier';
+import { ClaimType } from './VerifierState';
 
 QrScanner.WORKER_PATH = 'qr-scanner-worker.min.js';
 
@@ -210,8 +211,9 @@ const App: React.FC<AppProps> = (props) => {
     const retrieveVcClick = async () => {
         const onMessage = async ({ data, source }) => {
             const { vcs } = data
-            await dispatchToHolder(retrieveVcs(vcs, holderState))
             window.removeEventListener("message", onMessage)
+            console.log("Dispatch,", vcs, holderState)
+            await dispatchToHolder(retrieveVcs(vcs, holderState))
         }
         window.addEventListener("message", onMessage)
         window.open(props.issuer.issuerDownloadUrl)

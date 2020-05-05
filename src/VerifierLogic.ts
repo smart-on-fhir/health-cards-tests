@@ -40,7 +40,7 @@ export async function prepareSiopRequest (state: VerifierState) {
         },
         'scope': 'did_authn',
         'response_mode': state.config.responseMode,
-        'response_context': 'wallet',
+        'response_context': state.config.responseMode === 'form_post' ? 'wallet' : 'rp',
         'nonce': base64url.encode(crypto.randomBytes(16)),
         'registration': {
             'id_token_signed_response_alg': ['ES256K'],
@@ -79,6 +79,8 @@ export const issueVcToHolder = async (state: VerifierState): Promise<any> => {
     const vcPayload = CredentialManager.vcToJwtPayload(vc)
 
     const vcSigned = await state.sk.sign({ kid: state.did + '#signing-key-1' }, vcPayload);
+    const vcVerifiedInline = await state.sk.verify(vcSigned);
+    console.log("Verified?", vcSigned, vcVerifiedInline)
     const vcEncrypted = await encryptFor(vcSigned, subjectDid, state.config.keyGenerators);
 
     if (!state.config.skipVcPostToServer) {
