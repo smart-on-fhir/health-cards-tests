@@ -168,7 +168,7 @@ app.get('/api/fhir/DiagnosticReport', async (req, res) => {
                 extension: [
                     {
                         url: "https://healthwallet.cards#description",
-                        valueString: "Health Passport Stamp conveying COVID-19 serology results"
+                        valueString: "Health Wallet card conveying COVID-19 results"
                     }, {
                         url: "https://healthwallet.cards#presentation-context-online",
                         valueString: vc
