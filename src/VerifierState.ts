@@ -6,7 +6,7 @@ export interface VerifierState {
     did: string;
     config: {
         role: string;
-        skipPostToServer?: boolean;
+        skipVcPostToServer?: boolean;
         claimsRequired: ClaimType[];
         reset?: boolean;
         requestMode: SiopRequestMode;

@@ -82,7 +82,7 @@ export const issueVcToHolder = async (state: VerifierState): Promise<any> => {
     const vcSigned = await state.sk.sign({ kid: state.did + '#signing-key-1' }, vcPayload);
     const vcEncrypted = await encryptFor(vcSigned, subjectDid, state.config.keyGenerators);
 
-    if (!state.config.skipPostToServer) {
+    if (!state.config.skipVcPostToServer) {
         const vcCreated = await axios.post(`${serverBase}/lab/vcs/${encodeURIComponent(subjectDid)}`, {
             vcs: [vcEncrypted]
         });

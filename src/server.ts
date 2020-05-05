@@ -24,7 +24,7 @@ const port = 8080; // default port to listen
 
 const fhirBase = 'https://hapi.fhir.org/baseR4';
 
-async function resolveDid (did: string) {
+async function resolveDid(did: string) {
     const parsedDid = await Did.create(did, 'ion');
     const operationWithMockedAnchorTime: AnchoredOperationModel = {
         didUniqueSuffix: parsedDid.uniqueSuffix,
@@ -46,12 +46,13 @@ const client = {
     get: async (url: string) => (await axios.get(fhirBase + '/' + url)).data
 };
 
+type VerifierResponse  = VerifierState["siopResponse"]
 const siopCache: Record<string, {
     ttl: number,
-    siopRequest: string,
-    siopResponse: Promise<any>,
-    siopResponseDeferred: {
-        resolve: (object) => undefined;
+    siopStateAfterRequest: VerifierState["siopRequest"],
+    siopStateAfterResponse: Promise<VerifierState["siopResponse"]>,
+    responseDeferred: {
+        resolve: (r: VerifierResponse) => undefined;
         reject: (any) => undefined;
     }
 }> = {};
@@ -62,7 +63,7 @@ const vcCache: Record<string, {
 }> = {};
 
 const ttlMs = 1000 * 60 * 15; // 15 minute ttl
-function enforceTtl (cache: Record<string, { ttl: number }>) {
+function enforceTtl(cache: Record<string, { ttl: number }>) {
     const now = new Date().getTime();
     Object.entries(cache).forEach(([k, { ttl }]) => {
         if (ttl < now) {
@@ -137,15 +138,12 @@ app.get('/api/fhir/Patient/:patientID/[\$]HealthWallet.issue', async (req, res) 
 
     const state = patientToSiopResponse[req.params.patientID];
 
-    console.log('STATE', state);
-    const siopResponse = await siopCache[state].siopResponse;
-    const id_token = siopResponse.id_token;
+    const siopResponse = await siopCache[state].siopStateAfterResponse;
+    const id_token = siopResponse.idTokenRaw;
 
     const withResponse = await issuerReducer(issuerState, await parseSiopResponse(id_token, issuerState));
-    console.log('withResponse', withResponse);
     const afterIssued = await issuerReducer(withResponse, await issueVcToHolder(withResponse));
 
-    console.log('AFter issued', afterIssued);
     res.json({
         'resourceType': 'Parameters',
         'parameter': [{
@@ -168,7 +166,7 @@ const initializeIssuer = async (): Promise<VerifierState> => {
             claimsRequired: [],
             role: 'issuer',
             requestMode: 'form_post',
-            skipPostToServer: true,
+            skipVcPostToServer: true,
             postRequest: async (url, body) => {
                 return new Promise(resolve => {
                     siopBegin({ body }, { json: resolve });
@@ -193,17 +191,25 @@ const dispatchToIssuer = async (ePromise) => {
 const siopBegin = async (req, res) => {
     const id: string = (JWT.decode(req.body.siopRequest) as any).state;
 
-    let resolve;
-    let reject;
+    let responseResolve;
+    let responseReject;
+
+    let vcResolve
+    let vcReject;
 
     siopCache[id] = {
-        siopRequest: req.body.siopRequest,
-        siopResponse: new Promise((resolveFn, rejectFn) => {
-            resolve = resolveFn;
-            reject = rejectFn;
+        siopStateAfterRequest: {
+            siopRequestPayloadSigned: req.body.siopRequest,
+            siopRequestPayload: null,
+            siopRequestQrCodeUrl: null,
+            siopResponsePollingUrl: null
+        },
+        siopStateAfterResponse: new Promise((resolveFn, rejectFn) => {
+            responseResolve = resolveFn;
+            responseReject = rejectFn;
         }),
-        siopResponseDeferred: {
-            resolve, reject
+        responseDeferred: {
+            resolve: responseResolve, reject: responseReject
         },
         ttl: new Date().getTime() + ttlMs
     };
@@ -216,19 +222,29 @@ const siopBegin = async (req, res) => {
 app.post('/api/siop/begin', siopBegin);
 
 app.get('/api/siop/:id/response', async (req, res) => {
-    const r = siopCache[req.params.id];
-    res.send(await r.siopResponse);
+    const r = await siopCache[req.params.id].siopStateAfterResponse;
+    console.log("Siop response", r)
+    res.send({
+        state: req.params.id,
+        id_token: r.idTokenRaw
+    });
 });
 
 app.get('/api/siop/:id', async (req, res) => {
-    const r = siopCache[req.params.id];
-    res.send(r.siopRequest);
+    const r = siopCache[req.params.id].siopStateAfterRequest;
+    console.log("deref req", r)
+    res.send(r.siopRequestPayloadSigned);
 });
 
 app.post('/api/siop', async (req, res) => {
     const body = qs.parse(req.body.toString());
     const state = body.state as string;
-    siopCache[state].siopResponseDeferred.resolve(body);
+    const idTokenRaw = body.id_token as string;
+    siopCache[state].responseDeferred.resolve({
+        idTokenRaw,
+        idTokenDecrypted: null,
+        idTokenPayload: null
+    });
     res.send('Received SIOP Response');
 });
 
