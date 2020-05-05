@@ -1,4 +1,4 @@
-import sampleVc from './fixtures/vc-payload.json';
+import sampleVc from './fixtures/vc.json';
 import deepcopy from 'deepcopy';
 import * as uuid from 'uuid';
 import crypto from 'crypto'

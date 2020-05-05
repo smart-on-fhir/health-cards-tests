@@ -5,7 +5,7 @@ import qs from 'querystring';
 import { serverBase } from './config';
 import * as CredentialManager from './CredentialManager';
 import { encryptFor, verifyJws } from './dids';
-import sampleVc from './fixtures/vc-payload.json';
+import sampleVc from './fixtures/vc.json';
 import { VerifierState } from './VerifierState';
 
 
