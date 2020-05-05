@@ -301,8 +301,7 @@ const App: React.FC<AppProps> = (props) => {
                     <Nav navbar={true}>
                         <NavLink href="#" onClick={fhirConnect}> Connect to Lab via FHIR API</NavLink>
                         <NavLink href="#" onClick={connectTo('verifier')}> Open Employer Portal</NavLink>
-                        <NavbarText>Help</NavbarText>
-                        <NavbarText>About</NavbarText>
+                        <NavLink href="https://github.com/microsoft-healthcare-madison/health-wallet-demo">Source on GitHub</NavLink>
                     </Nav>
                 </Collapse></RS.Container>
         </RS.Navbar>
