@@ -137,6 +137,9 @@ app.get('/api/fhir/Patient/:patientID/[\$]HealthWallet.connect', async (req, res
 
 async function getVcForPatient(patientId) {
     const state = patientToSiopResponse[patientId];
+    if (!state) {
+        return null
+    }
     const siopResponse = await siopCache[state].siopStateAfterResponse;
     const id_token = siopResponse.idTokenRaw;
     const withResponse = await issuerReducer(issuerState, await parseSiopResponse(id_token, issuerState));
@@ -165,7 +168,7 @@ app.get('/api/fhir/DiagnosticReport', async (req, res) => {
                         code: "covid19"
                     }]
                 },
-                extension: [
+                extension: vc ? [
                     {
                         url: "https://healthwallet.cards#description",
                         valueString: "Health Wallet card conveying COVID-19 results"
@@ -173,7 +176,7 @@ app.get('/api/fhir/DiagnosticReport', async (req, res) => {
                         url: "https://healthwallet.cards#presentation-context-online",
                         valueString: vc
                     }
-                ],
+                ] : undefined,
                 ...exampleDr,
             }
         }]
