@@ -168,15 +168,13 @@ app.get('/api/fhir/DiagnosticReport', async (req, res) => {
                         code: "covid19"
                     }]
                 },
-                extension: vc ? [
-                    {
-                        url: "https://healthwallet.cards#description",
-                        valueString: "Health Wallet card conveying COVID-19 results"
-                    }, {
-                        url: "https://healthwallet.cards#presentation-context-online",
-                        valueString: vc
+                extension: vc ? [{
+                    "url": "https://healthwallet.cards#vc-attachment",
+                    "valueAttachment": {
+                      "title": "COVID-19 Card for online presentation",
+                      "data": vc
                     }
-                ] : undefined,
+                  }]: undefined,
                 ...exampleDr,
             }
         }]

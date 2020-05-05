@@ -173,8 +173,8 @@ const App: React.FC<AppProps> = (props) => {
             const credentials = axios.get(smartState.server + `/DiagnosticReport?patient=${smartState.patient}&_tag=https://healthwallet.cards|covid19`)
             credentials.then(response => {
                 const vcs = response.data.entry[0].resource.extension
-                    .filter(e => e.url === 'https://healthwallet.cards#presentation-context-online')
-                    .map(e => e.valueString)
+                    .filter(e => e.url === 'https://healthwallet.cards#vc-attachment')
+                    .map(e => e.valueAttachment.data)
 
                 dispatchToHolder(retrieveVcs(vcs, holderState))
             })
