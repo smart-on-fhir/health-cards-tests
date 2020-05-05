@@ -12,6 +12,8 @@ import DocumentComposer from '../sidetree/lib/core/versions/latest/DocumentCompo
 import OperationProcessor from '../sidetree/lib/core/versions/latest/OperationProcessor';
 import { generateEncryptionKey, generateSigningKey, keyGenerators } from './keys-server';
 
+import exampleDr from './fixtures/diagnostic-report.json'
+
 import { VerifierState } from './VerifierState';
 import { generateDid, verifyJws } from './dids';
 import { issuerReducer, prepareSiopRequest, issueVcToHolder, parseSiopResponse } from './VerifierLogic';
@@ -46,7 +48,7 @@ const client = {
     get: async (url: string) => (await axios.get(fhirBase + '/' + url)).data
 };
 
-type VerifierResponse  = VerifierState["siopResponse"]
+type VerifierResponse = VerifierState["siopResponse"]
 const siopCache: Record<string, {
     ttl: number,
     siopStateAfterRequest: VerifierState["siopRequest"],
@@ -109,7 +111,6 @@ app.get('/api/fhir/[\$]authorize', (req, res) => {
 
 app.post('/api/fhir/[\$]token', (req, res) => {
     const { code } = qs.parse(req.body.toString());
-    console.log('Code', code);
     const authorizeState = JSON.parse(code as string);
     res.json({
         'access_token': base64url.encode(crypto.randomBytes(32)),
@@ -134,21 +135,60 @@ app.get('/api/fhir/Patient/:patientID/[\$]HealthWallet.connect', async (req, res
     });
 });
 
-app.get('/api/fhir/Patient/:patientID/[\$]HealthWallet.issue', async (req, res) => {
-
-    const state = patientToSiopResponse[req.params.patientID];
-
+async function getVcForPatient(patientId) {
+    const state = patientToSiopResponse[patientId];
     const siopResponse = await siopCache[state].siopStateAfterResponse;
     const id_token = siopResponse.idTokenRaw;
-
     const withResponse = await issuerReducer(issuerState, await parseSiopResponse(id_token, issuerState));
     const afterIssued = await issuerReducer(withResponse, await issueVcToHolder(withResponse));
+    const vc = afterIssued.issuedCredentials[0]
+    return vc;
+}
+
+
+app.get('/api/fhir/DiagnosticReport', async (req, res) => {
+
+    const vc = await getVcForPatient(req.query.patient);
+    const fullUrl = issuerState.config.serverBase;
+
+    res.json({
+        resourceType: 'Bundle',
+        entry: [{
+            fullUrl: `${fullUrl}/fhir/DiagnosticReport/${exampleDr.id}`,
+            search: {
+                mode: "match"
+            },
+            resource: {
+                meta: {
+                    tag: [{
+                        system: "https://healthwallet.cards",
+                        code: "covid19"
+                    }]
+                },
+                extension: [
+                    {
+                        url: "https://healthwallet.cards#description",
+                        valueString: "Health Passport Stamp conveying COVID-19 serology results"
+                    }, {
+                        url: "https://healthwallet.cards#presentation-context-online",
+                        valueString: vc
+                    }
+                ],
+                ...exampleDr,
+            }
+        }]
+    })
+});
+
+
+app.get('/api/fhir/Patient/:patientID/[\$]HealthWallet.issue', async (req, res) => {
+    const vc = await getVcForPatient(req.params.patientID);
 
     res.json({
         'resourceType': 'Parameters',
         'parameter': [{
             'name': 'vc',
-            'valueString': afterIssued.issuedCredentials[0]
+            'valueString': vc
         }]
     });
 });
@@ -223,7 +263,6 @@ app.post('/api/siop/begin', siopBegin);
 
 app.get('/api/siop/:id/response', async (req, res) => {
     const r = await siopCache[req.params.id].siopStateAfterResponse;
-    console.log("Siop response", r)
     res.send({
         state: req.params.id,
         id_token: r.idTokenRaw
@@ -232,7 +271,6 @@ app.get('/api/siop/:id/response', async (req, res) => {
 
 app.get('/api/siop/:id', async (req, res) => {
     const r = siopCache[req.params.id].siopStateAfterRequest;
-    console.log("deref req", r)
     res.send(r.siopRequestPayloadSigned);
 });
 

@@ -55,7 +55,7 @@ const SiopRequestReceiver: React.FC<SiopRequestReceiverProps> = (props) => {
 
     return props.redirectMode === "qr" ? <>
         <span>Scan barcode for {props.label}</span><br />
-        <video ref={videoRef} style={{ width: "25vmin", height: "25vmin" }}/>
+        <video ref={videoRef} style={{ width: "25vmin", height: "25vmin" }} />
         <br />
     </> : <>
             <span>Waiting for redirect...</span>
@@ -168,11 +168,23 @@ const App: React.FC<AppProps> = (props) => {
 
     useEffect(() => {
         if (smartState?.access_token && issuerInteraction?.siopResponse && holderState.vcStore.length === 0) {
-            const credentials = axios.get(smartState.server + `/Patient/${smartState.patient}/$HealthWallet.issue`)
+
+            const credentials = axios.get(smartState.server + `/DiagnosticReport?patient=${smartState.patient}&_tag=https://healthwallet.cards|covid19`)
             credentials.then(response => {
-                const vcs = response.data.parameter.filter(p => p.name === 'vc').map(p => p.valueString)
+                const vcs = response.data.entry[0].resource.extension
+                    .filter(e => e.url === 'https://healthwallet.cards#presentation-context-online')
+                    .map(e => e.valueString)
+
                 dispatchToHolder(retrieveVcs(vcs, holderState))
             })
+
+            /* 
+             const credentials = axios.get(smartState.server + `/Patient/${smartState.patient}/$HealthWallet.issue`)
+             credentials.then(response => {
+                 const vcs = response.data.parameter.filter(p => p.name === 'vc').map(p => p.valueString)
+                 dispatchToHolder(retrieveVcs(vcs, holderState))
+             })
+             */
         }
     }, [smartState, holderState.interactions])
 
@@ -261,7 +273,7 @@ const App: React.FC<AppProps> = (props) => {
         }), { headers })).data
 
 
-        const newState: SmartState = {...accessTokenResponse, server}
+        const newState: SmartState = { ...accessTokenResponse, server }
         setSmartState(newState)
 
         const siopParameters = (await axios.get(server + `/Patient/${accessTokenResponse.patient}/$HealthWallet.connect`)).data
@@ -292,7 +304,7 @@ const App: React.FC<AppProps> = (props) => {
                     <img className="d-inline-block" style={{ maxHeight: "1em", maxWidth: "1em", marginRight: "10px" }} src="img/wallet.svg" />
                             Health Wallet Demo
                     </NavbarBrand>
-                <NavbarToggler onClick={toggle}/>
+                <NavbarToggler onClick={toggle} />
                 <Collapse navbar={true} isOpen={isOpen}>
                     <Nav navbar={true}>
                         <NavLink href="#" onClick={fhirConnect}> Connect to Lab via FHIR API</NavLink>
@@ -329,13 +341,13 @@ const App: React.FC<AppProps> = (props) => {
                         <CardSubtitle className="text-muted">Your COVID results are ready to share</CardSubtitle>
                         <CardText style={{ fontFamily: "monospace" }}>
                             <div>
-                            {holderState.vcStore[0].vcSigned.slice(0, 25)}...
+                                {holderState.vcStore[0].vcSigned.slice(0, 25)}...
                             </div>
                             <div>
-                            {JSON.stringify(holderState.vcStore[0].vcPayload, null).slice(0,100)}...
+                                {JSON.stringify(holderState.vcStore[0].vcPayload, null).slice(0, 100)}...
                             </div>
 
-                            </CardText>
+                        </CardText>
                     </Card>}
 
                     {currentStep < 4 &&
