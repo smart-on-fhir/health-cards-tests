@@ -1,5 +1,5 @@
-name: Deploy siop master to ci
 #  Basics from https://docs.microsoft.com/en-us/azure/dev-spaces/how-to/github-actions
+name: Deploy siop master to ci
 on:
   push:
     branches:
