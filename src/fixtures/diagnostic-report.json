@@ -1,0 +1,17 @@
+{
+    "resourceType": "DiagnosticReport",
+    "effectiveDateTime": "2020-05-01",
+    "id": "c19dr-001-sample-123",
+    "subject": {
+        "reference": "Patient/sample-123"
+    },
+    "result": [
+        {
+            "reference": "Observation/c19obs-001-sample-123"
+        },
+        {
+            "reference": "Observation/c19obs-002-sample-123"
+        }
+    ],
+    "conclusion": "Patient has passed through the acute phase of covid-19 infection as of May 1, 2020"
+}
