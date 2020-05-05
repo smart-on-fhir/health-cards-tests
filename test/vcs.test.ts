@@ -68,7 +68,6 @@ describe('CredentialManager', () => {
 
         expect(asVc).toEqual(asVcCloned)
         expect(asVcAgain).toEqual(asVc)
-
     })
 
 

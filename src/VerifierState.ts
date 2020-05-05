@@ -1,5 +1,7 @@
 import { EncryptionKey, SigningKey, KeyGenerators } from './KeyTypes';
-import { ClaimType, SiopRequestMode } from './verifier';
+export type ClaimType = 'vc-health-passport-stamp-covid19-serology' | 'vc-health-passport-stamp';
+export type SiopResponseMode = 'form_post' | 'fragment';
+
 export interface VerifierState {
     ek: EncryptionKey;
     sk: SigningKey;
@@ -9,14 +11,28 @@ export interface VerifierState {
         skipVcPostToServer?: boolean;
         claimsRequired: ClaimType[];
         reset?: boolean;
-        requestMode: SiopRequestMode;
+        responseMode: SiopResponseMode;
         displayQr?: boolean;
         postRequest: (url: string, jsonBody: any) => Promise<any>;
         serverBase: string;
         keyGenerators: KeyGenerators;
     };
     siopRequest?: {
-        siopRequestPayload: any;
+        siopRequestPayload: {
+            response_type: 'id_token';
+            scope: string;
+            nonce: string;
+            registration: {
+                id_token_signed_response_alg: string[];
+                client_uri: string;
+            };
+            response_mode: 'form_post' | 'fragment' | 'query';
+            response_context?: 'wallet' | 'rp';
+            claims?: any;
+            client_id: string;
+            state: string;
+            iss: string;
+        };
         siopRequestPayloadSigned: string;
         siopRequestQrCodeUrl: string;
         siopResponsePollingUrl: string;

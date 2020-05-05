@@ -205,7 +205,7 @@ const initializeIssuer = async (): Promise<VerifierState> => {
             serverBase: process.env.SERVER_BASE,
             claimsRequired: [],
             role: 'issuer',
-            requestMode: 'form_post',
+            responseMode: 'form_post',
             skipVcPostToServer: true,
             postRequest: async (url, body) => {
                 return new Promise(resolve => {

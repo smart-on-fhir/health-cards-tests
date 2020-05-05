@@ -6,7 +6,8 @@ import { serverBase } from './config';
 import { encryptFor, generateDid, verifyJws } from './dids';
 import { keyGenerators } from './keys';
 import { EncryptionKey, SigningKey } from './KeyTypes';
-import { ClaimType, simulatedOccurrence } from './verifier';
+import { ClaimType} from './VerifierState';
+import { simulatedOccurrence } from './verifier';
 
 export async function holderWorld() {
     let state = await initializeHolder();
@@ -46,7 +47,21 @@ export async function holderWorld() {
 }
 
 export interface SiopInteraction {
-    siopRequest?: any;
+    siopRequest?: {
+        response_type: 'id_token';
+        scope: string;
+        nonce: string;
+        registration: {
+            id_token_signed_response_alg: string[];
+            client_uri: string;
+        };
+        response_mode: 'form_post' | 'fragment' | 'query';
+        response_context?: 'wallet' | 'rp';
+        claims?: any;
+        client_id: string;
+        state: string;
+        iss: string;
+    };
     siopResponse?: any;
     siopPartnerRole?: 'verifier' | 'issuer'
     status: 'need-qrcode' | 'need-request' | 'need-approval' | 'need-redirect' | 'complete'
@@ -228,9 +243,11 @@ export async function prepareSiopResponse(state: HolderState) {
     };
     const responseUrl = interaction.siopRequest.client_id;
 
-    if (interaction.siopRequest.response_mode === 'form_post') {
+    console.log(" holder responding", interaction)
+    if (interaction.siopRequest.response_mode === 'form_post' && interaction.siopRequest.response_context === 'wallet') {
         const siopResponseCreated = await axios.post(responseUrl, qs.stringify(siopResponse));
     }
+
     return ({
         type: 'siop-response-prepared',
         siopResponse: {
@@ -239,7 +256,7 @@ export async function prepareSiopResponse(state: HolderState) {
             idTokenEncrypted,
             formPostBody: siopResponse,
         },
-        needRedirect: interaction.siopRequest.response_mode === 'fragment'
+        needRedirect: interaction.siopRequest.response_context !== 'wallet'
     });
 }
 
@@ -247,7 +264,7 @@ export async function retrieveVcs(vcs: any, state: HolderState) {
     const vcRetrieved = vcs[0]
     const vcDecrypted = await state.ek.decrypt(vcs[0]);
     const vcVerified = await verifyJws(vcDecrypted, keyGenerators);
-    if (vcVerified.valid){
+    if (vcVerified.valid) {
         return ({ 'type': 'vc-retrieved', vc: vcDecrypted, verified: vcVerified.valid, vcPayload: vcVerified.payload })
     }
 }

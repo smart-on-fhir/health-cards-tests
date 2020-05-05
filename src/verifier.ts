@@ -5,16 +5,15 @@ import qs from 'querystring';
 import { serverBase } from './config';
 import { generateDid, verifyJws } from './dids';
 import { generateEncryptionKey, generateSigningKey, keyGenerators } from './keys';
-import { VerifierState } from './VerifierState';
+import { VerifierState, SiopResponseMode } from './VerifierState';
 import { verifierReducer, prepareSiopRequest, parseSiopResponse } from './VerifierLogic';
 
-export type ClaimType = 'vc-health-passport-stamp-covid19-serology' | 'vc-health-passport-stamp';
 
-export async function verifierWorld (role = 'verifier', requestMode: SiopRequestMode = 'form_post', reset = false) {
+export async function verifierWorld (role = 'verifier', requestMode: SiopResponseMode = 'form_post', reset = false) {
     let state = await initializeVerifier({
         role,
         claimsRequired: ['vc-health-passport-stamp-covid19-serology'],
-        requestMode,
+        responseMode: requestMode,
         reset,
         displayQr: false,
         postRequest: async (url, r) => (await axios.post(url, r)).data,
@@ -36,7 +35,7 @@ export async function verifierWorld (role = 'verifier', requestMode: SiopRequest
     }
 
     if (!state.siopResponse) {
-        if (state.config.requestMode === 'form_post') {
+        if (state.config.responseMode === 'form_post') {
             await dispatch(receiveSiopResponse(state));
         }
     }
@@ -103,7 +102,6 @@ export const simulatedOccurrence = async ({ who, type }, rateMs = 200) => {
     }
 };
 
-export type SiopRequestMode = 'form_post' | 'fragment';
 
 export const initializeVerifier = async (config: VerifierState['config']): Promise<VerifierState> => {
     const stateKey = `${config.role}_state`;
@@ -143,9 +141,9 @@ export async function receiveSiopResponse (state: VerifierState) {
     const POLLING_RATE_MS = 500; // Obviously replace this with websockets, SSE, etc
     let responseRetrieved;
     do {
-        if (state.config.requestMode === 'form_post') {
+        if (state.config.responseMode === 'form_post') {
             responseRetrieved = await axios.get(serverBase + state.siopRequest.siopResponsePollingUrl);
-        } else if (state.config.requestMode === 'fragment') {
+        } else if (state.config.responseMode === 'fragment') {
             responseRetrieved = {
                 data: state.fragment
             };

@@ -1,17 +1,17 @@
-import { initializeVerifier, simulatedOccurrence, simulate, displayRequest, SiopRequestMode, receiveSiopResponse } from './verifier';
+import { initializeVerifier, simulatedOccurrence, simulate, displayRequest, receiveSiopResponse } from './verifier';
 import axios from 'axios';
 import { serverBase } from './config';
 
 import { encryptFor, generateDid, verifyJws } from './dids';
-import { VerifierState } from './VerifierState';
+import { VerifierState, SiopResponseMode } from './VerifierState';
 import { keyGenerators } from './keys';
 import { prepareSiopRequest, verifierReducer, issuerReducer, issueVcToHolder } from './VerifierLogic';
 
-export async function issuerWorld(requestMode: SiopRequestMode  = 'form_post', reset = false) {
+export async function issuerWorld(requestMode: SiopResponseMode  = 'form_post', reset = false) {
     let state = await initializeVerifier({
         role: 'issuer',
         claimsRequired: [],
-        requestMode,
+        responseMode: requestMode,
         reset,
         displayQr: false,
         postRequest: async (url, r) => (await axios.post(url, r)).data,

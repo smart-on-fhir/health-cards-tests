@@ -3,11 +3,10 @@ import base64url from 'base64url';
 import * as crypto from 'crypto';
 import qs from 'querystring';
 import { serverBase } from './config';
+import * as CredentialManager from './CredentialManager';
 import { encryptFor, verifyJws } from './dids';
 import sampleVc from './fixtures/vc-payload.json';
 import { VerifierState } from './VerifierState';
-import * as CredentialManager from './CredentialManager'
-import deepcopy from 'deepcopy'
 
 
 export async function verifierReducer (state: VerifierState, event: any): Promise<VerifierState> {
@@ -27,8 +26,8 @@ export async function prepareSiopRequest (state: VerifierState) {
         kid: state.did + '#signing-key-1'
     };
     // TODO read window.location from state rather than browser global
-    const responseUrl = state.config.requestMode === 'form_post' ? `${state.config.serverBase}/siop` : window.location.href.split('?')[0];
-    const siopRequestPayload = {
+    const responseUrl = state.config.responseMode === 'form_post' ? `${state.config.serverBase}/siop` : window.location.href.split('?')[0];
+    const siopRequestPayload: VerifierState["siopRequest"]["siopRequestPayload"] = {
         state: siopState,
         'iss': state.did,
         'response_type': 'id_token',
@@ -40,7 +39,8 @@ export async function prepareSiopRequest (state: VerifierState) {
             }), {})
         },
         'scope': 'did_authn',
-        'response_mode': state.config.requestMode,
+        'response_mode': state.config.responseMode,
+        'response_context': 'wallet',
         'nonce': base64url.encode(crypto.randomBytes(16)),
         'registration': {
             'id_token_signed_response_alg': ['ES256K'],
@@ -48,7 +48,6 @@ export async function prepareSiopRequest (state: VerifierState) {
         }
     };
     const siopRequestPayloadSigned = await state.sk.sign(siopRequestHeader, siopRequestPayload);
-    const testVerify = await verifyJws(siopRequestPayloadSigned, state.config.keyGenerators);
     const siopRequestCreated = await state.config.postRequest(`${serverBase}/siop/begin`, {
         siopRequest: siopRequestPayloadSigned
     });
