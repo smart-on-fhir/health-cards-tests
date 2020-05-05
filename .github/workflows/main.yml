@@ -1,5 +1,5 @@
 #  Basics from https://docs.microsoft.com/en-us/azure/dev-spaces/how-to/github-actions
-name: Deploy siop master to ci
+name: Deploy Health Wallet Demo master branch to ci
 on:
   push:
     branches:
