@@ -454,7 +454,8 @@ const App: React.FC<AppProps> = (props) => {
 
                             <RS.UncontrolledButtonDropdown className="mb-1" >
                                 <DropdownToggle caret color={currentStep === 2 ? 'success' : 'info'} >
-                                    Connect to Lab and get tested
+                                    {currentStep > 2 && '✓ '}
+                                    2. Connect to Lab and get tested
                                 </DropdownToggle>
                                 <DropdownMenu style={{width: "100%"}}>
                                     <DropdownItem onClick={fhirConnect} >Connect with SMART on FHIR </DropdownItem>
