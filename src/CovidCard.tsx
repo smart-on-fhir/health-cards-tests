@@ -75,17 +75,29 @@ const CovidCard: React.FC<{
         }
     }, [smartState, holderState.interactions])
 
+    const conclusions = holderState.vcStore.flatMap(vc =>
+        vc.vcPayload.vc.fhirBundle.entry
+            .filter(e => e.resource.resourceType === 'DiagnosticReport')
+            .flatMap(e => e.resource.conclusion))
+
+    const resources = holderState.vcStore.flatMap(vc =>
+        vc.vcPayload.vc.fhirBundle.entry
+            .flatMap(e => e.resource))
+
+
     return <> {
         currentStep === 4 && <Card style={{ border: "1px solid grey", padding: ".5em", marginBottom: "1em" }}>
             <CardTitle style={{ fontWeight: "bolder" }}>
                 COVID Card
                 </CardTitle>
 
-            <CardSubtitle className="text-muted">Your COVID results are ready to share</CardSubtitle>
+            <CardSubtitle className="text-muted">Your COVID results are ready to share, based on {" "}
+                {resources && <>{resources.length} FHIR Resource{resources.length > 1 ? "s":""} <br /> </>}
+            </CardSubtitle>
             <CardText style={{ fontFamily: "monospace" }}>
                 <span>
-                    {JSON.stringify(holderState.vcStore[0].vcPayload, null).slice(0, 100)}...
-                    </span>
+                    Conclusions: {conclusions && conclusions.join("\n")}
+                </span>
             </CardText>
         </Card>
     } {currentStep < 4 &&

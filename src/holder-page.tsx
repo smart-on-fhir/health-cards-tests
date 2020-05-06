@@ -93,7 +93,7 @@ const App: React.FC<AppProps> = (props) => {
         const e = await ePromise
         const holder = await holderReducer(holderState, e)
         setHolderState(state => holder)
-        console.log("Holder state", e, holder)
+        console.log("After event", e, "Holder state is", holder)
     }
 
     const connectTo = who => async () => {
@@ -105,9 +105,9 @@ const App: React.FC<AppProps> = (props) => {
     }
 
     const connectToFhir = async () => {
-       const connected = await makeFhirConnector(uiState, holderState)
-       setSmartState(connected.newSmartState)
-       dispatchToHolder(receiveSiopRequest(connected.siopUrl, holderState))
+        const connected = await makeFhirConnector(uiState, holderState)
+        setSmartState(connected.newSmartState)
+        dispatchToHolder(receiveSiopRequest(connected.siopUrl, holderState))
     }
 
     const [isOpen, setIsOpen] = useState(false);
@@ -136,7 +136,7 @@ const App: React.FC<AppProps> = (props) => {
                 onReady={onScanned}
                 redirectMode="window-open"
                 label={siopAtNeedQr[0].siopPartnerRole}
-                startUrl={siopAtNeedQr[0].siopPartnerRole === 'issuer' ?  uiState.issuer.issuerStartUrl : uiState.verifier.verifierStartUrl}
+                startUrl={siopAtNeedQr[0].siopPartnerRole === 'issuer' ? uiState.issuer.issuerStartUrl : uiState.verifier.verifierStartUrl}
                 interaction={siopAtNeedQr[0]} />}
 
         {uiState.editingConfig && <ConfigEditModal uiState={uiState} defaultUiState={props.defaultUiState} dispatch={dispatch} />}
@@ -164,19 +164,8 @@ const App: React.FC<AppProps> = (props) => {
                     <Card style={{ padding: ".5em" }}>
                         <CardTitle style={{ fontWeight: "bolder" }}>
                             Debugging Details
-                    </CardTitle>
-                        <CardSubtitle className="text-muted">Just for developers to see what's going on</CardSubtitle>
-                        <pre> {JSON.stringify({
-                            ...holderState,
-                            ek: {
-                                ...holderState.ek,
-                                privateJwk: "redacted"
-                            },
-                            sk: {
-                                ...holderState.sk,
-                                privateJwk: "redacted"
-                            }
-                        }, null, 2)} </pre>
+                        </CardTitle>
+                        <CardSubtitle className="text-muted">Your browser's dev tools will show details on current page state + events </CardSubtitle>
                     </Card>
                 </RS.Col>
             </RS.Row>
@@ -195,19 +184,19 @@ export default async function main() {
 
 
     const defaultUiState: UiState = {
-       issuer: {
-           issuerStartUrl:  './issuer.html?begin',
-           issuerDownloadUrl: './issuer.html'
-       },
-       verifier: {
-           verifierStartUrl: './verifier.html?begin'
-       },
-       fhirClient: {
-           server: config.serverBase + '/fhir',
-           client_id: 'sample_client_id',
-           client_secret: 'sample_client_secret',
-           scope: 'launch launch/patient patient/*.*'
-       }
+        issuer: {
+            issuerStartUrl: './issuer.html?begin',
+            issuerDownloadUrl: './issuer.html'
+        },
+        verifier: {
+            verifierStartUrl: './verifier.html?begin'
+        },
+        fhirClient: {
+            server: config.serverBase + '/fhir',
+            client_id: 'sample_client_id',
+            client_secret: 'sample_client_secret',
+            scope: 'launch launch/patient patient/*.*'
+        }
     }
 
     let initialUiState: UiState = defaultUiState
