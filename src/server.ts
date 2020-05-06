@@ -79,7 +79,7 @@ setInterval(() => {
     enforceTtl(vcCache)
 }, 1000 * 60);
 */
-const smartConfig = '.well-known/smart-configuration.json';
+const smartConfig = '.well-known/smart-configuration';
 app.get('/api/fhir/' + smartConfig, (req, res) => {
 
     const fullUrl = issuerState.config.serverBase;

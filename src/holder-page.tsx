@@ -208,7 +208,7 @@ interface UiState {
     issuer: IssuerProps,
     verifier: VerifierProps,
     fhirClient: OAuthProps,
-    editingConfig: boolean
+    editingConfig?: boolean
 }
 
 interface AppProps {
@@ -321,7 +321,7 @@ const App: React.FC<AppProps> = (props) => {
         const scope = uiState.fhirClient?.scope || 'launch launch/patient patient/*.*'
         const redirect_uri = window.location.origin + window.location.pathname + 'authorized.html'
 
-        const smartConfig = (await axios.get(server + '/.well-known/smart-configuration.json')).data
+        const smartConfig = (await axios.get(server + '/.well-known/smart-configuration')).data
 
         const authorize = smartConfig.authorization_endpoint
         const token = smartConfig.token_endpoint
@@ -500,15 +500,30 @@ export default async function main() {
     const issuerStartUrl = queryProps.issuerStartUrl as string || `./issuer.html?begin`
     const issuerDownloadUrl = queryProps.issuerDownloadUrl as string || `./issuer.html`
     const verifierStartUrl = queryProps.verifierStartUrl as string || `./verifier.html?begin`
-    console.log("issuersta", issuerStartUrl)
 
     const server = config.serverBase + '/fhir'
     const client_id = 'sample_client_id'
     const client_secret = 'sample_client_secret'
     const scope = 'launch launch/patient patient/*.*'
-    const redirect_uri = window.location.origin + window.location.pathname + 'authorized.html'
 
-    const defaultUiState = JSON.parse(decodeURIComponent(window.location.hash.slice(1))) as UiState
+    let defaultUiState: UiState = {
+        issuer: {
+            issuerStartUrl: issuerStartUrl,
+            issuerDownloadUrl: issuerDownloadUrl
+        },
+        verifier: {
+            verifierStartUrl: verifierStartUrl
+        },
+        fhirClient: {
+            server, client_id, client_secret, scope
+        }
+    }
+
+    try {
+        defaultUiState = JSON.parse(decodeURIComponent(window.location.hash.slice(1))) as UiState
+    } catch (e) {
+        console.log("No default UI state from url")
+    }
 
 
     ReactDOM.render(
