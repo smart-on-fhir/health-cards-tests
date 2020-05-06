@@ -71,4 +71,12 @@ describe('CredentialManager', () => {
     })
 
 
+    test('prints', ()=>{
+        
+        const x = require('../src/fixtures/vc-payload.json')
+        const asVc = CredentialManager.vcToJwtPayload(x)
+        console.log(JSON.stringify(asVc, null, 2))
+    })
+
+
 });

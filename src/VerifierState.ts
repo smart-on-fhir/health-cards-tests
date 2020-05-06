@@ -1,5 +1,5 @@
 import { EncryptionKey, SigningKey, KeyGenerators } from './KeyTypes';
-export type ClaimType = 'vc-health-passport-stamp-covid19-serology' | 'vc-health-passport-stamp';
+export type ClaimType = 'https://healthwallet.cards#covid19' | 'https://healthwallet.cards#immunization';
 export type SiopResponseMode = 'form_post' | 'fragment';
 
 export interface VerifierState {

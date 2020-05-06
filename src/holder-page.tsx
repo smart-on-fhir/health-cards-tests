@@ -1,17 +1,19 @@
 import axios from 'axios';
 import base64url from 'base64url';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import './style.css';
 import * as crypto from 'crypto';
 import QrScanner from 'qr-scanner';
 import qs from 'querystring';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useReducer } from 'react';
 import ReactDOM from 'react-dom';
 import * as RS from 'reactstrap';
-import { Button, Card, CardSubtitle, CardText, CardTitle, Collapse, Nav, NavbarBrand, NavbarText, NavbarToggler, NavLink } from 'reactstrap';
+import { Button, Card, CardSubtitle, CardText, CardTitle, Collapse, Nav, NavbarBrand, NavbarText, NavbarToggler, NavLink, InputGroupAddon, InputGroupText, Dropdown, DropdownMenu, DropdownItem, DropdownToggle } from 'reactstrap';
 import { holderReducer, HolderState, initializeHolder, prepareSiopResponse, receiveSiopRequest, retrieveVcs, SiopInteraction } from './holder';
 import { issuerWorld } from './issuer';
 import { verifierWorld } from './verifier';
 import { ClaimType } from './VerifierState';
+import * as config from './config';
 
 QrScanner.WORKER_PATH = 'qr-scanner-worker.min.js';
 
@@ -106,11 +108,11 @@ const SiopApprovalModal: React.FC<SiopApprovalProps | null> = (props) => {
             <RS.ModalBody>The following details will be shared:
         <ul>
                     <li><b>Your ID Card:</b> allows secure communications</li>
-                    {props.share.includes("vc-health-passport-stamp-covid19-serology") && <li>
+                    {props.share.includes('https://healthwallet.cards#covid19') && <li>
                         <b>Your COVID Card:</b> labs and vaccines for COVID-19
             </li>
                     }
-                    {props.share.includes("vc-health-passport-stamp") && <li>
+                    {props.share.includes('https://healthwallet.cards#immunization') && <li>
                         <b>Your Immunizations Card:</b> full vaccine history
             </li>
                     }
@@ -127,6 +129,59 @@ const SiopApprovalModal: React.FC<SiopApprovalProps | null> = (props) => {
         </RS.Modal>
     </>
 }
+
+const ConfigEditOption: React.FC<{ title: string, default: string, value: string, onChange: (string) => void }> = (props) => {
+
+    return <>
+        <RS.InputGroup>
+            <InputGroupAddon addonType='prepend' className='config-prepend'>
+                <RS.InputGroupText>{props.title}</RS.InputGroupText>
+            </InputGroupAddon>
+            <RS.Input type="text"
+                value={props.value}
+                onChange={e => props.onChange(e.target.value)}>
+            </RS.Input>
+            <InputGroupAddon addonType="prepend">
+                <Button onClick={e => props.onChange(props.default)}>↻</Button>
+            </InputGroupAddon>
+        </RS.InputGroup>
+        <br />
+    </>
+
+}
+const ConfigEditModal: React.FC<{ uiState: UiState, onSave: any, onDiscard: any }> = (props) => {
+
+    const [ui, setUi] = useState(props.uiState)
+
+    return <>
+        <RS.Modal isOpen={true} >
+            <RS.ModalHeader>Edit Config Settings</RS.ModalHeader>
+            <RS.ModalBody>
+                <ConfigEditOption title="FHIR Server"
+                    default={props.uiState.fhirClient.server}
+                    value={ui.fhirClient.server}
+                    onChange={v => setUi({ ...ui, fhirClient: { ...ui.fhirClient, server: v } })} />
+                <ConfigEditOption title="Client ID"
+                    default={props.uiState.fhirClient.client_id}
+                    value={ui.fhirClient.client_id}
+                    onChange={v => setUi({ ...ui, fhirClient: { ...ui.fhirClient, client_id: v } })} />
+                <ConfigEditOption title="Client Secret"
+                    default={props.uiState.fhirClient.client_secret}
+                    value={ui.fhirClient.client_secret}
+                    onChange={v => setUi({ ...ui, fhirClient: { ...ui.fhirClient, client_secret: v } })} />
+                <ConfigEditOption title="Scopes"
+                    default={props.uiState.fhirClient.scope}
+                    value={ui.fhirClient.scope}
+                    onChange={v => setUi({ ...ui, fhirClient: { ...ui.fhirClient, scope: v } })} />
+            </RS.ModalBody>
+            <RS.ModalFooter>
+                <Button color="danger" onClick={e => props.onDiscard()}>Cancel</Button>
+                <Button color="success" onClick={e => props.onSave(ui)}>Save to Bookmarkable URL</Button>
+            </RS.ModalFooter>
+        </RS.Modal>
+    </>
+}
+
 
 interface IssuerProps {
     issuerStartUrl: string;
@@ -149,15 +204,41 @@ interface SmartState {
     server: string;
 }
 
-interface AppProps {
-    initialState: HolderState;
-    simulatedBarcodeScan: boolean;
-    issuer: IssuerProps;
-    verifier: VerifierProps;
-    oauth: OAuthProps;
+interface UiState {
+    issuer: IssuerProps,
+    verifier: VerifierProps,
+    fhirClient: OAuthProps,
+    editingConfig: boolean
 }
+
+interface AppProps {
+    initialHolderState: HolderState;
+    simulatedBarcodeScan: boolean;
+    initialUiState: UiState
+}
+
+type UiEvent = { type: 'save-ui-state', newState: UiState } | { type: 'toggle-editing-config' }
+
+const uiReducer = (prevState: UiState, action: UiEvent): UiState => {
+    if (action.type === 'save-ui-state') {
+        return {
+            ...action.newState,
+            editingConfig: false
+        }
+    }
+
+    if (action.type === 'toggle-editing-config') {
+        return {
+            ...prevState,
+            editingConfig: !prevState.editingConfig
+        }
+    }
+
+}
+
 const App: React.FC<AppProps> = (props) => {
-    const [holderState, setHolderState] = useState<HolderState>(props.initialState)
+    const [holderState, setHolderState] = useState<HolderState>(props.initialHolderState)
+    const [uiState, dispatch] = useReducer(uiReducer, props.initialUiState)
 
     const [smartState, setSmartState] = useState<SmartState | null>(null)
 
@@ -216,7 +297,7 @@ const App: React.FC<AppProps> = (props) => {
             await dispatchToHolder(retrieveVcs(vcs, holderState))
         }
         window.addEventListener("message", onMessage)
-        window.open(props.issuer.issuerDownloadUrl)
+        window.open(uiState.issuer.issuerDownloadUrl)
     }
 
     const onScanned = async (qrCodeUrl: string) => {
@@ -234,10 +315,10 @@ const App: React.FC<AppProps> = (props) => {
 
     const fhirConnect = async () => {
         const state = base64url.encode(crypto.randomBytes(32))
-        const server = props.oauth?.server || './api/fhir'
-        const client_id = props.oauth?.client_id || 'sample_client_id'
-        const client_secret = props.oauth?.client_secret || 'sample_client_secret'
-        const scope = props.oauth?.scope || 'launch launch/patient patient/*.*'
+        const server = uiState.fhirClient?.server || './api/fhir'
+        const client_id = uiState.fhirClient?.client_id || 'sample_client_id'
+        const client_secret = uiState.fhirClient?.client_secret || 'sample_client_secret'
+        const scope = uiState.fhirClient?.scope || 'launch launch/patient patient/*.*'
         const redirect_uri = window.location.origin + window.location.pathname + 'authorized.html'
 
         const smartConfig = (await axios.get(server + '/.well-known/smart-configuration.json')).data
@@ -286,6 +367,7 @@ const App: React.FC<AppProps> = (props) => {
     const [isOpen, setIsOpen] = useState(false);
     const toggle = () => setIsOpen(!isOpen);
 
+
     let currentStep = 1;
     /* tslint:disable-next-line:prefer-conditional-expression */
     if (issuerInteraction?.status !== 'complete') {
@@ -309,8 +391,8 @@ const App: React.FC<AppProps> = (props) => {
                 <NavbarToggler onClick={toggle} />
                 <Collapse navbar={true} isOpen={isOpen}>
                     <Nav navbar={true}>
-                        <NavLink href="#" onClick={fhirConnect}> Connect to Lab via FHIR API</NavLink>
                         <NavLink href="#" onClick={connectTo('verifier')}> Open Employer Portal</NavLink>
+                        <NavLink href="#config" onClick={e => dispatch({ type: 'toggle-editing-config' })}> Edit Config</NavLink>
                         <NavLink target="_blank" href="https://github.com/microsoft-healthcare-madison/health-wallet-demo">Source on GitHub</NavLink>
                     </Nav>
                 </Collapse></RS.Container>
@@ -321,8 +403,19 @@ const App: React.FC<AppProps> = (props) => {
                 redirectMode="window-open"
                 label={siopAtNeedQr[0].siopPartnerRole}
                 startUrl={siopAtNeedQr[0].siopPartnerRole === 'issuer' ?
-                    props.issuer.issuerStartUrl : props.verifier.verifierStartUrl}
+                    uiState.issuer.issuerStartUrl : uiState.verifier.verifierStartUrl}
                 interaction={siopAtNeedQr[0]} />}
+
+        {uiState.editingConfig && <ConfigEditModal uiState={uiState}
+            onSave={ui => {
+                window.location.hash = JSON.stringify({ ...ui, editingConfig: undefined }, null, 0)
+                dispatch({ type: 'save-ui-state', newState: ui })
+            }
+            }
+            onDiscard={() => {
+                dispatch({ type: 'toggle-editing-config' });
+            }}
+        />}
         <SiopApprovalModal  {...parseSiopApprovalProps(holderState, onApproval, onDenial)} />
 
         <RS.Container >
@@ -342,13 +435,9 @@ const App: React.FC<AppProps> = (props) => {
                     </CardTitle>
                         <CardSubtitle className="text-muted">Your COVID results are ready to share</CardSubtitle>
                         <CardText style={{ fontFamily: "monospace" }}>
-                            <div>
-                                {holderState.vcStore[0].vcSigned.slice(0, 25)}...
-                            </div>
-                            <div>
+                            <span>
                                 {JSON.stringify(holderState.vcStore[0].vcPayload, null).slice(0, 100)}...
-                            </div>
-
+                            </span>
                         </CardText>
                     </Card>}
 
@@ -361,9 +450,17 @@ const App: React.FC<AppProps> = (props) => {
 
                             <Button disabled={true} className="mb-1" color="info">
                                 {currentStep > 1 && '✓ '} 1. Set up your Health Wallet</Button>
-                            <Button disabled={currentStep !== 2} onClick={connectTo('issuer')} className="mb-1" color={currentStep === 2 ? 'success' : 'info'}>
-                                {currentStep > 2 && '✓ '}
-                             2. Find a lab and get tested</Button>
+
+
+                            <RS.UncontrolledButtonDropdown className="mb-1" >
+                                <DropdownToggle caret color={currentStep === 2 ? 'success' : 'info'} >
+                                    Connect to Lab and get tested
+                                </DropdownToggle>
+                                <DropdownMenu style={{width: "100%"}}>
+                                    <DropdownItem onClick={fhirConnect} >Connect with SMART on FHIR </DropdownItem>
+                                    <DropdownItem onClick={connectTo('issuer')} >Start from Lab Portal</DropdownItem>
+                                </DropdownMenu>
+                            </RS.UncontrolledButtonDropdown>
                             <Button disabled={currentStep !== 3} onClick={retrieveVcClick} className="mb-1" color={currentStep === 3 ? 'success' : 'info'} >
                                 {currentStep > 3 && '✓ '}
                             3. Save COVID card to wallet</Button>
@@ -405,13 +502,20 @@ export default async function main() {
     const verifierStartUrl = queryProps.verifierStartUrl as string || `./verifier.html?begin`
     console.log("issuersta", issuerStartUrl)
 
+    const server = config.serverBase + '/fhir'
+    const client_id = 'sample_client_id'
+    const client_secret = 'sample_client_secret'
+    const scope = 'launch launch/patient patient/*.*'
+    const redirect_uri = window.location.origin + window.location.pathname + 'authorized.html'
+
+    const defaultUiState = JSON.parse(decodeURIComponent(window.location.hash.slice(1))) as UiState
+
+
     ReactDOM.render(
-        <App initialState={state}
+        <App initialHolderState={state}
             simulatedBarcodeScan={simulatedBarcodeScan}
-            verifier={{ verifierStartUrl }}
-            issuer={{ issuerStartUrl, issuerDownloadUrl }}
-            oauth={{}} />,
-        document.getElementById('app')
+            initialUiState={defaultUiState}
+        />, document.getElementById('app')
     );
 }
 

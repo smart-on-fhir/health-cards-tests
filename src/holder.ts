@@ -168,7 +168,7 @@ export async function holderReducer(state: HolderState, event: any): Promise<Hol
         return {
             ...state,
             vcStore: [...state.vcStore, {
-                type: "vc-health-passport-stamp-covid19-serology", // TODO inspect VC for type
+                type: 'https://healthwallet.cards#covid19', // TODO inspect VC for type
                 vcSigned: event.vc,
                 vcPayload: event.vcPayload
             }]

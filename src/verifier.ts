@@ -12,7 +12,7 @@ import { verifierReducer, prepareSiopRequest, parseSiopResponse } from './Verifi
 export async function verifierWorld (role = 'verifier', responseMode: SiopResponseMode = 'form_post', reset = false) {
     let state = await initializeVerifier({
         role,
-        claimsRequired: ['vc-health-passport-stamp-covid19-serology'],
+        claimsRequired: ['https://healthwallet.cards#covid19'],
         responseMode: responseMode,
         reset,
         displayQr: false,

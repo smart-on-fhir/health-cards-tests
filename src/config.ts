@@ -4,4 +4,4 @@ if (serverBase === 'relative') {
 }
 export const resolveUrl = `${serverBase}/did/`;
 
-console.log('SERVER base', process.env, process.env.SERVER_BASE);
+console.log('SERVER base', process.env, process.env.SERVER_BASE, serverBase);
