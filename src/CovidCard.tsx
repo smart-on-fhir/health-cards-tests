@@ -17,6 +17,12 @@ import { SiopRequestReceiver, parseSiopApprovalProps } from './SiopApproval';
 import makeFhirConnector from './FhirConnector';
 import { SmartState, UiState } from './holder-page';
 
+enum CardStep {
+    CONFIGURE_WALLET = 1,
+    CONNECT_TO_ISSUER = 2,
+    DOWNLOAD_CREDENTIAL = 3,
+    COMPLETE = 4
+}
 
 const CovidCard: React.FC<{
     holderState: HolderState,
@@ -30,15 +36,15 @@ const CovidCard: React.FC<{
     const issuerInteraction = issuerInteractions.length ? issuerInteractions[0] : null
 
 
-    let currentStep = 1;
+    let currentStep = CardStep.CONFIGURE_WALLET;
     /* tslint:disable-next-line:prefer-conditional-expression */
     if (issuerInteraction?.status !== 'complete') {
-        currentStep = 2;
+        currentStep = CardStep.CONNECT_TO_ISSUER;
     } else {
-        currentStep = 3;
+        currentStep = CardStep.DOWNLOAD_CREDENTIAL;
     }
     if (holderState.vcStore.length) {
-        currentStep = 4
+        currentStep = CardStep.COMPLETE
     }
 
     const retrieveVcClick = async () => {
@@ -64,7 +70,6 @@ const CovidCard: React.FC<{
 
                 dispatchToHolder(retrieveVcs(vcs, holderState))
             })
-
             /* 
              const credentials = axios.get(smartState.server + `/Patient/${smartState.patient}/$HealthWallet.issue`)
              credentials.then(response => {
@@ -86,13 +91,13 @@ const CovidCard: React.FC<{
 
 
     return <> {
-        currentStep === 4 && <Card style={{ border: "1px solid grey", padding: ".5em", marginBottom: "1em" }}>
+        currentStep === CardStep.COMPLETE && <Card style={{ border: "1px solid grey", padding: ".5em", marginBottom: "1em" }}>
             <CardTitle style={{ fontWeight: "bolder" }}>
                 COVID Card
                 </CardTitle>
 
             <CardSubtitle className="text-muted">Your COVID results are ready to share, based on {" "}
-                {resources && <>{resources.length} FHIR Resource{resources.length > 1 ? "s":""} <br /> </>}
+                {resources && <>{resources.length} FHIR Resource{resources.length > 1 ? "s" : ""} <br /> </>}
             </CardSubtitle>
             <CardText style={{ fontFamily: "monospace" }}>
                 <span>
@@ -100,17 +105,17 @@ const CovidCard: React.FC<{
                 </span>
             </CardText>
         </Card>
-    } {currentStep < 4 &&
+    } {currentStep < CardStep.COMPLETE &&
         <Card style={{ border: ".25em dashed grey", padding: ".5em", marginBottom: "1em" }}>
             <CardTitle>COVID Card </CardTitle>
             <CardSubtitle className="text-muted">You don't have a COVID card in your wallet yet.</CardSubtitle>
 
             <Button disabled={true} className="mb-1" color="info">
-                {currentStep > 1 && '✓ '} 1. Set up your Health Wallet</Button>
+                {currentStep > CardStep.CONFIGURE_WALLET && '✓ '} 1. Set up your Health Wallet</Button>
 
             <RS.UncontrolledButtonDropdown className="mb-1" >
-                <DropdownToggle caret color={currentStep === 2 ? 'success' : 'info'} >
-                    {currentStep > 2 && '✓ '}
+                <DropdownToggle caret color={currentStep === CardStep.CONNECT_TO_ISSUER ? 'success' : 'info'} >
+                    {currentStep > CardStep.CONNECT_TO_ISSUER && '✓ '}
                                     2. Connect to Lab and get tested
                                 </DropdownToggle>
                 <DropdownMenu style={{ width: "100%" }}>
@@ -118,9 +123,12 @@ const CovidCard: React.FC<{
                     <DropdownItem onClick={connectToIssuer} >Start from Lab Portal</DropdownItem>
                 </DropdownMenu>
             </RS.UncontrolledButtonDropdown>
-            <Button disabled={currentStep !== 3} onClick={retrieveVcClick} className="mb-1" color={currentStep === 3 ? 'success' : 'info'} >
-                {currentStep > 3 && '✓ '}
-                            3. Save COVID card to wallet</Button>
+            <Button
+                disabled={currentStep !== CardStep.DOWNLOAD_CREDENTIAL}
+                onClick={retrieveVcClick}
+                className="mb-1"
+                color={currentStep === CardStep.DOWNLOAD_CREDENTIAL ? 'success' : 'info'} >
+                3. Save COVID card to wallet</Button>
         </Card>
         }
     </>
