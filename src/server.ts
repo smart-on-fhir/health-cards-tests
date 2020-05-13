@@ -2,6 +2,7 @@ import axios from 'axios';
 import cors from 'cors';
 import express from 'express';
 import base64url from 'base64url';
+import base64 from 'base-64';
 import { JWT } from 'jose';
 import * as crypto from 'crypto';
 import qs from 'querystring';
@@ -172,7 +173,7 @@ app.get('/api/fhir/DiagnosticReport', async (req, res) => {
                     "url": "https://healthwallet.cards#vc-attachment",
                     "valueAttachment": {
                       "title": "COVID-19 Card for online presentation",
-                      "data": vc
+                      "data": base64.encode(vc)
                     }
                   }]: undefined,
                 ...exampleDr,

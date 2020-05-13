@@ -38,7 +38,6 @@ export interface SmartState {
     patient: string;
 }
 
-
 export interface UiState {
     issuer: IssuerProps,
     verifier: VerifierProps,

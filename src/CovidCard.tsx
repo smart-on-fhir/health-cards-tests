@@ -1,21 +1,12 @@
 import axios from 'axios';
-import base64url from 'base64url';
+import base64 from 'base-64';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import * as crypto from 'crypto';
-import qs from 'querystring';
-import React, { useEffect, useReducer, useState } from 'react';
-import ReactDOM from 'react-dom';
+import React, { useEffect } from 'react';
 import * as RS from 'reactstrap';
-import { Button, Card, CardSubtitle, CardText, CardTitle, Collapse, DropdownItem, DropdownMenu, DropdownToggle, Nav, NavbarBrand, NavbarToggler, NavLink } from 'reactstrap';
-import * as config from './config';
-import { holderReducer, HolderState, initializeHolder, prepareSiopResponse, receiveSiopRequest, retrieveVcs } from './holder';
-import { issuerWorld } from './issuer';
-import { ConfigEditModal, SiopApprovalModal } from './Modals';
-import './style.css';
-import { verifierWorld } from './verifier';
-import { SiopRequestReceiver, parseSiopApprovalProps } from './SiopApproval';
-import makeFhirConnector from './FhirConnector';
+import { Button, Card, CardSubtitle, CardText, CardTitle, DropdownItem, DropdownMenu, DropdownToggle } from 'reactstrap';
+import { HolderState, retrieveVcs } from './holder';
 import { SmartState, UiState } from './holder-page';
+import './style.css';
 
 enum CardStep {
     CONFIGURE_WALLET = 1,
@@ -66,7 +57,7 @@ const CovidCard: React.FC<{
             credentials.then(response => {
                 const vcs = response.data.entry[0].resource.extension
                     .filter(e => e.url === 'https://healthwallet.cards#vc-attachment')
-                    .map(e => e.valueAttachment.data)
+                    .map(e => base64.decode(e.valueAttachment.data))
 
                 dispatchToHolder(retrieveVcs(vcs, holderState))
             })
@@ -101,7 +92,7 @@ const CovidCard: React.FC<{
             </CardSubtitle>
             <CardText style={{ fontFamily: "monospace" }}>
                 <span>
-                    Conclusions: {conclusions && conclusions.join("\n")}
+                    Conclusions: {conclusions && conclusions.join("\n ")}
                 </span>
             </CardText>
         </Card>

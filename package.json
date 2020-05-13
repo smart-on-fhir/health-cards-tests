@@ -24,6 +24,7 @@
     "@types/react": "^16.9.34",
     "@types/react-dom": "^16.9.6",
     "axios": "^0.19.2",
+    "base-64": "^0.1.0",
     "base64url": "^3.0.1",
     "bootstrap": "^4.4.1",
     "cors": "^2.8.5",
