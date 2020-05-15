@@ -196,7 +196,7 @@ app.post('/api/fhir/Patient/:patientID/[\$]HealthWallet.issueVc', async (req, re
 
     const requestedCredentialType = (requestBody.parameter || [])
         .filter(p => p.name === 'credentialType')
-        .map(p => p.valueCoding.code)[0]
+        .map(p => p.valueUrl)[0]
 
     const requestedCredentialIdentityClaims = (requestBody.parameter || [])
         .filter(p => p.name === 'includeIdentityClaim')
