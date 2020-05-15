@@ -17,7 +17,7 @@ import exampleDr from './fixtures/diagnostic-report.json'
 
 import { VerifierState } from './VerifierState';
 import { generateDid, verifyJws } from './dids';
-import { issuerReducer, prepareSiopRequest, issueVcToHolder, parseSiopResponse } from './VerifierLogic';
+import { issuerReducer, prepareSiopRequest, issueVcToHolder, parseSiopResponse, CredentialGenerationDetals, defaultIdentityClaims } from './VerifierLogic';
 
 const app = express();
 app.use(express.raw({ type: 'application/x-www-form-urlencoded' }));
@@ -136,7 +136,14 @@ app.get('/api/fhir/Patient/:patientID/[\$]HealthWallet.connect', async (req, res
     });
 });
 
-async function getVcForPatient(patientId) {
+async function getVcForPatient(patientId, details: CredentialGenerationDetals = {
+    type: 'https://healthwallet.cards#covid19',
+    identityClaims: [
+        "Patient.telecom",
+        "Patient.name",
+        "Patient.photo"
+    ]
+}) {
     const state = patientToSiopResponse[patientId];
     if (!state) {
         return null
@@ -144,7 +151,7 @@ async function getVcForPatient(patientId) {
     const siopResponse = await siopCache[state].siopStateAfterResponse;
     const id_token = siopResponse.idTokenRaw;
     const withResponse = await issuerReducer(issuerState, await parseSiopResponse(id_token, issuerState));
-    const afterIssued = await issuerReducer(withResponse, await issueVcToHolder(withResponse));
+    const afterIssued = await issuerReducer(withResponse, await issueVcToHolder(withResponse, details));
     const vc = afterIssued.issuedCredentials[0]
     return vc;
 }
@@ -183,14 +190,31 @@ app.get('/api/fhir/DiagnosticReport', async (req, res) => {
 });
 
 
-app.get('/api/fhir/Patient/:patientID/[\$]HealthWallet.issue', async (req, res) => {
-    const vc = await getVcForPatient(req.params.patientID);
+app.post('/api/fhir/Patient/:patientID/[\$]HealthWallet.issueVc', async (req, res) => {
+    
+    const requestBody = (req.body || {})
+
+    const requestedCredentialType = (requestBody.parameter || [])
+        .filter(p => p.name === 'credentialType')
+        .map(p => p.valueCoding.code)[0]
+
+    const requestedCredentialIdentityClaims = (requestBody.parameter || [])
+        .filter(p => p.name === 'includeIdentityClaim')
+        .map(p => p.valueString)
+
+    const identityClaims = requestedCredentialIdentityClaims.length > 0 ? requestedCredentialIdentityClaims : defaultIdentityClaims
+    const vc = await getVcForPatient(req.params.patientID, {
+        type: requestedCredentialType,
+        identityClaims
+    });
 
     res.json({
         'resourceType': 'Parameters',
         'parameter': [{
-            'name': 'vc',
-            'valueString': vc
+            'name': 'verifiableCredential',
+            'valueAttachment': {
+                "data": base64.encode(vc)
+            }
         }]
     });
 });

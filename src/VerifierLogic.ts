@@ -9,7 +9,7 @@ import sampleVc from './fixtures/vc.json';
 import { VerifierState } from './VerifierState';
 
 
-export async function verifierReducer (state: VerifierState, event: any): Promise<VerifierState> {
+export async function verifierReducer(state: VerifierState, event: any): Promise<VerifierState> {
     if (event.type === 'siop-request-created') {
         return { ...state, siopRequest: event.siopRequest };
     }
@@ -20,7 +20,7 @@ export async function verifierReducer (state: VerifierState, event: any): Promis
     console.log('Unrecogized event type', event);
     return state;
 }
-export async function prepareSiopRequest (state: VerifierState) {
+export async function prepareSiopRequest(state: VerifierState) {
     const siopState = base64url.encode(crypto.randomBytes(16));
     const siopRequestHeader = {
         kid: state.did + '#signing-key-1'
@@ -44,7 +44,7 @@ export async function prepareSiopRequest (state: VerifierState) {
         'nonce': base64url.encode(crypto.randomBytes(16)),
         'registration': {
             'id_token_encrypted_response_alg': state.config.skipEncryptedResponse ? undefined : 'RSA-OAEP',
-            'id_token_encrypted_response_enc': state.config.skipEncryptedResponse ?  undefined : 'A128CBC-HS256',
+            'id_token_encrypted_response_enc': state.config.skipEncryptedResponse ? undefined : 'A128CBC-HS256',
             'id_token_signed_response_alg': 'ES256K',
             'client_uri': serverBase
         }
@@ -70,14 +70,37 @@ export async function prepareSiopRequest (state: VerifierState) {
     });
 }
 
-export const issueVcToHolder = async (state: VerifierState): Promise<any> => {
+export interface CredentialGenerationDetals {
+    type: string,
+    identityClaims: string[]
+}
 
+export const defaultIdentityClaims = [
+    "Patient.telecom",
+    "Patient.name",
+    "Patient.photo"
+]
+
+export const issueVcToHolder = async (state: VerifierState, details: CredentialGenerationDetals = {
+    type: 'covid19',
+    identityClaims:  defaultIdentityClaims
+}): Promise<any> => {
 
     const subjectDid = state.siopResponse.idTokenPayload.did;
     const examplePatient = sampleVc.credentialSubject.fhirBundle.entry[0].resource
     const exampleClinicalResults = sampleVc.credentialSubject.fhirBundle.entry.slice(1).map(r => r.resource)
 
-    const vc = CredentialManager.createVc(state.did, subjectDid, examplePatient, exampleClinicalResults)
+    let examplePatientRestricted = details.identityClaims
+        .map(prop => prop.split(".")[1])
+        .reduce((prev, element) => ({
+            ...prev,
+            [element]: examplePatient[element]
+        }), {
+            resourceType: examplePatient.resourceType,
+            extension: examplePatient.extension
+        })
+
+    const vc = CredentialManager.createVc(state.did, subjectDid, examplePatientRestricted, exampleClinicalResults)
     const vcPayload = CredentialManager.vcToJwtPayload(vc)
 
     const vcSigned = await state.sk.sign({ kid: state.did + '#signing-key-1' }, vcPayload);
@@ -98,7 +121,7 @@ export const issueVcToHolder = async (state: VerifierState): Promise<any> => {
 
 };
 
-export async function parseSiopResponse (idTokenRetrieved: string, state: VerifierState) {
+export async function parseSiopResponse(idTokenRetrieved: string, state: VerifierState) {
     const idTokenRetrievedDecrypted = await state.ek.decrypt(idTokenRetrieved);
     const idTokenVerified = await verifyJws(idTokenRetrievedDecrypted, state.config.keyGenerators);
     if (idTokenVerified.valid) {
@@ -114,7 +137,7 @@ export async function parseSiopResponse (idTokenRetrieved: string, state: Verifi
     }
 }
 
-export async function issuerReducer (state: VerifierState, event: any): Promise<VerifierState> {
+export async function issuerReducer(state: VerifierState, event: any): Promise<VerifierState> {
     if (event.type === 'credential-ready') {
         return {
             ...state,

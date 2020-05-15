@@ -53,6 +53,7 @@ const CovidCard: React.FC<{
     useEffect(() => {
         if (smartState?.access_token && issuerInteraction?.siopResponse && holderState.vcStore.length === 0) {
 
+            /*
             const credentials = axios.get(uiState.fhirClient.server + `/DiagnosticReport?patient=${smartState.patient}&_tag=https://healthwallet.cards|covid19`)
             credentials.then(response => {
                 const vcs = response.data.entry[0].resource.extension
@@ -61,13 +62,22 @@ const CovidCard: React.FC<{
 
                 dispatchToHolder(retrieveVcs(vcs, holderState))
             })
-            /* 
-             const credentials = axios.get(smartState.server + `/Patient/${smartState.patient}/$HealthWallet.issue`)
-             credentials.then(response => {
-                 const vcs = response.data.parameter.filter(p => p.name === 'vc').map(p => p.valueString)
-                 dispatchToHolder(retrieveVcs(vcs, holderState))
-             })
-             */
+            */
+
+            const credentials = axios.post(uiState.fhirClient.server + `/Patient/${smartState.patient}/$HealthWallet.issueVc`, {
+                "resourceType": "Parameters",
+                "parameter": [{
+                    "name": "credentialType",
+                    "valueUrl": "https://healthwallet.cards#covid19"
+                }, {
+                    "name": "includeIdentityClaim",
+                    "valueString": "Patient.name"
+                }]
+            })
+            credentials.then(response => {
+                const vcs = response.data.parameter.filter(p => p.name === 'verifiableCredential').map(p => base64.decode(p.valueAttachment.data))
+                dispatchToHolder(retrieveVcs(vcs, holderState))
+            })
         }
     }, [smartState, holderState.interactions])
 
