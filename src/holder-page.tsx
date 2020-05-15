@@ -1,22 +1,18 @@
-import axios from 'axios';
-import base64url from 'base64url';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import * as crypto from 'crypto';
 import qs from 'querystring';
 import React, { useEffect, useReducer, useState } from 'react';
 import ReactDOM from 'react-dom';
 import * as RS from 'reactstrap';
-import { Button, Card, CardSubtitle, CardText, CardTitle, Collapse, DropdownItem, DropdownMenu, DropdownToggle, Nav, NavbarBrand, NavbarToggler, NavLink } from 'reactstrap';
+import { Card, CardSubtitle, CardText, CardTitle, Collapse, Nav, NavbarBrand, NavbarToggler, NavLink } from 'reactstrap';
 import * as config from './config';
-import { holderReducer, HolderState, initializeHolder, prepareSiopResponse, receiveSiopRequest, retrieveVcs } from './holder';
+import CovidCard from './CovidCard';
+import makeFhirConnector from './FhirConnector';
+import { holderReducer, HolderState, initializeHolder, receiveSiopRequest } from './holder';
 import { issuerWorld } from './issuer';
 import { ConfigEditModal } from './Modals';
+import { parseSiopApprovalProps, SiopApprovalModal, SiopRequestReceiver } from './SiopApproval';
 import './style.css';
 import { verifierWorld } from './verifier';
-import { SiopRequestReceiver, parseSiopApprovalProps, SiopApprovalModal } from './SiopApproval';
-import makeFhirConnector from './FhirConnector';
-import CovidCard from './CovidCard';
-import { BigIntStats } from 'fs';
 
 interface IssuerProps {
     issuerStartUrl: string;

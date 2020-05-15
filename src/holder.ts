@@ -52,7 +52,9 @@ export interface SiopInteraction {
         scope: string;
         nonce: string;
         registration: {
-            id_token_signed_response_alg: string[];
+            id_token_encrypted_response_alg?: string; 
+            id_token_encrypted_response_enc?: string; 
+            id_token_signed_response_alg: string;
             client_uri: string;
         };
         response_mode: 'form_post' | 'fragment' | 'query';
@@ -236,10 +238,13 @@ export async function prepareSiopResponse(state: HolderState) {
         ...presentationForEssentialClaims(state.vcStore, currentInteraction(state).siopRequest.claims)
     };
     const idTokenSigned = await state.sk.sign({ kid: state.did + '#signing-key-1' }, idTokenPayload);
-    const idTokenEncrypted = await encryptFor(idTokenSigned, interaction.siopRequest.iss, keyGenerators);
+    let idTokenEncrypted
+    if (interaction?.siopRequest?.registration?.id_token_encrypted_response_alg) {
+        idTokenEncrypted = await encryptFor(idTokenSigned, interaction.siopRequest.iss, keyGenerators);
+    }
     const siopResponse = {
         state: interaction.siopRequest.state,
-        id_token: idTokenEncrypted
+        id_token: idTokenEncrypted || idTokenSigned
     };
     const responseUrl = interaction.siopRequest.client_id;
 

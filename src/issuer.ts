@@ -69,7 +69,7 @@ export function displayResponse(state: VerifierState) {
             window.localStorage[state.config.role + '_state'] = JSON.stringify(state)
             window.opener.postMessage({
                 "type": "credential-ready",
-                "vcs": state.issuedCredentials
+                "verifiableCredential": state.issuedCredentials
             }, "*")
             window.close()
         }

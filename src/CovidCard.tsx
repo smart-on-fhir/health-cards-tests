@@ -41,10 +41,9 @@ const CovidCard: React.FC<{
 
     const retrieveVcClick = async () => {
         const onMessage = async ({ data, source }) => {
-            const { vcs } = data
+            const { verifiableCredential } = data
             window.removeEventListener("message", onMessage)
-            console.log("Dispatch,", vcs, holderState)
-            await dispatchToHolder(retrieveVcs(vcs, holderState))
+            await dispatchToHolder(retrieveVcs(verifiableCredential, holderState))
         }
         window.addEventListener("message", onMessage)
         window.open(uiState.issuer.issuerDownloadUrl)

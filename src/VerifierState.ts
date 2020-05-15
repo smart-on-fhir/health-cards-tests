@@ -16,6 +16,7 @@ export interface VerifierState {
         postRequest: (url: string, jsonBody: any) => Promise<any>;
         serverBase: string;
         keyGenerators: KeyGenerators;
+        skipEncryptedResponse?: boolean;
     };
     siopRequest?: {
         siopRequestPayload: {
@@ -23,7 +24,9 @@ export interface VerifierState {
             scope: string;
             nonce: string;
             registration: {
-                id_token_signed_response_alg: string[];
+                id_token_encrypted_response_alg?: string; 
+                id_token_encrypted_response_enc?: string; 
+                id_token_signed_response_alg: string;
                 client_uri: string;
             };
             response_mode: 'form_post' | 'fragment' | 'query';

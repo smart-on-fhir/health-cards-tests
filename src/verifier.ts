@@ -18,7 +18,8 @@ export async function verifierWorld (role = 'verifier', responseMode: SiopRespon
         displayQr: false,
         postRequest: async (url, r) => (await axios.post(url, r)).data,
         serverBase,
-        keyGenerators
+        keyGenerators,
+        skipEncryptedResponse: false
     });
 
     const dispatch = async (ePromise) => {
