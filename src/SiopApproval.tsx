@@ -1,9 +1,10 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import QrScanner from "qr-scanner";
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { HolderState, SiopInteraction, prepareSiopResponse } from "./holder";
 import './style.css';
 import { ClaimType } from "./VerifierState";
+import { Modal, ModalHeader, ModalBody, ModalFooter, Button, InputGroup, InputGroupAddon, InputGroupText, Input } from 'reactstrap';
 
 type RedirectMode = "qr" | "window-open"
 QrScanner.WORKER_PATH = 'qr-scanner-worker.min.js';
@@ -12,15 +13,18 @@ export interface SiopRequestReceiverProps {
     label: string;
     redirectMode: RedirectMode;
     onReady: (s: string) => void;
-    interaction: SiopInteraction;
-    startUrl: string;
+    startUrl?: string;
 }
 
 export const SiopRequestReceiver: React.FC<SiopRequestReceiverProps> = (props) => {
-    const videoRef = useRef()
-    useEffect(() => {
-        if (!videoRef.current) { return; }
-        let qrScanner = new QrScanner(videoRef.current, result => {
+
+    const [currentCode, setCurrentCode] = useState("")
+    const videoCallback = useCallback((videoElement) => {
+        if (!videoElement) {
+            return;
+        }
+        console.log("Check out ref", videoElement)
+        let qrScanner = new QrScanner(videoElement, result => {
             if (result.length)
                 props.onReady(result)
         });
@@ -29,7 +33,7 @@ export const SiopRequestReceiver: React.FC<SiopRequestReceiverProps> = (props) =
             qrScanner.destroy();
             qrScanner = null;
         }
-    }, [videoRef])
+    }, [])
 
     useEffect(() => {
         if (props.redirectMode === "window-open") {
@@ -47,9 +51,23 @@ export const SiopRequestReceiver: React.FC<SiopRequestReceiverProps> = (props) =
 
 
     return props.redirectMode === "qr" ? <>
-        <span>Scan barcode for {props.label}</span><br />
-        <video ref={videoRef} style={{ width: "25vmin", height: "25vmin" }} />
-        <br />
+        <Modal isOpen={true}>
+            <ModalHeader>Connect to {props.label}</ModalHeader>
+            <ModalBody>
+                <div>Scan a QR Code</div>
+                <video ref={videoCallback} style={{ maxWidth: "25vmin", maxHeight: "25vmin" }} />
+            </ModalBody>
+            <ModalFooter  >
+                <InputGroup>
+                    <Input placeholder="Or paste a URL directly..." type="text" autoFocus={true} value={currentCode} onChange={e => setCurrentCode(e.target.value)}>
+                    </Input>
+                </InputGroup>
+                <Button color="success" onClick={e => props.onReady(currentCode)}>
+                    Connect
+                </Button>
+
+            </ModalFooter>
+        </Modal>
     </> : <>
             <span>Waiting for redirect...</span>
         </>
@@ -61,6 +79,37 @@ export interface SiopApprovalProps {
     onApproval: () => void;
     onDenial: () => void;
 }
+
+export const SiopApprovalModal: React.FC<SiopApprovalProps | null> = (props) => {
+    if (!props.onApproval) {
+        return null;
+    }
+    const focusCallback = useCallback(b => {
+        setTimeout(() => b && b.focus());
+    }, []);
+    return <>
+        <Modal isOpen={true}>
+            <ModalHeader>Share with {props.with}?</ModalHeader>
+            <ModalBody>The following details will be shared:
+        <ul>
+                    <li><b>Your ID Card:</b> allows secure communications</li>
+                    {props.share.includes('https://healthwallet.cards#covid19') && <li>
+                        <b>Your COVID Card:</b> labs and vaccines for COVID-19
+            </li>}
+                    {props.share.includes('https://healthwallet.cards#immunization') && <li>
+                        <b>Your Immunizations Card:</b> full vaccine history
+            </li>}
+                </ul>
+            </ModalBody>
+            <ModalFooter>
+                <Button color="danger" onClick={props.onDenial}>Do not share</Button>
+                <Button innerRef={focusCallback} color="success" onClick={props.onApproval}>
+                    Share {props.share.length > 0 ? "these cards" : "this card"}
+                </Button>
+            </ModalFooter>
+        </Modal>
+    </>;
+};
 
 export const parseSiopApprovalProps = (holderState: HolderState, dispatchToHolder: any): SiopApprovalProps | null => {
     const siopAtNeedApproval = holderState.interactions.filter(i => i.status === 'need-approval').slice(-1)

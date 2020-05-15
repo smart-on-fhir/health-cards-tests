@@ -56,7 +56,12 @@ export async function generateEncryptionKey(inputPublic?: JsonWebKey, inputPriva
                 throw new Error('Cannot decrypt with a public key');
             }
             const decrypter = new Jose.JoseJWE.Decrypter(cryptographer, Promise.resolve(privateKey));
-            return decrypter.decrypt(payload);
+            try {
+                const ret = await decrypter.decrypt(payload);
+                return ret;
+            } catch (e) {
+                console.log("Error decrypting", e)
+            }
         },
         encrypt: async (header, payload) => {
             const input = payload;

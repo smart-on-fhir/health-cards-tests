@@ -3,36 +3,6 @@ import { Button, InputGroupAddon, ModalHeader, Modal, ModalBody, ModalFooter, In
 import { UiState } from './holder-page';
 import { SiopApprovalProps } from './SiopApproval';
 
-export const SiopApprovalModal: React.FC<SiopApprovalProps | null> = (props) => {
-    if (!props.onApproval) {
-        return null;
-    }
-    const focusCallback = useCallback(b => {
-        setTimeout(() => b && b.focus());
-    }, []);
-    return <>
-        <Modal isOpen={true}>
-            <ModalHeader>Share with {props.with}?</ModalHeader>
-            <ModalBody>The following details will be shared:
-        <ul>
-                    <li><b>Your ID Card:</b> allows secure communications</li>
-                    {props.share.includes('https://healthwallet.cards#covid19') && <li>
-                        <b>Your COVID Card:</b> labs and vaccines for COVID-19
-            </li>}
-                    {props.share.includes('https://healthwallet.cards#immunization') && <li>
-                        <b>Your Immunizations Card:</b> full vaccine history
-            </li>}
-                </ul>
-            </ModalBody>
-            <ModalFooter>
-                <Button color="danger" onClick={props.onDenial}>Do not share</Button>
-                <Button innerRef={focusCallback} color="success" onClick={props.onApproval}>
-                    Share {props.share.length > 0 ? "these cards" : "this card"}
-                </Button>
-            </ModalFooter>
-        </Modal>
-    </>;
-};
 const ConfigEditOption: React.FC<{
     title: string;
     default: string;

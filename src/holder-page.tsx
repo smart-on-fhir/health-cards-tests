@@ -10,12 +10,13 @@ import { Button, Card, CardSubtitle, CardText, CardTitle, Collapse, DropdownItem
 import * as config from './config';
 import { holderReducer, HolderState, initializeHolder, prepareSiopResponse, receiveSiopRequest, retrieveVcs } from './holder';
 import { issuerWorld } from './issuer';
-import { ConfigEditModal, SiopApprovalModal } from './Modals';
+import { ConfigEditModal } from './Modals';
 import './style.css';
 import { verifierWorld } from './verifier';
-import { SiopRequestReceiver, parseSiopApprovalProps } from './SiopApproval';
+import { SiopRequestReceiver, parseSiopApprovalProps, SiopApprovalModal } from './SiopApproval';
 import makeFhirConnector from './FhirConnector';
 import CovidCard from './CovidCard';
+import { BigIntStats } from 'fs';
 
 interface IssuerProps {
     issuerStartUrl: string;
@@ -43,6 +44,10 @@ export interface UiState {
     verifier: VerifierProps,
     fhirClient: OAuthProps,
     editingConfig?: boolean
+    scanningBarcode?: {
+        active: boolean,
+        label?: string
+    }
 }
 
 interface AppProps {
@@ -52,7 +57,7 @@ interface AppProps {
     defaultUiState: UiState;
 }
 
-type UiEvent = { type: 'save-ui-state', newState: UiState } | { type: 'toggle-editing-config' }
+type UiEvent = { type: 'save-ui-state', newState: UiState } | { type: 'toggle-editing-config' } | {type: 'open-scanner', label: string} | {type: 'scann-barcode'}
 
 const uiReducer = (prevState: UiState, action: UiEvent): UiState => {
     if (action.type === 'save-ui-state') {
@@ -66,6 +71,23 @@ const uiReducer = (prevState: UiState, action: UiEvent): UiState => {
         return {
             ...prevState,
             editingConfig: !prevState.editingConfig
+        }
+    }
+
+    if (action.type === 'open-scanner') {
+        return {
+            ...prevState,
+            scanningBarcode: {
+                active: true,
+                label: action.label
+            }
+        }
+    }
+
+    if (action.type === 'scann-barcode') {
+        return {
+            ...prevState,
+            scanningBarcode: null
         }
     }
 }
@@ -83,7 +105,7 @@ const App: React.FC<AppProps> = (props) => {
     useEffect(() => {
         holderState.interactions.filter(i => i.status === 'need-redirect').forEach(i => {
             const redirectUrl = i.siopRequest.client_id + '#' + qs.encode(i.siopResponse.formPostBody)
-            const opened = window.open(redirectUrl, "issuer")
+            const opened = window.open(redirectUrl, "_blank")
             dispatchToHolder({ 'type': "siop-response-complete" })
         })
     }, [holderState.interactions])
@@ -100,6 +122,7 @@ const App: React.FC<AppProps> = (props) => {
     }
 
     const onScanned = async (qrCodeUrl: string) => {
+        dispatch({type: 'scann-barcode'})
         await dispatchToHolder(receiveSiopRequest(qrCodeUrl, holderState));
     }
 
@@ -130,13 +153,21 @@ const App: React.FC<AppProps> = (props) => {
                 </Collapse></RS.Container>
         </RS.Navbar>
 
+        {uiState.scanningBarcode?.active &&
+            <SiopRequestReceiver
+                onReady={onScanned}
+                redirectMode="qr"
+                label={uiState.scanningBarcode?.label}
+            />
+        }
+
         {siopAtNeedQr.length > 0 &&
             <SiopRequestReceiver
                 onReady={onScanned}
                 redirectMode="window-open"
                 label={siopAtNeedQr[0].siopPartnerRole}
                 startUrl={siopAtNeedQr[0].siopPartnerRole === 'issuer' ? uiState.issuer.issuerStartUrl : uiState.verifier.verifierStartUrl}
-                interaction={siopAtNeedQr[0]} />}
+            />}
 
         {uiState.editingConfig && <ConfigEditModal uiState={uiState} defaultUiState={props.defaultUiState} dispatch={dispatch} />}
 
@@ -156,6 +187,9 @@ const App: React.FC<AppProps> = (props) => {
                         holderState={holderState}
                         smartState={smartState}
                         uiState={uiState}
+                        openScannerUi={async () => {
+                            dispatch({type: 'open-scanner', 'label': 'Lab'})
+                        }}
                         connectToIssuer={connectTo('issuer')}
                         connectToFhir={connectToFhir}
                         dispatchToHolder={dispatchToHolder}

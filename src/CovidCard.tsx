@@ -19,10 +19,11 @@ const CovidCard: React.FC<{
     holderState: HolderState,
     smartState: SmartState,
     uiState: UiState,
+    openScannerUi: () => Promise<void>,
     connectToIssuer: () => Promise<void>,
     connectToFhir: () => Promise<void>,
     dispatchToHolder: (e: Promise<any>) => Promise<void>
-}> = ({ holderState, smartState, uiState, connectToFhir, connectToIssuer, dispatchToHolder }) => {
+}> = ({ holderState, smartState, uiState, openScannerUi, connectToFhir, connectToIssuer, dispatchToHolder }) => {
     const issuerInteractions = holderState.interactions.filter(i => i.siopPartnerRole === 'issuer').slice(-1)
     const issuerInteraction = issuerInteractions.length ? issuerInteractions[0] : null
 
@@ -111,7 +112,8 @@ const CovidCard: React.FC<{
                                 </DropdownToggle>
                 <DropdownMenu style={{ width: "100%" }}>
                     <DropdownItem onClick={connectToFhir} >Connect with SMART on FHIR </DropdownItem>
-                    <DropdownItem onClick={connectToIssuer} >Start from Lab Portal</DropdownItem>
+                    <DropdownItem onClick={connectToIssuer} >Open Lab Portal</DropdownItem>
+                    <DropdownItem onClick={openScannerUi} >Scan / Paste Request</DropdownItem>
                 </DropdownMenu>
             </RS.UncontrolledButtonDropdown>
             <Button
