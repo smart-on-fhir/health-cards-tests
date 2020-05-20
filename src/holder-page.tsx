@@ -53,7 +53,7 @@ interface AppProps {
     defaultUiState: UiState;
 }
 
-type UiEvent = { type: 'save-ui-state', newState: UiState } | { type: 'toggle-editing-config' } | {type: 'open-scanner', label: string} | {type: 'scann-barcode'}
+type UiEvent = { type: 'save-ui-state', newState: UiState } | { type: 'toggle-editing-config' } | {type: 'open-scanner', label: string} | {type: 'scan-barcode'}
 
 const uiReducer = (prevState: UiState, action: UiEvent): UiState => {
     if (action.type === 'save-ui-state') {
@@ -80,7 +80,7 @@ const uiReducer = (prevState: UiState, action: UiEvent): UiState => {
         }
     }
 
-    if (action.type === 'scann-barcode') {
+    if (action.type === 'scan-barcode') {
         return {
             ...prevState,
             scanningBarcode: null
@@ -118,7 +118,7 @@ const App: React.FC<AppProps> = (props) => {
     }
 
     const onScanned = async (qrCodeUrl: string) => {
-        dispatch({type: 'scann-barcode'})
+        dispatch({type: 'scan-barcode'})
         await dispatchToHolder(receiveSiopRequest(qrCodeUrl, holderState));
     }
 
@@ -142,6 +142,9 @@ const App: React.FC<AppProps> = (props) => {
                 <NavbarToggler onClick={toggle} />
                 <Collapse navbar={true} isOpen={isOpen}>
                     <Nav navbar={true}>
+                        <NavLink href="#" onClick={() => {
+                            dispatch({type: 'open-scanner', 'label': 'Verifier'})
+                        }}>Scan QR to Share</NavLink>
                         <NavLink href="#" onClick={connectTo('verifier')}> Open Employer Portal</NavLink>
                         <NavLink href="#config" onClick={e => dispatch({ type: 'toggle-editing-config' })}> Edit Config</NavLink>
                         <NavLink target="_blank" href="https://github.com/microsoft-healthcare-madison/health-wallet-demo">Source on GitHub</NavLink>
