@@ -36,7 +36,15 @@
       }, {
         "fullUrl": "urn:uuid:4fe4f8d4-9b6e-4780-8ea5-6b5791230c85",
         "resource": {
-          "resourceType": "DiagnosticReport",
+          "resourceType": "DiagnosticReport",     
+          "status": "final",
+          "code": {
+            "coding": [{
+              "system": "http://loinc.org",
+              "code": "94661-6",
+              "display": "SARS coronavirus 2 Ab [Interpretation] in Serum or Plasma"
+            }]   
+          },
           "effectiveDateTime": "2020-05-01",
           "subject": {
             "reference": "urn:uuid:643e199d-1aaf-49af-8a3b-c7ae375d11ce"
@@ -56,6 +64,7 @@
           "subject": {
             "reference": "urn:uuid:643e199d-1aaf-49af-8a3b-c7ae375d11ce"
           },
+          "status": "final",
           "code": {
             "coding": [{
                 "system": "http://loinc.org",
@@ -79,6 +88,7 @@
           "subject": {
             "reference": "urn:uuid:643e199d-1aaf-49af-8a3b-c7ae375d11ce"
           },
+          "status": "final",
           "code": {
             "coding": [{
                 "system": "http://loinc.org",
