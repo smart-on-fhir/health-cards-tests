@@ -53,7 +53,7 @@ interface AppProps {
     defaultUiState: UiState;
 }
 
-type UiEvent = { type: 'save-ui-state', newState: UiState } | { type: 'toggle-editing-config' } | {type: 'open-scanner', label: string} | {type: 'scan-barcode'}
+type UiEvent = { type: 'save-ui-state', newState: UiState } | { type: 'toggle-editing-config' } | { type: 'open-scanner', label: string } |{type: 'close-scanner'} | { type: 'scan-barcode' }
 
 const uiReducer = (prevState: UiState, action: UiEvent): UiState => {
     if (action.type === 'save-ui-state') {
@@ -79,6 +79,15 @@ const uiReducer = (prevState: UiState, action: UiEvent): UiState => {
             }
         }
     }
+    if (action.type === 'close-scanner') {
+        return {
+            ...prevState,
+            scanningBarcode: {
+                active: false,
+            }
+        }
+    }
+
 
     if (action.type === 'scan-barcode') {
         return {
@@ -118,7 +127,7 @@ const App: React.FC<AppProps> = (props) => {
     }
 
     const onScanned = async (qrCodeUrl: string) => {
-        dispatch({type: 'scan-barcode'})
+        dispatch({ type: 'scan-barcode' })
         await dispatchToHolder(receiveSiopRequest(qrCodeUrl, holderState));
     }
 
@@ -143,7 +152,7 @@ const App: React.FC<AppProps> = (props) => {
                 <Collapse navbar={true} isOpen={isOpen}>
                     <Nav navbar={true}>
                         <NavLink href="#" onClick={() => {
-                            dispatch({type: 'open-scanner', 'label': 'Verifier'})
+                            dispatch({ type: 'open-scanner', 'label': 'Verifier' })
                         }}>Scan QR to Share</NavLink>
                         <NavLink href="#" onClick={connectTo('verifier')}> Open Employer Portal</NavLink>
                         <NavLink href="#config" onClick={e => dispatch({ type: 'toggle-editing-config' })}> Edit Config</NavLink>
@@ -155,6 +164,7 @@ const App: React.FC<AppProps> = (props) => {
         {uiState.scanningBarcode?.active &&
             <SiopRequestReceiver
                 onReady={onScanned}
+                onCancel={() => dispatch({'type': 'close-scanner'})}
                 redirectMode="qr"
                 label={uiState.scanningBarcode?.label}
             />
@@ -163,6 +173,7 @@ const App: React.FC<AppProps> = (props) => {
         {siopAtNeedQr.length > 0 &&
             <SiopRequestReceiver
                 onReady={onScanned}
+                onCancel={() => dispatch({'type': 'close-scanner'})}
                 redirectMode="window-open"
                 label={siopAtNeedQr[0].siopPartnerRole}
                 startUrl={siopAtNeedQr[0].siopPartnerRole === 'issuer' ? uiState.issuer.issuerStartUrl : uiState.verifier.verifierStartUrl}
@@ -187,7 +198,7 @@ const App: React.FC<AppProps> = (props) => {
                         smartState={smartState}
                         uiState={uiState}
                         openScannerUi={async () => {
-                            dispatch({type: 'open-scanner', 'label': 'Lab'})
+                            dispatch({ type: 'open-scanner', 'label': 'Lab' })
                         }}
                         connectToIssuer={connectTo('issuer')}
                         connectToFhir={connectToFhir}
@@ -201,7 +212,18 @@ const App: React.FC<AppProps> = (props) => {
                     </Card>
                 </RS.Col>
             </RS.Row>
+            <RS.Row style={{
+                justifyContent: "flex-end"
+            }}>
+                {holderState.vcStore.length ? <img
+                    onClick={() => { dispatch({ type: 'open-scanner', 'label': 'Verifier' }) }}
+                    style={{ cursor: "pointer" }} src="img/qr-scan-icon.svg"></img> : ""
+                }
+            </RS.Row>
         </RS.Container>
+
+        <div>
+        </div>
     </div>
 }
 

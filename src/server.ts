@@ -17,7 +17,7 @@ import exampleDr from './fixtures/diagnostic-report.json'
 
 import { VerifierState } from './VerifierState';
 import { generateDid, verifyJws } from './dids';
-import { issuerReducer, prepareSiopRequest, issueVcToHolder, parseSiopResponse, CredentialGenerationDetals, defaultIdentityClaims } from './VerifierLogic';
+import { issuerReducer, prepareSiopRequest, issueVcToHolder, parseSiopResponse, CredentialGenerationDetals } from './VerifierLogic';
 
 const app = express();
 app.use(express.raw({ type: 'application/x-www-form-urlencoded' }));
@@ -138,11 +138,8 @@ app.get('/api/fhir/Patient/:patientID/[\$]HealthWallet.connect', async (req, res
 
 async function getVcForPatient(patientId, details: CredentialGenerationDetals = {
     type: 'https://healthwallet.cards#covid19',
-    identityClaims: [
-        "Patient.telecom",
-        "Patient.name",
-        "Patient.photo"
-    ]
+    presentationContext: 'https://healthwallet.cards#presentation-context-online',
+    identityClaims:  null
 }) {
     const state = patientToSiopResponse[patientId];
     if (!state) {
@@ -198,14 +195,18 @@ app.post('/api/fhir/Patient/:patientID/[\$]HealthWallet.issueVc', async (req, re
         .filter(p => p.name === 'credentialType')
         .map(p => p.valueUrl)[0]
 
+    const requestedPresentationContext = (requestBody.parameter || [])
+        .filter(p => p.name === 'presentationContext')
+        .map(p => p.valueUrl)[0]
+
     const requestedCredentialIdentityClaims = (requestBody.parameter || [])
         .filter(p => p.name === 'includeIdentityClaim')
         .map(p => p.valueString)
 
-    const identityClaims = requestedCredentialIdentityClaims.length > 0 ? requestedCredentialIdentityClaims : defaultIdentityClaims
     const vc = await getVcForPatient(req.params.patientID, {
         type: requestedCredentialType,
-        identityClaims
+        presentationContext: requestedPresentationContext,
+        identityClaims: requestedCredentialIdentityClaims.length > 0 ? requestedCredentialIdentityClaims : null
     });
 
     res.json({

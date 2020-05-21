@@ -72,25 +72,34 @@ export async function prepareSiopRequest(state: VerifierState) {
 
 export interface CredentialGenerationDetals {
     type: string,
+    presentationContext: string,
     identityClaims: string[]
 }
 
-export const defaultIdentityClaims = [
-    "Patient.telecom",
-    "Patient.name",
-    "Patient.photo"
-]
+export const defaultIdentityClaims = {
+    "https://healthwallet.cards#presentation-context-online": [
+        "Patient.telecom",
+        "Patient.name",
+    ],
+    "https://healthwallet.cardspresentation-context-in-person": [
+        "Patient.name",
+        "Patient.photo"
+    ]
+}
 
 export const issueVcToHolder = async (state: VerifierState, details: CredentialGenerationDetals = {
     type: 'covid19',
-    identityClaims:  defaultIdentityClaims
+    presentationContext: 'https://healthwallet.cards#presentation-context-online',
+    identityClaims: null
 }): Promise<any> => {
 
     const subjectDid = state.siopResponse.idTokenPayload.did;
     const examplePatient = sampleVc.credentialSubject.fhirBundle.entry[0].resource
     const exampleClinicalResults = sampleVc.credentialSubject.fhirBundle.entry.slice(1).map(r => r.resource)
 
-    let examplePatientRestricted = details.identityClaims
+    console.log("ISsue for", details)
+    const examplePatientRestricted = defaultIdentityClaims[details.presentationContext]
+        .filter(c => details.identityClaims === null || details.identityClaims.includes(c))
         .map(prop => prop.split(".")[1])
         .reduce((prev, element) => ({
             ...prev,
@@ -99,6 +108,7 @@ export const issueVcToHolder = async (state: VerifierState, details: CredentialG
             resourceType: examplePatient.resourceType,
             extension: examplePatient.extension
         })
+
 
     const vc = CredentialManager.createVc(state.did, subjectDid, examplePatientRestricted, exampleClinicalResults)
     const vcPayload = CredentialManager.vcToJwtPayload(vc)

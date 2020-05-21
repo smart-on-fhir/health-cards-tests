@@ -49,7 +49,6 @@ const CovidCard: React.FC<{
         window.open(uiState.issuer.issuerDownloadUrl)
     }
 
-
     useEffect(() => {
         if (smartState?.access_token && issuerInteraction?.siopResponse && holderState.vcStore.length === 0) {
 
@@ -70,8 +69,8 @@ const CovidCard: React.FC<{
                     "name": "credentialType",
                     "valueUrl": "https://healthwallet.cards#covid19"
                 }, {
-                    "name": "includeIdentityClaim",
-                    "valueString": "Patient.name"
+                    "name": "presentationContext",
+                    "valueUrl": "https://healthwallet.cards#presentation-context-online"
                 }]
             })
             credentials.then(response => {

@@ -13,26 +13,30 @@ export interface SiopRequestReceiverProps {
     label: string;
     redirectMode: RedirectMode;
     onReady: (s: string) => void;
+    onCancel?: () => void;
     startUrl?: string;
 }
 
 export const SiopRequestReceiver: React.FC<SiopRequestReceiverProps> = (props) => {
 
     const [currentCode, setCurrentCode] = useState("")
+
+    const runningQrScanner = useRef(null)
+
+    let qrScanner; // scope bound to callback
     const videoCallback = useCallback((videoElement) => {
         if (!videoElement) {
+            if (qrScanner) {
+                qrScanner.destroy()
+            }
             return;
         }
-        console.log("Check out ref", videoElement)
-        let qrScanner = new QrScanner(videoElement, result => {
+        qrScanner = new QrScanner(videoElement, result => {
             if (result.length)
                 props.onReady(result)
         });
+        runningQrScanner.current = qrScanner 
         qrScanner.start();
-        return function cancel() {
-            qrScanner.destroy();
-            qrScanner = null;
-        }
     }, [])
 
     useEffect(() => {
@@ -46,9 +50,7 @@ export const SiopRequestReceiver: React.FC<SiopRequestReceiverProps> = (props) =
                 window.removeEventListener("message", onMessage)
             }
         }
-        return;
     }, [])
-
 
     return props.redirectMode === "qr" ? <>
         <Modal isOpen={true}>
@@ -62,6 +64,13 @@ export const SiopRequestReceiver: React.FC<SiopRequestReceiverProps> = (props) =
                     <Input placeholder="Or paste a URL directly..." type="text" autoFocus={true} value={currentCode} onChange={e => setCurrentCode(e.target.value)}>
                     </Input>
                 </InputGroup>
+
+                {props.onCancel ?
+                    <Button color="error" onClick={e => props.onCancel()}>
+                        Cancel
+                </Button> : ""
+                }
+
                 <Button color="success" onClick={e => props.onReady(currentCode)}>
                     Connect
                 </Button>
