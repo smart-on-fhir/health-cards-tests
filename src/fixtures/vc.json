@@ -7,7 +7,7 @@
     "https://healthwallet.cards#covid19",
     "https://healthwallet.cards#presentation-context-online"],
   "issuer": "<<did:ion identifier for lab>>",
-  "issuanceDate": "2020-05-01T11:59:00-07:00",
+  "issuanceDate": "2020-06-01T11:59:00-07:00",
   "display": "COVID-19 Card for Eve Everywoman",
   "credentialSubject": {
     "id": "<<did:identifier for subject if known>>",
@@ -37,7 +37,7 @@
         "fullUrl": "urn:uuid:4fe4f8d4-9b6e-4780-8ea5-6b5791230c85",
         "resource": {
           "resourceType": "DiagnosticReport",
-          "effectiveDateTime": "2020-05-01",
+          "effectiveDateTime": "2020-06-01",
           "subject": {
             "reference": "urn:uuid:643e199d-1aaf-49af-8a3b-c7ae375d11ce"
           },
@@ -49,10 +49,10 @@
           "conclusion": "Patient has passed through the acute phase of covid-19 infection as of May 1, 2020"
         }
       }, {
-        "fullUrl": "urn:uuid:4fe4f8d4-9b6e-4780-8ea5-6b5791230c85",
+        "fullUrl": "urn:uuid:911791c4-5131-44ba-85bd-8e6bdf652fd4",
         "resource": {
           "resourceType": "Observation",
-          "effectiveDateTime": "2020-05-01",
+          "effectiveDateTime": "2020-06-01",
           "subject": {
             "reference": "urn:uuid:643e199d-1aaf-49af-8a3b-c7ae375d11ce"
           },
@@ -75,7 +75,7 @@
         "fullUrl": "urn:uuid:05912d66-1e03-4dd1-91cf-b4769306c422",
         "resource": {
           "resourceType": "Observation",
-          "effectiveDateTime": "2020-05-01",
+          "effectiveDateTime": "2020-06-01",
           "subject": {
             "reference": "urn:uuid:643e199d-1aaf-49af-8a3b-c7ae375d11ce"
           },
@@ -86,7 +86,7 @@
                 "display": "SARS coronavirus 2 IgG Ab [Presence] in Serum or Plasma by Rapid immunoassay"
               }]
           },
-          "valueCodebleConcept": {
+          "valueCodeableConcept": {
             "coding": [{
                 "system": "http://loinc.org",
                 "code": "LA6576-8",
