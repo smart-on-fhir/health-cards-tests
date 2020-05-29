@@ -1,0 +1,614 @@
+[
+  {
+    "code": "LOINC_NUM",
+    "name": "omponen",
+    "component": "Property",
+    "time": "Time_Aspct",
+    "system": "System",
+    "scale": "Scale_Typ",
+    "method": "Method_Typ"
+  },
+  {
+    "code": "94763-0",
+    "name": "SARS coronavirus 2",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "XXX",
+    "scale": "Ord",
+    "method": "\"Organism specific culture\""
+  },
+  {
+    "code": "94661-6",
+    "name": "SARS coronavirus 2 Ab",
+    "component": "Imp",
+    "time": "Pt",
+    "system": "Ser/Plas",
+    "scale": "Nom",
+    "method": ""
+  },
+  {
+    "code": "94762-2",
+    "name": "SARS coronavirus 2 Ab",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "Ser/Plas",
+    "scale": "Ord",
+    "method": "IA"
+  },
+  {
+    "code": "94769-7",
+    "name": "SARS coronavirus 2 Ab",
+    "component": "ACnc",
+    "time": "Pt",
+    "system": "Ser/Plas",
+    "scale": "Qn",
+    "method": "IA"
+  },
+  {
+    "code": "94504-8",
+    "name": "SARS coronavirus 2 Ab panel",
+    "component": "-",
+    "time": "Pt",
+    "system": "Ser/Plas",
+    "scale": "-",
+    "method": "IA"
+  },
+  {
+    "code": "94558-4",
+    "name": "SARS coronavirus 2 Ag",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "Respiratory",
+    "scale": "Ord",
+    "method": "IA.rapid"
+  },
+  {
+    "code": "94509-7",
+    "name": "SARS coronavirus 2 E gene",
+    "component": "ThreshNum",
+    "time": "Pt",
+    "system": "XXX",
+    "scale": "Qn",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94758-0",
+    "name": "SARS coronavirus 2 E gene",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "Respiratory",
+    "scale": "Ord",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94765-5",
+    "name": "SARS coronavirus 2 E gene",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "Ser/Plas",
+    "scale": "Ord",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94315-9",
+    "name": "SARS coronavirus 2 E gene",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "XXX",
+    "scale": "Ord",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94562-6",
+    "name": "SARS coronavirus 2 Ab.IgA",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "Ser/Plas",
+    "scale": "Ord",
+    "method": "IA"
+  },
+  {
+    "code": "94768-9",
+    "name": "SARS coronavirus 2 Ab.IgA",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "Ser/Plas/Bld",
+    "scale": "Ord",
+    "method": "IA.rapid"
+  },
+  {
+    "code": "94720-0",
+    "name": "SARS coronavirus 2 Ab.IgA",
+    "component": "ACnc",
+    "time": "Pt",
+    "system": "Ser/Plas",
+    "scale": "Qn",
+    "method": "IA"
+  },
+  {
+    "code": "95125-1",
+    "name": "SARS coronavirus 2 Ab.IgA+IgM",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "Ser/Plas",
+    "scale": "Ord",
+    "method": "IA"
+  },
+  {
+    "code": "94761-4",
+    "name": "SARS coronavirus 2 Ab.IgG",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "Bld.dot",
+    "scale": "Ord",
+    "method": "IA"
+  },
+  {
+    "code": "94563-4",
+    "name": "SARS coronavirus 2 Ab.IgG",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "Ser/Plas",
+    "scale": "Ord",
+    "method": "IA"
+  },
+  {
+    "code": "94507-1",
+    "name": "SARS coronavirus 2 Ab.IgG",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "Ser/Plas/Bld",
+    "scale": "Ord",
+    "method": "IA.rapid"
+  },
+  {
+    "code": "94505-5",
+    "name": "SARS coronavirus 2 Ab.IgG",
+    "component": "ACnc",
+    "time": "Pt",
+    "system": "Ser/Plas",
+    "scale": "Qn",
+    "method": "IA"
+  },
+  {
+    "code": "94503-0",
+    "name": "SARS coronavirus 2 Ab.IgG & IgM panel",
+    "component": "-",
+    "time": "Pt",
+    "system": "Ser/Plas/Bld",
+    "scale": "-",
+    "method": "IA.rapid"
+  },
+  {
+    "code": "94547-7",
+    "name": "SARS coronavirus 2 Ab.IgG+IgM",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "Ser/Plas",
+    "scale": "Ord",
+    "method": "IA"
+  },
+  {
+    "code": "94564-2",
+    "name": "SARS coronavirus 2 Ab.IgM",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "Ser/Plas",
+    "scale": "Ord",
+    "method": "IA"
+  },
+  {
+    "code": "94508-9",
+    "name": "SARS coronavirus 2 Ab.IgM",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "Ser/Plas/Bld",
+    "scale": "Ord",
+    "method": "IA.rapid"
+  },
+  {
+    "code": "94506-3",
+    "name": "SARS coronavirus 2 Ab.IgM",
+    "component": "ACnc",
+    "time": "Pt",
+    "system": "Ser/Plas",
+    "scale": "Qn",
+    "method": "IA"
+  },
+  {
+    "code": "94510-5",
+    "name": "SARS coronavirus 2 N gene",
+    "component": "ThreshNum",
+    "time": "Pt",
+    "system": "XXX",
+    "scale": "Qn",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94311-8",
+    "name": "SARS coronavirus 2 N gene",
+    "component": "ThreshNum",
+    "time": "Pt",
+    "system": "XXX",
+    "scale": "Qn",
+    "method": "\"Probe.amp.tar.CDC primer-probe set N1\""
+  },
+  {
+    "code": "94312-6",
+    "name": "SARS coronavirus 2 N gene",
+    "component": "ThreshNum",
+    "time": "Pt",
+    "system": "XXX",
+    "scale": "Qn",
+    "method": "\"Probe.amp.tar.CDC primer-probe set N2\""
+  },
+  {
+    "code": "94760-6",
+    "name": "SARS coronavirus 2 N gene",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "Nph",
+    "scale": "Ord",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94533-7",
+    "name": "SARS coronavirus 2 N gene",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "Respiratory",
+    "scale": "Ord",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94756-4",
+    "name": "SARS coronavirus 2 N gene",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "Respiratory",
+    "scale": "Ord",
+    "method": "\"Probe.amp.tar.CDC primer-probe set N1\""
+  },
+  {
+    "code": "94757-2",
+    "name": "SARS coronavirus 2 N gene",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "Respiratory",
+    "scale": "Ord",
+    "method": "\"Probe.amp.tar.CDC primer-probe set N2\""
+  },
+  {
+    "code": "94766-3",
+    "name": "SARS coronavirus 2 N gene",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "Ser/Plas",
+    "scale": "Ord",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94316-7",
+    "name": "SARS coronavirus 2 N gene",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "XXX",
+    "scale": "Ord",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94307-6",
+    "name": "SARS coronavirus 2 N gene",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "XXX",
+    "scale": "Ord",
+    "method": "\"Probe.amp.tar.CDC primer-probe set N1\""
+  },
+  {
+    "code": "94308-4",
+    "name": "SARS coronavirus 2 N gene",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "XXX",
+    "scale": "Ord",
+    "method": "\"Probe.amp.tar.CDC primer-probe set N2\""
+  },
+  {
+    "code": "94644-2",
+    "name": "SARS coronavirus 2 ORF1ab region",
+    "component": "ThreshNum",
+    "time": "Pt",
+    "system": "Respiratory",
+    "scale": "Qn",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94511-3",
+    "name": "SARS coronavirus 2 ORF1ab region",
+    "component": "ThreshNum",
+    "time": "Pt",
+    "system": "XXX",
+    "scale": "Qn",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94559-2",
+    "name": "SARS coronavirus 2 ORF1ab region",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "Respiratory",
+    "scale": "Ord",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94639-2",
+    "name": "SARS coronavirus 2 ORF1ab region",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "XXX",
+    "scale": "Ord",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94646-7",
+    "name": "SARS coronavirus 2 RdRp gene",
+    "component": "ThreshNum",
+    "time": "Pt",
+    "system": "Respiratory",
+    "scale": "Qn",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94645-9",
+    "name": "SARS coronavirus 2 RdRp gene",
+    "component": "ThreshNum",
+    "time": "Pt",
+    "system": "XXX",
+    "scale": "Qn",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94534-5",
+    "name": "SARS coronavirus 2 RdRp gene",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "Respiratory",
+    "scale": "Ord",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94314-2",
+    "name": "SARS coronavirus 2 RdRp gene",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "XXX",
+    "scale": "Ord",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94745-7",
+    "name": "SARS coronavirus 2 RNA",
+    "component": "ThreshNum",
+    "time": "Pt",
+    "system": "Respiratory",
+    "scale": "Qn",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94746-5",
+    "name": "SARS coronavirus 2 RNA",
+    "component": "ThreshNum",
+    "time": "Pt",
+    "system": "XXX",
+    "scale": "Qn",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94819-0",
+    "name": "SARS coronavirus 2 RNA",
+    "component": "LnCnc",
+    "time": "Pt",
+    "system": "XXX",
+    "scale": "Qn",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94565-9",
+    "name": "SARS coronavirus 2 RNA",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "Nph",
+    "scale": "Ord",
+    "method": "Non-probe.amp.tar"
+  },
+  {
+    "code": "94759-8",
+    "name": "SARS coronavirus 2 RNA",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "Nph",
+    "scale": "Ord",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94500-6",
+    "name": "SARS coronavirus 2 RNA",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "Respiratory",
+    "scale": "Ord",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94845-5",
+    "name": "SARS coronavirus 2 RNA",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "Saliva",
+    "scale": "Ord",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94822-4",
+    "name": "SARS coronavirus 2 RNA",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "Saliva",
+    "scale": "Ord",
+    "method": "Sequencing"
+  },
+  {
+    "code": "94660-8",
+    "name": "SARS coronavirus 2 RNA",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "Ser/Plas",
+    "scale": "Ord",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94309-2",
+    "name": "SARS coronavirus 2 RNA",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "XXX",
+    "scale": "Ord",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94531-1",
+    "name": "SARS coronavirus 2 RNA panel",
+    "component": "-",
+    "time": "Pt",
+    "system": "Respiratory",
+    "scale": "-",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94306-8",
+    "name": "SARS coronavirus 2 RNA panel",
+    "component": "-",
+    "time": "Pt",
+    "system": "XXX",
+    "scale": "-",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94642-6",
+    "name": "SARS coronavirus 2 S gene",
+    "component": "ThreshNum",
+    "time": "Pt",
+    "system": "Respiratory",
+    "scale": "Qn",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94643-4",
+    "name": "SARS coronavirus 2 S gene",
+    "component": "ThreshNum",
+    "time": "Pt",
+    "system": "XXX",
+    "scale": "Qn",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94640-0",
+    "name": "SARS coronavirus 2 S gene",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "Respiratory",
+    "scale": "Ord",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94767-1",
+    "name": "SARS coronavirus 2 S gene",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "Ser/Plas",
+    "scale": "Ord",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94641-8",
+    "name": "SARS coronavirus 2 S gene",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "XXX",
+    "scale": "Ord",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94764-8",
+    "name": "SARS coronavirus 2 whole genome",
+    "component": "Seq",
+    "time": "Pt",
+    "system": "Isolate",
+    "scale": "Nom",
+    "method": "Sequencing"
+  },
+  {
+    "code": "95209-3",
+    "name": "SARS coronavirus+SARS coronavirus 2 Ag",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "Respiratory",
+    "scale": "Ord",
+    "method": "IA.rapid"
+  },
+  {
+    "code": "94313-4",
+    "name": "SARS-like coronavirus N gene",
+    "component": "ThreshNum",
+    "time": "Pt",
+    "system": "XXX",
+    "scale": "Qn",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94310-0",
+    "name": "SARS-like coronavirus N gene",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "XXX",
+    "scale": "Ord",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94502-2",
+    "name": "SARS-related coronavirus RNA",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "Respiratory",
+    "scale": "Ord",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94647-5",
+    "name": "SARS-related coronavirus RNA",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "XXX",
+    "scale": "Ord",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": "94532-9",
+    "name": "SARS-related coronavirus+MERS coronavirus RNA",
+    "component": "PrThr",
+    "time": "Pt",
+    "system": "Respiratory",
+    "scale": "Ord",
+    "method": "Probe.amp.tar"
+  },
+  {
+    "code": null,
+    "name": null,
+    "component": null,
+    "time": null,
+    "system": null,
+    "scale": null,
+    "method": null
+  }
+]
