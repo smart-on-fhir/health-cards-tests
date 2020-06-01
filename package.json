@@ -39,6 +39,7 @@
     "jose": "^1.26.1",
     "jose-jwe-jws": "^0.2.2",
     "js-sha256": "^0.9.0",
+    "jsonschema": "^1.2.6",
     "multihashes": "^0.4.19",
     "qr-scanner": "^1.1.1",
     "qrcode": "^1.4.4",

@@ -3,6 +3,11 @@ import cbor from 'cbor';
 import csvParse from 'csv-parse/lib/sync';
 import fs from 'fs';
 import vc from '../fixtures/vc.pcr.json';
+import jsonschema from 'jsonschema';
+import schema from './summarize-current-infection-status.schema.json'
+
+var Validator = jsonschema.Validator;
+var v = new Validator();
 
 
 const codesCsv = fs.readFileSync(__dirname + '/Loinc_Sarscov2_Export_20200529.csv')
@@ -43,19 +48,20 @@ const hasCodeFrom = (codes) => (cc) => (cc.coding || [] as { code: string }[])
 const patient = fhirBundle.entry.map(e => e.resource).filter(r => r.resourceType === 'Patient')[0]
 
 const output = {
-    alg: "healthwallet.cards#summarize-covid-status.v0",
-    pt: {
-        name: patient.name.map(n => 
+    alg: "healthwallet.cards#summarize-covid-status",
+    ver: "0.0.1",
+    ptName: patient.name.map(n => 
             [n.prefix || ""]
             .concat(n.given)
             .concat(n.family)
             .concat([n.suffix || ""])
-            .filter(n => n).join(" ")
-       ),
-        phone: patient.telecom
+            .filter(n => n).join(" "))
+            [0],
+    ptPhone: patient.telecom
             .filter(p => p.system === 'phone')
-            .map(p => p.value),
-        ial: patient
+            .map(p => p.value)
+            [0],
+    ial: patient
             .extension
             .filter(e => e.url === "https://github.com/TransparentHealth/800-63-3-trustmark#P")
             .map(e => {
@@ -64,8 +70,8 @@ const output = {
                     case "P1": return IdentityProofing.P1;
                     default: return IdentityProofing.P0;
                 }
-            })[0],
-    },
+            })
+            [0],
     result: fhirBundle
         .entry
         .map(e => e.resource)
@@ -89,6 +95,12 @@ const output = {
         })
 }
 
+if (!v.validate(output, schema).valid) {
+    console.log("Invalid!");
+    console.log(v.validate(output, schema));
+    process.exit(1);
+}
+
 console.log("FHIR Bundle size", JSON.stringify(fhirBundle).length, "\n")
 
 console.log("Summary JSON", output, "\n")
@@ -97,3 +109,4 @@ console.log("Summary JSON size",  JSON.stringify(output).length)
 const e: Buffer = cbor.encode(output)
 console.log("Summary CBOR", e)
 console.log("Summary CBOR size", e.length)
+

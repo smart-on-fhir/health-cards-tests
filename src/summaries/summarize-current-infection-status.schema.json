@@ -1,0 +1,127 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://healthwallet.cards/summarize-covid-status.schema.json",
+    "type": "object",
+    "title": "Summarize Covid Status",
+    "description": "Represents a summary of FHIR data to determine COVID-19 infection status as at specific points in time.",
+    "examples": [{
+        "alg": "healthwallet.cards#summarize-covid-status",
+        "ver": "0.0.1",
+        "ial": 2,
+        "ptName": "Eve Everywoman",
+        "ptPhone": "000-000-0000",
+        "result": [{
+            "effective": "2020-05-01",
+            "infectionStatus": 1
+        }]
+    }],
+    "required": [
+        "alg",
+        "ver",
+        "ial",
+        "result"
+    ],
+    "additionalProperties": true,
+    "properties": {
+        "alg": {
+            "$id": "#/properties/alg",
+            "type": "string",
+            "title": "Algorithm",
+            "description": "Algorithm used to produce this summary",
+            "const": "healthwallet.cards#summarize-covid-status"
+        },
+        "ver": {
+            "$id": "#/properties/ver",
+            "type": "string",
+            "title": "Version",
+            "description": "Version of the algorithm applied to produce this summary",
+            "examples": [
+                "0.0.1"
+            ]
+        },
+        "ptName": {
+            "$id": "#/properties/ptName",
+            "type": "string",
+            "title": "Patient name",
+            "description": "Verified patient name for the record associated with this summary",
+            "examples": [
+                "Eve Everywoman"
+            ]
+        },
+        "ptPhone": {
+            "$id": "#/properties/ptPhone",
+            "type": "string",
+            "title": "Patient phone number",
+            "description": "Verified patient phone number for the record associated with this summary",
+            "examples": [
+                "000-000-0000"
+            ]
+        },
+        "ial": {
+            "$id": "#/properties/ial",
+            "type": "integer",
+            "title": "Identity Assurance Level",
+            "description": "NIST SP 800-63A Enrollment and Identity Proofing: Identity Assurance Level",
+            "default": 1,
+            "enum": [1, 2, 3]
+        },
+        "result": {
+            "$id": "#/properties/result",
+            "type": "array",
+            "title": "Results array",
+            "description": "Array of COVID-19 status results",
+            "examples": [
+                [{
+                    "effective": "2020-05-01",
+                    "infectionStatus": 1
+                }]
+            ],
+            "additionalItems": true,
+            "items": {
+                "$id": "#/properties/result/items/properties",
+                "type": "object",
+                "title": "COVID 19 Status",
+                "description": "Summary of COVID-19 infection status at a specific point in time",
+                "examples": [{
+                    "effective": "2020-05-01",
+                    "infectionStatus": 1
+                }],
+                "required": [
+                    "effective",
+                    "infectionStatus"
+                ],
+                "additionalProperties": true,
+                "properties": {
+                    "effective": {
+                        "$id": "#/properties/result/items/properties/effective",
+                        "type": "string",
+                        "title": "Effective time",
+                        "description": "Time at which this COVID-19 status is effective",
+                        "examples": [
+                            "2020-05-01"
+                        ]
+                    },
+                    "infectionStatus": {
+                        "$id": "#/properties/result/items/properties/infectionStatus",
+                        "type": "integer",
+                        "title": "Infection status",
+                        "description": "Summary of current C19 infection status",
+                        "oneOf": [{
+                            "title": "Evidence of no current infection",
+                            "const": 0
+                        }, {
+                            "title": "Evidence of current infection",
+                            "const": 1
+                        }, {
+                            "title": "No conclusive evidence",
+                            "const": 2
+                        }],
+                        "examples": [
+                            1
+                        ]
+                    }
+                }
+            }
+        }
+    }
+}
