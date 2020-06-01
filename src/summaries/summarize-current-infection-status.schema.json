@@ -5,7 +5,7 @@
     "title": "Summarize Covid Status",
     "description": "Represents a summary of FHIR data to determine COVID-19 infection status as at specific points in time.",
     "examples": [{
-        "alg": "healthwallet.cards#summarize-covid-status",
+        "alg": "https://healthwallet.cards#summarize-covid-status",
         "ver": "0.0.1",
         "ial": 2,
         "ptName": "Eve Everywoman",
@@ -28,7 +28,7 @@
             "type": "string",
             "title": "Algorithm",
             "description": "Algorithm used to produce this summary",
-            "const": "healthwallet.cards#summarize-covid-status"
+            "const": "https://healthwallet.cards#summarize-covid-status"
         },
         "ver": {
             "$id": "#/properties/ver",
