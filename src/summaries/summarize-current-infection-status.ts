@@ -24,7 +24,7 @@ console.log("LOINC PCR Tests in DB", pcrTestCodes)
 const pcrResultCodesPositve = ['LA6576-8', 'LA11882-0']
 const pcrResultCodesNegative = ['LA6577-6', 'LA11883-8']
 
-enum PcrStatus {
+enum InfectionStatus {
     negative = 0,
     positive = 1,
     other = 2
@@ -43,7 +43,7 @@ const hasCodeFrom = (codes) => (cc) => (cc.coding || [] as { code: string }[])
 const patient = fhirBundle.entry.map(e => e.resource).filter(r => r.resourceType === 'Patient')[0]
 
 const output = {
-    alg: "healthwallet.cards#summarize-pcr.v0",
+    alg: "healthwallet.cards#summarize-covid-status.v0",
     pt: {
         name: patient.name.map(n => 
             [n.prefix || ""]
@@ -72,19 +72,19 @@ const output = {
         .filter(r => r.resourceType === 'Observation')
         .filter(r => hasCodeFrom(pcrTestCodes)(r.code))
         .map(r => {
-            const positive = hasCodeFrom(pcrResultCodesPositve)(r.valueCodeableConcept)
-            const negative = hasCodeFrom(pcrResultCodesNegative)(r.valueCodeableConcept)
+            const pcrPositive = hasCodeFrom(pcrResultCodesPositve)(r.valueCodeableConcept)
+            const pcrNegative = hasCodeFrom(pcrResultCodesNegative)(r.valueCodeableConcept)
 
-            let pcrStatus = PcrStatus.other
-            if (positive) {
-                pcrStatus = PcrStatus.positive
-            } else if (negative) {
-                pcrStatus = PcrStatus.negative
+            let infectionStatus = InfectionStatus.other
+            if (pcrPositive) {
+                infectionStatus = InfectionStatus.positive
+            } else if (pcrNegative) {
+                infectionStatus = InfectionStatus.negative
             }
 
             return {
                 effective: r.effectiveDateTime,
-                pcrStatus
+                infectionStatus: infectionStatus
             }
         })
 }

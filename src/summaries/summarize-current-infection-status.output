@@ -1,0 +1,21 @@
+LOINC PCR Tests in DB [
+  '94758-0', '94765-5', '94315-9',
+  '94760-6', '94533-7', '94756-4',
+  '94757-2', '94766-3', '94316-7',
+  '94307-6', '94308-4', '94559-2',
+  '94639-2', '94534-5', '94314-2',
+  '94565-9', '94759-8', '94500-6',
+  '94845-5', '94660-8', '94309-2',
+  '94640-0', '94767-1', '94641-8'
+]
+FHIR Bundle size 1225 
+
+Summary JSON {
+  alg: 'healthwallet.cards#summarize-covid-status.v0',
+  pt: { name: [ 'Eve Everywoman' ], phone: [ '000-000-0000' ], ial: 2 },
+  result: [ { effective: '2020-05-01', infectionStatus: 1 } ]
+} 
+
+Summary JSON size 178
+Summary CBOR <Buffer a3 63 61 6c 67 78 2c 68 65 61 6c 74 68 77 61 6c 6c 65 74 2e 63 61 72 64 73 23 73 75 6d 6d 61 72 69 7a 65 2d 63 6f 76 69 64 2d 73 74 61 74 75 73 2e 76 ... 98 more bytes>
+Summary CBOR size 148
