@@ -1,11 +1,11 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://healthwallet.cards/summarize-covid-status.schema.json",
+    "$id": "https://healthwallet.cards/c19-status.schema.json",
     "type": "object",
     "title": "Summarize Covid Status",
     "description": "Represents a summary of FHIR data to determine COVID-19 infection status as at specific points in time.",
     "examples": [{
-        "alg": "https://healthwallet.cards#summarize-covid-status",
+        "alg": "https://healthwallet.cards#c19-status",
         "ver": "0.0.1",
         "ial": 2,
         "ptName": "Eve Everywoman",
@@ -28,7 +28,7 @@
             "type": "string",
             "title": "Algorithm",
             "description": "Algorithm used to produce this summary",
-            "const": "https://healthwallet.cards#summarize-covid-status"
+            "const": "https://healthwallet.cards#c19-status"
         },
         "ver": {
             "$id": "#/properties/ver",

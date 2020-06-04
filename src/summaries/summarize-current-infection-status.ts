@@ -48,7 +48,7 @@ const hasCodeFrom = (codes) => (cc) => (cc.coding || [] as { code: string }[])
 const patient = fhirBundle.entry.map(e => e.resource).filter(r => r.resourceType === 'Patient')[0]
 
 const output = {
-    alg: "https://healthwallet.cards#summarize-covid-status",
+    alg: "https://healthwallet.cards#c19-status",
     ver: "0.0.1",
     ptName: patient.name.map(n => 
             [n.prefix || ""]
