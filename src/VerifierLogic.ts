@@ -12,7 +12,7 @@ import { VerificationResult } from './KeyTypes';
 
 export async function verifierReducer(state: VerifierState, event: any): Promise<VerifierState> {
     if (event.type === 'siop-request-created') {
-        return { ...state, siopRequest: event.siopRequest };
+        return { ...state, siopRequest: event.siopRequest, siopResponse: undefined };
     }
     if (event.type === 'siop-response-received') {
         return { ...state, siopResponse: event.siopResponse };

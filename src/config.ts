@@ -1,4 +1,4 @@
-export let serverBase = process.env.SERVER_BASE || 'http://localhost:8080/api';
+export let serverBase = process.env.SERVER_BASE || 'relative';
 if (serverBase === 'relative') {
     serverBase = window.location.origin + '/api';
 }
