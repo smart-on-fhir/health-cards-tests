@@ -46,6 +46,7 @@ export interface VerifierState {
         idTokenPayload: {
             did: string;
         };
+        idTokenVcs?: any[]
     };
     issuedCredentials?: string[];
     fragment?: {

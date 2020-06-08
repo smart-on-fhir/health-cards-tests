@@ -7,6 +7,7 @@ import * as CredentialManager from './CredentialManager';
 import { encryptFor, verifyJws } from './dids';
 import sampleVc from './fixtures/vc.json';
 import { VerifierState } from './VerifierState';
+import { VerificationResult } from './KeyTypes';
 
 
 export async function verifierReducer(state: VerifierState, event: any): Promise<VerifierState> {
@@ -131,6 +132,7 @@ export const issueVcToHolder = async (state: VerifierState, details: CredentialG
 
 };
 
+
 export async function parseSiopResponse(idTokenRetrieved: string, state: VerifierState) {
     const idTokenRetrievedDecrypted = await state.ek.decrypt(idTokenRetrieved);
     const idTokenVerified = await verifyJws(idTokenRetrievedDecrypted, state.config.keyGenerators);
@@ -141,7 +143,9 @@ export async function parseSiopResponse(idTokenRetrieved: string, state: Verifie
             siopResponse: {
                 idTokenEncrypted: idTokenRetrieved,
                 idTokenSigned: idTokenRetrievedDecrypted,
-                idTokenPayload: idTokenVerified.payload
+                idTokenPayload: idTokenVerified.payload,
+                idTokenVcs: (await Promise.all((idTokenVerified.payload?.vp?.verifiableCredential || []).map(vc => verifyJws(vc, state.config.keyGenerators))))
+                    .map((jws: VerificationResult) => jws.valid && jws.payload)
             }
         });
     }
