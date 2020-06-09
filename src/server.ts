@@ -223,9 +223,14 @@ app.post('/api/fhir/Patient/:patientID/[\$]HealthWallet.issueVc', async (req, re
 const initializeIssuer = async (): Promise<VerifierState> => {
     const ek = await generateEncryptionKey();
     const sk = await generateSigningKey();
+    const uk = await generateSigningKey();
+    const rk = await generateSigningKey();
+ 
     const did = await generateDid({
-        encryptionPublicKey: ek.publicJwk,
-        signingPublicKey: sk.publicJwk
+        encryptionPublicJwk: ek.publicJwk,
+        signingPublicJwk: sk.publicJwk,
+        recoveryPublicJwk: rk.publicJwk,
+        updatePublicJwk: uk.publicJwk
     });
     return {
         config: {

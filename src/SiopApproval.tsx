@@ -57,7 +57,7 @@ export const SiopRequestReceiver: React.FC<SiopRequestReceiverProps> = (props) =
             <ModalHeader>Connect to {props.label}</ModalHeader>
             <ModalBody>
                 <div>Scan a QR Code</div>
-                <video ref={videoCallback} style={{ maxWidth: "100vw", maxHeight: "50vh" }} />
+                <video ref={videoCallback} style={{ maxWidth: "100%", maxHeight: "30vh" }} />
             </ModalBody>
             <ModalFooter  >
                 <InputGroup>

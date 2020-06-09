@@ -3,9 +3,10 @@ import base64url from 'base64url';
 import * as crypto from 'crypto';
 import multihashes from 'multihashes';
 import { resolveUrl } from './config';
-import { EncryptionKey, KeyGenerators } from './KeyTypes';
+import { EncryptionKey, KeyGenerators, SigningKey } from './KeyTypes';
+import { canonicalize } from 'json-canonicalize';
 
-export async function verifyJws (jws: string, {
+export async function verifyJws(jws: string, {
     generateEncryptionKey,
     generateSigningKey
 }: KeyGenerators) {
@@ -16,7 +17,7 @@ export async function verifyJws (jws: string, {
 }
 const ENCRYPTION_KEY_TYPE = 'JwsVerificationKey2020'; // TODO fix this once sidetree allows encryption key types
 
-export async function encryptFor (jws: string, did: string, { generateEncryptionKey }: KeyGenerators) {
+export async function encryptFor(jws: string, did: string, { generateEncryptionKey }: KeyGenerators) {
     const didDoc = (await axios.get(resolveUrl + encodeURIComponent(did))).data;
     const encryptionKey = didDoc.publicKey.filter(k => k.type === ENCRYPTION_KEY_TYPE)[0];
     const ek = await generateEncryptionKey(encryptionKey.publicKeyJwk);
@@ -27,49 +28,48 @@ const resolveKeyId = async (kid: string): Promise<JsonWebKey> => {
     const didDoc = (await axios.get(resolveUrl + encodeURIComponent(kid))).data;
     return didDoc.publicKey.filter(k => k.id === fragment)[0].publicKeyJwk;
 };
-export async function generateDid ({ signingPublicKey, encryptionPublicKey }) {
-    const recoveryPublicKey = signingPublicKey;
+export async function generateDid({ signingPublicJwk, encryptionPublicJwk, recoveryPublicJwk, updatePublicJwk }) {
     const hashAlgorithmName = multihashes.codes[18];
-    const hash = (b: Buffer) => multihashes.encode(crypto.createHash('sha256').update(b).digest(), hashAlgorithmName);
-    const revealCommitPair = () => {
-        const revealValueBuffer = crypto.randomBytes(32);
-        const revealValueEncodedString = base64url.encode(revealValueBuffer);
-        const commitmentHash = hash(revealValueBuffer);
+    const hash = (b: string|Buffer) => multihashes.encode(crypto.createHash('sha256').update(b).digest(), hashAlgorithmName);
+
+    const revealCommitPair = (publicKey: SigningKey) => {
+        const revealValueEncodedString = canonicalize(publicKey)
+        const commitmentHash = hash(revealValueEncodedString);
         const commitmentHashEncodedString = base64url.encode(commitmentHash);
         return [revealValueEncodedString, commitmentHashEncodedString];
     };
-    const [recoveryValue, recoveryCommitment] = revealCommitPair();
-    const [updateValue, updateCommitment] = revealCommitPair();
+    const [recoveryValue, recoveryCommitment] = revealCommitPair(recoveryPublicJwk);
+    const [updateValue, updateCommitment] = revealCommitPair(updatePublicJwk);
+
     const delta: Record<string, any> = {
         'update_commitment': updateCommitment,
         'patches': [{
-            action: 'replace',
-            document: {
-                publicKeys: [{
-                    id: 'signing-key-1',
-                    usage: ['ops', 'general', 'auth'],
-                    type: 'EcdsaSecp256k1VerificationKey2019',
-                    jwk: signingPublicKey
-                }, {
-                    id: 'encryption-key-1',
-                    usage: ['general', 'auth'],
-                    type: 'JwsVerificationKey2020',
-                    jwk: encryptionPublicKey
-                }]
-            }
+            action: 'add-public-keys',
+            public_keys: [{
+                id: 'signing-key-1',
+                purpose: ['general', 'auth'],
+                type: 'EcdsaSecp256k1VerificationKey2019',
+                jwk: signingPublicJwk
+            }, {
+                id: 'encryption-key-1',
+                purpose: ['general', 'auth'],
+                type: 'JwsVerificationKey2020',
+                jwk: encryptionPublicJwk
+            }]
         }]
     };
     const deltaCanonical = JSON.stringify(delta);
     const deltaEncoded = base64url.encode(deltaCanonical);
     const suffixData = {
         delta_hash: base64url.encode(hash(Buffer.from(deltaCanonical))),
-        recovery_key: recoveryPublicKey,
         recovery_commitment: recoveryCommitment
     };
     const suffixDataCanonical = JSON.stringify(suffixData);
-    const suffixDataEncoded = base64url.encode(suffixDataCanonical);
-    const suffix = base64url.encode(hash(Buffer.from(suffixDataEncoded)));
+    console.log("generat with suffix data", suffixDataCanonical)
+    const suffix = base64url.encode(hash(Buffer.from(suffixDataCanonical)));
+
     const didShort = `did:ion:${suffix}`;
+    const suffixDataEncoded = base64url.encode(suffixDataCanonical);
     const didLong = `did:ion:${suffix}?-ion-initial-state=${suffixDataEncoded}.${deltaEncoded}`;
     return didLong;
 }

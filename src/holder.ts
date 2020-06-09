@@ -88,9 +88,13 @@ export const currentInteraction = (state: HolderState): SiopInteraction =>
 export const initializeHolder = async (): Promise<HolderState> => {
     const ek = await keyGenerators.generateEncryptionKey();
     const sk = await keyGenerators.generateSigningKey();
+    const uk = await keyGenerators.generateSigningKey();
+    const rk = await keyGenerators.generateSigningKey();
     const did = await generateDid({
-        encryptionPublicKey: ek.publicJwk,
-        signingPublicKey: sk.publicJwk
+        encryptionPublicJwk: ek.publicJwk,
+        signingPublicJwk: sk.publicJwk,
+        recoveryPublicJwk: rk.publicJwk,
+        updatePublicJwk: uk.publicJwk
     });
     return {
         ek,
