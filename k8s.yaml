@@ -16,11 +16,11 @@ metadata:
   namespace: siop
 spec:
   rules:
-  - host: siop.argo.run
+  - host: dev.c19.cards
     http:
       paths:
       - backend:
-          serviceName: siop
+          serviceName: siop-dev
           servicePort: 80
         path: /(.*)
   - host: c19.cards
@@ -32,8 +32,8 @@ spec:
         path: /(.*)
   tls:
   - hosts:
-    - siop.argo.run
     - c19.cards
+    - dev.c19.cards
     secretName: tls-secret
 status:
   loadBalancer:
@@ -79,3 +79,43 @@ spec:
         env:
         - name: SERVER_BASE
           value: "https://c19.cards/api"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: siop
+  name: siop-dev
+spec:
+  selector:
+    app: siop-dev
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: siop
+  name: siop-dev
+  labels:
+    app: siop-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: siop-dev
+  template:
+    metadata:
+      labels:
+        app: siop-dev
+    spec:
+      volumes:
+      containers:
+      - name: ui-dev
+        image: argonautcontainerregistry.azurecr.io/siop:dev
+        ports:
+        - containerPort: 8080
+        env:
+        - name: SERVER_BASE
+          value: "https://dev.c19.cards/api"

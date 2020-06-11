@@ -1,0 +1,32 @@
+name: Deploy Health Wallet Demo master branch to ci
+# Basics from https://docs.microsoft.com/en-us/azure/dev-spaces/how-to/github-actions
+on:
+  push:
+    branches:
+    - dev
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+
+    - uses: azure/docker-login@v1
+      with:
+        login-server: ${{ secrets.CONTAINER_REGISTRY }}
+        username: ${{ secrets.REGISTRY_USERNAME }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+
+    - uses: azure/aks-set-context@v1
+      with:
+        creds: '${{ secrets.AZURE_CREDENTIALS }}'
+        cluster-name: ${{ secrets.CLUSTER_NAME }}
+        resource-group: ${{ secrets.RESOURCE_GROUP }}
+
+    - name: Build and rollout to CI
+      run: |
+        docker build . \
+          -t ${{ secrets.CONTAINER_REGISTRY }}/siop:$GITHUB_SHA \
+          -t ${{ secrets.CONTAINER_REGISTRY }}/siop:dev
+        docker push ${{ secrets.CONTAINER_REGISTRY }}/siop
+        kubectl -n siop rollout restart deployment/siop-dev
