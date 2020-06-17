@@ -97,6 +97,8 @@ app.get('/api/fhir/' + smartConfig, (req, res) => {
 });
 
 const SAMPLE_PATIENT_ID = 'sample-123';
+const generateSamplePatientId = () =>crypto.randomBytes(8).toString('hex')
+
 app.get('/api/fhir/[\$]authorize', (req, res) => {
     const state = req.query.state as string;
     const redirectUri = req.query.redirect_uri as string;
@@ -104,7 +106,7 @@ app.get('/api/fhir/[\$]authorize', (req, res) => {
     res.redirect(redirectUri + '?' + qs.encode({
         state,
         code: JSON.stringify({
-            patient: SAMPLE_PATIENT_ID,
+            patient: generateSamplePatientId(),
             scope
         })
     }));
