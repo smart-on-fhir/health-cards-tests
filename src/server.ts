@@ -16,7 +16,7 @@ import { generateEncryptionKey, generateSigningKey, keyGenerators } from './keys
 import exampleDr from './fixtures/diagnostic-report.json'
 
 import { VerifierState } from './VerifierState';
-import { generateDid, verifyJws } from './dids';
+import { generateDid, verifyJws, encryptFor } from './dids';
 import { issuerReducer, prepareSiopRequest, issueVcToHolder, parseSiopResponse, CredentialGenerationDetals } from './VerifierLogic';
 
 const app = express();
@@ -97,7 +97,7 @@ app.get('/api/fhir/' + smartConfig, (req, res) => {
 });
 
 const SAMPLE_PATIENT_ID = 'sample-123';
-const generateSamplePatientId = () =>crypto.randomBytes(8).toString('hex')
+const generateSamplePatientId = () => crypto.randomBytes(8).toString('hex')
 
 app.get('/api/fhir/[\$]authorize', (req, res) => {
     const state = req.query.state as string;
@@ -141,7 +141,7 @@ app.get('/api/fhir/Patient/:patientID/[\$]HealthWallet.connect', async (req, res
 async function getVcForPatient(patientId, details: CredentialGenerationDetals = {
     type: 'https://healthwallet.cards#covid19',
     presentationContext: 'https://healthwallet.cards#presentation-context-online',
-    identityClaims:  null
+    identityClaims: null
 }) {
     const state = patientToSiopResponse[patientId];
     if (!state) {
@@ -178,10 +178,10 @@ app.get('/api/fhir/DiagnosticReport', async (req, res) => {
                 extension: vc ? [{
                     "url": "https://healthwallet.cards#vc-attachment",
                     "valueAttachment": {
-                      "title": "COVID-19 Card for online presentation",
-                      "data": base64.encode(vc)
+                        "title": "COVID-19 Card for online presentation",
+                        "data": base64.encode(vc)
                     }
-                  }]: undefined,
+                }] : undefined,
                 ...exampleDr,
             }
         }]
@@ -190,7 +190,7 @@ app.get('/api/fhir/DiagnosticReport', async (req, res) => {
 
 
 app.post('/api/fhir/Patient/:patientID/[\$]HealthWallet.issueVc', async (req, res) => {
-    
+
     const requestBody = (req.body || {})
 
     const requestedCredentialType = (requestBody.parameter || [])
@@ -227,7 +227,7 @@ const initializeIssuer = async (): Promise<VerifierState> => {
     const sk = await generateSigningKey();
     const uk = await generateSigningKey();
     const rk = await generateSigningKey();
- 
+
     const did = await generateDid({
         encryptionPublicJwk: ek.publicJwk,
         signingPublicJwk: sk.publicJwk,
@@ -341,6 +341,51 @@ app.get('/api/lab/vcs/:did', async (req, res) => {
     const did = decodeURIComponent(req.params.did);
     res.json(vcCache[did]);
 });
+
+
+app.get('/api/test/did-doc', async (req, res) => {
+    const did = issuerState.did;
+    const didDoc = await resolveDid(did);
+    res.json(didDoc.didDocument);
+});
+
+app.post('/api/test/validate-jws', async (req, res) => {
+    try {
+        const jws = req.body.toString()
+        const jwsVerified = await verifyJws(jws, keyGenerators);
+        res.json(jwsVerified)
+    } catch (e) {
+        res.status(500)
+        res.send(e);
+    }
+});
+
+app.post('/api/test/validate-jwe', async (req, res) => {
+    try {
+        const jwe = req.body.toString()
+        const jwsVerified = await issuerState.ek.decrypt(jwe);
+        res.json(jwsVerified)
+    } catch (e) {
+        res.status(500)
+        res.send(e);
+    }
+});
+
+app.post('/api/test/encrypt-for-did', async (req, res) => {
+    try {
+        const did = req.body.did;
+        const payload = req.body.payload;
+        const encrypted = await encryptFor(JSON.stringify(payload), did, keyGenerators)
+        res.json(encrypted)
+    } catch (e) {
+        res.status(500)
+        res.send(e);
+    }
+});
+
+
+
+
 
 app.use(express.static('dist/static', {
     extensions: ['html']
