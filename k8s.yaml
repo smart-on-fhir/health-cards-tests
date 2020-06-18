@@ -114,6 +114,7 @@ spec:
       containers:
       - name: ui-dev
         image: argonautcontainerregistry.azurecr.io/siop:dev
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
         env:
