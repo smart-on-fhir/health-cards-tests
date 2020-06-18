@@ -6,6 +6,7 @@ export interface VerifierState {
     ek: EncryptionKey;
     sk: SigningKey;
     did: string;
+    didDebugging?: any;
     config: {
         role: string;
         skipVcPostToServer?: boolean;

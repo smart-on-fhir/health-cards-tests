@@ -9,6 +9,15 @@ curl -X GET http://localhost:8080/api/test/did-doc
 ```
 
 
+#### `api/test/did-debug`
+
+Returns all the details used for generating this did
+
+```
+curl -X GET http://localhost:8080/api/test/did-debug
+```
+
+
 #### `api/test/encrypt-for-did`
 
 The body is a JSON object (note, this API requires a content-type header) with a `did` (to encrypt for) and a `payload` (content to encrypt)

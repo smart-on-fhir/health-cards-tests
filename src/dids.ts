@@ -65,12 +65,25 @@ export async function generateDid({ signingPublicJwk, encryptionPublicJwk, recov
         recovery_commitment: recoveryCommitment
     };
     const suffixDataCanonical = JSON.stringify(suffixData);
-    console.log("generat with suffix data", suffixDataCanonical)
     const suffix = base64url.encode(hash(Buffer.from(suffixDataCanonical)));
 
     const didShort = `did:ion:${suffix}`;
     const suffixDataEncoded = base64url.encode(suffixDataCanonical);
     const didLong = `did:ion:${suffix}?-ion-initial-state=${suffixDataEncoded}.${deltaEncoded}`;
-    return didLong;
+    return {
+        did: didLong,
+        recoveryValue,
+        recoveryCommitment,
+        updateValue,
+        updateCommitment,
+        delta,
+        deltaCanonical,
+        deltaEncoded,
+        suffixData,
+        suffixDataCanonical,
+        suffixDataEncoded,
+        didShort,
+        didLong
+    }
 }
 const jwtHeader = (jwt) => JSON.parse(base64url.decode(jwt.split('.')[0]));

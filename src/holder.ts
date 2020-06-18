@@ -99,7 +99,7 @@ export const initializeHolder = async (): Promise<HolderState> => {
     return {
         ek,
         sk,
-        did,
+        did: did.did,
         interactions: [],
         vcStore: []
     };

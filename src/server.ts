@@ -250,7 +250,8 @@ const initializeIssuer = async (): Promise<VerifierState> => {
         },
         ek,
         sk,
-        did
+        did: did.did,
+        didDebugging: did
     };
 };
 
@@ -348,6 +349,12 @@ app.get('/api/test/did-doc', async (req, res) => {
     const didDoc = await resolveDid(did);
     res.json(didDoc.didDocument);
 });
+
+app.get('/api/test/did-debug', async (req, res) => {
+    res.json(issuerState.didDebugging);
+});
+
+
 
 app.post('/api/test/validate-jws', async (req, res) => {
     try {

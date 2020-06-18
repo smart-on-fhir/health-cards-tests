@@ -138,7 +138,7 @@ export const initializeVerifier = async (config: VerifierState['config']): Promi
         config,
         ek,
         sk,
-        did
+        did: did.did
     };
 };
 
