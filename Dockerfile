@@ -9,7 +9,6 @@ RUN npm install
 COPY src/ ./src
 COPY dist ./dist
 COPY tslint.json tsconfig.json ./
-RUN cd sidetree && npm install
 RUN npm run build-ui
 RUN npm run build
 
