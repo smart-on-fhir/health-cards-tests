@@ -6,11 +6,11 @@ import base64 from 'base-64';
 import { JWT } from 'jose';
 import * as crypto from 'crypto';
 import qs from 'querystring';
-import OperationType from '../sidetree/lib/core/enums/OperationType';
-import AnchoredOperationModel from '../sidetree/lib/core/models/AnchoredOperationModel';
-import Did from '../sidetree/lib/core/versions/latest/Did';
-import DocumentComposer from '../sidetree/lib/core/versions/latest/DocumentComposer';
-import OperationProcessor from '../sidetree/lib/core/versions/latest/OperationProcessor';
+import OperationType from '@decentralized-identity/sidetree/dist/lib/core/enums/OperationType';
+import AnchoredOperationModel from '@decentralized-identity/sidetree/dist/lib/core/models/AnchoredOperationModel';
+import Did from '@decentralized-identity/sidetree/dist/lib/core/versions/latest/Did';
+import DocumentComposer from '@decentralized-identity/sidetree/dist/lib/core/versions/latest/DocumentComposer';
+import OperationProcessor from '@decentralized-identity/sidetree/dist/lib/core/versions/latest/OperationProcessor';
 import { generateEncryptionKey, generateSigningKey, keyGenerators } from './keys-server';
 
 import exampleDr from './fixtures/diagnostic-report.json'
@@ -18,6 +18,10 @@ import exampleDr from './fixtures/diagnostic-report.json'
 import { VerifierState } from './VerifierState';
 import { generateDid, verifyJws, encryptFor } from './dids';
 import { issuerReducer, prepareSiopRequest, issueVcToHolder, parseSiopResponse, CredentialGenerationDetals } from './VerifierLogic';
+
+import * as s1 from '@decentralized-identity/sidetree/dist/lib/core/versions/latest/protocol-parameters.json';
+import * as s2 from '@decentralized-identity/sidetree/dist/lib/bitcoin/protocol-parameters.json';
+
 
 const app = express();
 app.use(express.raw({ type: 'application/x-www-form-urlencoded' }));

@@ -6,7 +6,6 @@ WORKDIR /usr/src/app
 COPY package.json .
 RUN npm install
 
-RUN git clone https://github.com/decentralized-identity/sidetree
 COPY src/ ./src
 COPY dist ./dist
 COPY tslint.json tsconfig.json ./

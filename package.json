@@ -20,7 +20,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@decentralized-identity/sidetree": "git+https://github.com/decentralized-identity/sidetree.git",
+    "@decentralized-identity/sidetree": "^0.9.1",
     "@types/react": "^16.9.34",
     "@types/react-dom": "^16.9.6",
     "axios": "^0.19.2",
