@@ -2,9 +2,10 @@ import axios from 'axios';
 import base64url from 'base64url';
 import * as crypto from 'crypto';
 import multihashes from 'multihashes';
-import { resolveUrl } from './config';
+import { resolveUrl, ALLOW_INVALID_SIGNATURES } from './config';
 import { EncryptionKey, KeyGenerators, SigningKey } from './KeyTypes';
 import { canonicalize } from 'json-canonicalize';
+import { config } from 'process';
 
 export async function verifyJws(jws: string, {
     generateEncryptionKey,
@@ -13,6 +14,12 @@ export async function verifyJws(jws: string, {
     const signingKid = jwtHeader(jws).kid;
     const signingKeyJwt = await resolveKeyId(signingKid);
     const sk = await generateSigningKey(signingKeyJwt);
+    if (ALLOW_INVALID_SIGNATURES) {
+        return {
+            valid: true,
+            payload: JSON.parse(base64url.decode(jws.split(".")[1]))
+        }
+    }
     return sk.verify(jws);
 }
 const ENCRYPTION_KEY_TYPE = 'JwsVerificationKey2020'; // TODO fix this once sidetree allows encryption key types

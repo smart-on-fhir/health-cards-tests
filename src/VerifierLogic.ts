@@ -2,7 +2,7 @@ import axios from 'axios';
 import base64url from 'base64url';
 import * as crypto from 'crypto';
 import qs from 'querystring';
-import { serverBase } from './config';
+import { ALLOW_INVALID_SIGNATURES, serverBase } from './config';
 import * as CredentialManager from './CredentialManager';
 import { encryptFor, verifyJws } from './dids';
 import sampleVc from './fixtures/vc.json';
