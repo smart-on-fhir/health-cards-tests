@@ -24,8 +24,8 @@ import * as s2 from '@decentralized-identity/sidetree/dist/lib/bitcoin/protocol-
 
 
 const app = express();
-app.use(express.raw({ type: 'application/x-www-form-urlencoded' }));
-app.use(express.json({ type: 'application/json' }));
+app.use(express.raw({ type: 'application/x-www-form-urlencoded', limit: '5000kb' }));
+app.use(express.json({ type: 'application/json', limit: '5000kb'}));
 app.use(cors());
 const port = 8080; // default port to listen
 
