@@ -25,10 +25,24 @@
           }
         ],
         "resourceType": "DiagnosticReport",
+        "status": "final",
         "effectiveDateTime": "2020-05-01",
         "id": "c19dr-001-sample-123",
         "subject": {
           "reference": "Patient/sample-123"
+        },
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "94508-9",
+              "display": "SARS coronavirus 2 IgM Ab [Presence] in Serum or Plasma by Rapid immunoassay"
+            }
+          ]
+        },
+        "issued": "2020-05-01T11:59:00-07:00",
+        "performer": {
+          "display":  "Dr. Jones"
         },
         "result": [
           {

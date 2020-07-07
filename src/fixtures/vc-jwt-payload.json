@@ -52,9 +52,23 @@
           "fullUrl": "urn:uuid:4fe4f8d4-9b6e-4780-8ea5-6b5791230c85",
           "resource": {
             "resourceType": "DiagnosticReport",
+            "status": "final",
             "effectiveDateTime": "2020-05-01",
             "subject": {
               "reference": "urn:uuid:643e199d-1aaf-49af-8a3b-c7ae375d11ce"
+            },
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "94508-9",
+                  "display": "SARS coronavirus 2 IgM Ab [Presence] in Serum or Plasma by Rapid immunoassay"
+                }
+              ]
+            },
+            "issued": "2020-05-01T11:59:00-07:00",
+            "performer": {
+              "display":  "Dr. Jones"
             },
             "result": [
               {
@@ -71,6 +85,7 @@
           "fullUrl": "urn:uuid:4fe4f8d4-9b6e-4780-8ea5-6b5791230c85",
           "resource": {
             "resourceType": "Observation",
+            "status": "final",
             "effectiveDateTime": "2020-05-01",
             "subject": {
               "reference": "urn:uuid:643e199d-1aaf-49af-8a3b-c7ae375d11ce"
@@ -99,6 +114,7 @@
           "fullUrl": "urn:uuid:05912d66-1e03-4dd1-91cf-b4769306c422",
           "resource": {
             "resourceType": "Observation",
+            "status": "final",
             "effectiveDateTime": "2020-05-01",
             "subject": {
               "reference": "urn:uuid:643e199d-1aaf-49af-8a3b-c7ae375d11ce"
