@@ -78,7 +78,7 @@
                 "display": "SARS coronavirus 2 IgM Ab [Presence] in Serum or Plasma by Rapid immunoassay"
               }]
           },
-          "valueCodebleConcept": {
+          "valueCodeableConcept": {
             "coding": [{
                 "system": "http://loinc.org",
                 "code": "LA6577-6",
