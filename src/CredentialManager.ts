@@ -14,7 +14,9 @@ interface Entry {
 }
 
 export const createVc = (issuer: string, subject: string, fhirIdentityResource: any, fhirClniicalResources: any[]) => {
-    const vc = deepcopy(sampleVc);
+    const vc: VC = deepcopy(sampleVc);
+
+    vc.issuanceDate = new Date(vc.issuanceDate).toISOString()
 
     const identityEntry: Entry = {
         fullUrl: generateUri(),
@@ -40,10 +42,11 @@ export const createVc = (issuer: string, subject: string, fhirIdentityResource: 
 interface VC {
     id?: string;
     issuer?: string;
-    issuanceDate?: number;
-    expirationDate?: number;
+    issuanceDate?: string;
+    expirationDate?: string;
     credentialSubject: {
-        id: string
+        id: string,
+        fhirBundle: any
     }
 }
 
@@ -58,15 +61,17 @@ interface VcJWTPayload {
     vc: any;
 }
 
-export const vcToJwtPayload = (vcIn: VC): VcJWTPayload => {
-    const vc = deepcopy(vcIn)
+export const isoToNumericDate = (isoDate: string): number => new Date(isoDate).getTime() / 1000
+export const numericToIsoDate = (numericDate: number): string => new Date(numericDate*1000).toISOString()
 
-    const ret = {
+export const vcToJwtPayload = (vcIn: VC): VcJWTPayload => {
+    const vc = deepcopy(vcIn) as VC
+
+    const ret: VcJWTPayload = {
         ...vc,
         iss: vc.issuer,
-        nbf: vc.issuanceDate,
-        iat: vc.issuanceDate,
-        exp: vc.expirationDate,
+        nbf: isoToNumericDate( vc.issuanceDate),
+        iat: isoToNumericDate(vc.issuanceDate),
         jti: vc.id,
         sub: vc.credentialSubject.id,
         nonce: base64url.encode(crypto.randomBytes(16)),
@@ -75,12 +80,16 @@ export const vcToJwtPayload = (vcIn: VC): VcJWTPayload => {
         }
     }
 
-    delete ret.credentialSubject
-    delete ret.vc.id
-    delete ret.issuer
-    delete ret.issuanceDate
-    delete ret.expirationDate
-    delete ret.id
+    if (vc.expirationDate){
+        ret.exp = isoToNumericDate(vc.expirationDate);
+    }
+
+    delete ret["credentialSubject"]
+    delete ret.vc["id"]
+    delete ret["issuer"]
+    delete ret["issuanceDate"]
+    delete ret["expirationDate"]
+    delete ret["id"]
 
     return ret
 }
@@ -91,13 +100,15 @@ export const jwtPayloadToVc = (pIn: VcJWTPayload): VC => {
     const ret ={
         ...p,
         issuer: p.iss,
-        issuanceDate: p.nbf,
-        expirationDate: p.exp,
+        issuanceDate: numericToIsoDate(p.nbf),
         id: p.jti,
         credentialSubject: {
             ...(p.vc),
             id: p.sub
         }
+    }
+    if (p.exp) {
+        ret.expirationDate = numericToIsoDate(p.exp)
     }
 
     delete ret.iss;

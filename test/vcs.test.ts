@@ -24,6 +24,8 @@ describe('CredentialManager', () => {
         expect(asVc.credentialSubject.id).toEqual(subject)
         expect(asVc.credentialSubject.fhirBundle.entry).toHaveLength(2)
 
+        expect(typeof asVc.issuanceDate).toBe('string')
+
         const patientUrl = asVc.credentialSubject.fhirBundle.entry[0].fullUrl
         const referenceToPatient = asVc.credentialSubject.fhirBundle.entry[1].resource.subject.reference
         expect(referenceToPatient).toEqual(patientUrl)
@@ -50,8 +52,13 @@ describe('CredentialManager', () => {
         expect(asJwtPayload.credentialSubject).toBeUndefined()
         expect(asJwtPayload.vc.id).toBeUndefined()
         expect(asJwtPayload.iss).toEqual(asVc.issuer)
-        expect(asJwtPayload.iat).toEqual(asVc.issuanceDate)
-        expect(asJwtPayload.nbf).toEqual(asVc.issuanceDate)
+
+        expect(typeof asJwtPayload.iat).toBe('number')
+        expect(asJwtPayload.iat).toEqual(CredentialManager.isoToNumericDate(asVc.issuanceDate))
+        
+        expect(typeof asJwtPayload.nbf).toBe('number')
+        expect(asJwtPayload.nbf).toEqual(CredentialManager.isoToNumericDate(asVc.issuanceDate))
+
         expect(asJwtPayload.jti).toEqual(asVc.id)
         expect(asJwtPayload.vc).toEqual({
             ...asVc.credentialSubject,
@@ -68,6 +75,7 @@ describe('CredentialManager', () => {
 
         expect(asVc).toEqual(asVcCloned)
         expect(asVcAgain).toEqual(asVc)
+        
     })
 
 
