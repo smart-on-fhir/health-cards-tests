@@ -1,5 +1,4 @@
-Lab
-## Using the hosted
+## Using the hosted demo components
 
 ### Mobile Wallet demo at https://c19.cards
 
