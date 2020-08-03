@@ -71,6 +71,9 @@ const CovidCard: React.FC<{
                 }, {
                     "name": "presentationContext",
                     "valueUri": "https://healthwallet.cards#presentation-context-online"
+                }, {
+                    "name": "encryptForKeyId",
+                    "valueString": "#encryption-key-1"
                 }]
             })
             credentials.then(response => {

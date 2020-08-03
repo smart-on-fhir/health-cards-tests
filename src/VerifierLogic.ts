@@ -74,7 +74,9 @@ export async function prepareSiopRequest(state: VerifierState) {
 export interface CredentialGenerationDetals {
     type: string,
     presentationContext: string,
-    identityClaims: string[]
+    identityClaims: string[],
+    encryptVc?: boolean,
+    encryptVcForKeyId?: string // just the id portion, i.e., `#` and everything after
 }
 
 export const defaultIdentityClaims = {
@@ -91,7 +93,8 @@ export const defaultIdentityClaims = {
 export const issueVcToHolder = async (state: VerifierState, details: CredentialGenerationDetals = {
     type: 'covid19',
     presentationContext: 'https://healthwallet.cards#presentation-context-online',
-    identityClaims: null
+    identityClaims: null,
+    encryptVc: true,
 }): Promise<any> => {
 
     const subjectDid = state.siopResponse.idTokenPayload.did;
@@ -110,14 +113,17 @@ export const issueVcToHolder = async (state: VerifierState, details: CredentialG
             extension: examplePatient.extension
         })
 
-
     const vc = CredentialManager.createVc(state.did, subjectDid, examplePatientRestricted, exampleClinicalResults)
     const vcPayload = CredentialManager.vcToJwtPayload(vc)
 
     const vcSigned = await state.sk.sign({ kid: state.did + '#signing-key-1' }, vcPayload);
     const vcVerifiedInline = await state.sk.verify(vcSigned);
     console.log("Verified?", vcSigned, vcVerifiedInline)
-    const vcEncrypted = await encryptFor(vcSigned, subjectDid, state.config.keyGenerators);
+
+
+    const vcEncrypted = details.encryptVc ? 
+         await encryptFor(vcSigned, subjectDid, state.config.keyGenerators, details.encryptVcForKeyId):
+         vcSigned;
 
     if (!state.config.skipVcPostToServer) {
         const vcCreated = await axios.post(`${serverBase}/lab/vcs/${encodeURIComponent(subjectDid)}`, {

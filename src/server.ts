@@ -128,7 +128,9 @@ app.post('/api/fhir/[\$]token', (req, res) => {
 });
 
 const patientToSiopResponse = {};
-app.get('/api/fhir/Patient/:patientID/[\$]HealthWallet.connect', async (req, res) => {
+app.get('/api/fhir/Patient/:patientID/[\$]HealthWallet.connect', async (req, res, err) => {
+    try {
+
     await dispatchToIssuer(prepareSiopRequest(issuerState));
 
     patientToSiopResponse[req.params.patientID] = issuerState.siopRequest.siopRequestPayload.state;
@@ -140,12 +142,16 @@ app.get('/api/fhir/Patient/:patientID/[\$]HealthWallet.connect', async (req, res
             'valueUri': openidUrl
         }]
     });
+    } catch (e) {
+        err(e);
+    }
 });
 
 async function getVcForPatient(patientId, details: CredentialGenerationDetals = {
     type: 'https://healthwallet.cards#covid19',
     presentationContext: 'https://healthwallet.cards#presentation-context-online',
-    identityClaims: null
+    identityClaims: null,
+    encryptVc: false
 }) {
     const state = patientToSiopResponse[patientId];
     if (!state) {
@@ -160,7 +166,9 @@ async function getVcForPatient(patientId, details: CredentialGenerationDetals = 
 }
 
 
-app.get('/api/fhir/DiagnosticReport', async (req, res) => {
+app.get('/api/fhir/DiagnosticReport', async (req, res, err) => {
+    try {
+
 
     const vc = await getVcForPatient(req.query.patient);
     const fullUrl = issuerState.config.serverBase;
@@ -190,10 +198,15 @@ app.get('/api/fhir/DiagnosticReport', async (req, res) => {
             }
         }]
     })
+    
+    } catch (e) {
+        err(e);
+    }
 });
 
 
-app.post('/api/fhir/Patient/:patientID/[\$]HealthWallet.issueVc', async (req, res) => {
+app.post('/api/fhir/Patient/:patientID/[\$]HealthWallet.issueVc', async (req, res, err) => {
+    try {
 
     const requestBody = (req.body || {})
 
@@ -209,10 +222,22 @@ app.post('/api/fhir/Patient/:patientID/[\$]HealthWallet.issueVc', async (req, re
         .filter(p => p.name === 'includeIdentityClaim')
         .map(p => p.valueString)
 
+    const requestedEncryptionKeyId = (requestBody.parameter || [])
+        .filter(p => p.name === 'encryptForKeyId')
+        .map(p => p.valueString)
+
+    if (requestedEncryptionKeyId.length > 0 && requestedEncryptionKeyId[0][0] !== "#") {
+        throw "Requested encryption key ID must start with '#', e.g., '#encryption-key-1'.";
+    }
+
+
+    const encryptVc =  requestedEncryptionKeyId.length === 1;
     const vc = await getVcForPatient(req.params.patientID, {
         type: requestedCredentialType,
         presentationContext: requestedPresentationContext,
-        identityClaims: requestedCredentialIdentityClaims.length > 0 ? requestedCredentialIdentityClaims : null
+        identityClaims: requestedCredentialIdentityClaims.length > 0 ? requestedCredentialIdentityClaims : null,
+        encryptVc,
+        encryptVcForKeyId: encryptVc ? requestedEncryptionKeyId[0] : undefined
     });
 
     res.json({
@@ -224,6 +249,10 @@ app.post('/api/fhir/Patient/:patientID/[\$]HealthWallet.issueVc', async (req, re
             }
         }]
     });
+        
+    } catch (e) {
+        err(e);
+    }
 });
 
 const initializeIssuer = async (): Promise<VerifierState> => {
@@ -267,7 +296,9 @@ const dispatchToIssuer = async (ePromise) => {
     issuerState = await issuerReducer(issuerState, e);
 };
 
-const siopBegin = async (req, res) => {
+const siopBegin = async (req, res, err?) => {
+    try {
+
     const id: string = (JWT.decode(req.body.siopRequest) as any).state;
 
     let responseResolve;
@@ -297,23 +328,36 @@ const siopBegin = async (req, res) => {
         responsePollingUrl: `/siop/${id}/response`,
         ...siopCache[id]
     });
+    } catch (e){ 
+        err && err(e);
+    }
 };
 app.post('/api/siop/begin', siopBegin);
 
-app.get('/api/siop/:id/response', async (req, res) => {
+app.get('/api/siop/:id/response', async (req, res, err) => {
+    try {
     const r = await siopCache[req.params.id].siopStateAfterResponse;
     res.send({
         state: req.params.id,
         id_token: r.idTokenRaw
     });
+        
+    } catch(e) {
+        err(e);
+    }
 });
 
-app.get('/api/siop/:id', async (req, res) => {
+app.get('/api/siop/:id', async (req, res, err) => {
+    try {
     const r = siopCache[req.params.id].siopStateAfterRequest;
     res.send(r.siopRequestPayloadSigned);
+    } catch (e) {
+        err(e);
+    }
 });
 
-app.post('/api/siop', async (req, res) => {
+app.post('/api/siop', async (req, res, err) => {
+    try {
     const body = qs.parse(req.body.toString());
     const state = body.state as string;
     const idTokenRaw = body.id_token as string;
@@ -323,15 +367,25 @@ app.post('/api/siop', async (req, res) => {
         idTokenPayload: null
     });
     res.send('Received SIOP Response');
+    } catch(e) {
+        err(e);
+    }
 });
 
-app.get('/api/did/:did', async (req, res) => {
+app.get('/api/did/:did', async (req, res, err) => {
+    try  {
     const didLong = decodeURIComponent(req.params.did);
     const didDoc = await resolveDid(didLong);
     res.json(didDoc.didDocument);
+    } catch (e) {
+        err(e)
+    }
 });
 
-app.post('/api/lab/vcs/:did', async (req, res) => {
+app.post('/api/lab/vcs/:did', async (req, res, err) => {
+    try {
+    
+        
     const did = decodeURIComponent(req.params.did);
     const vcs = req.body.vcs;
     const entry = {
@@ -340,57 +394,67 @@ app.post('/api/lab/vcs/:did', async (req, res) => {
     };
     vcCache[did] = entry;
     res.send('Received VC for DID');
+        
+    } catch (e) {
+        err(e);
+    }
 });
 
-app.get('/api/lab/vcs/:did', async (req, res) => {
+app.get('/api/lab/vcs/:did', async (req, res, err) => {
+    try {
     const did = decodeURIComponent(req.params.did);
     res.json(vcCache[did]);
+    } catch (e) {
+        err(e);
+    }
 });
 
 
-app.get('/api/test/did-doc', async (req, res) => {
+app.get('/api/test/did-doc', async (req, res, err) => {
+    try {
     const did = issuerState.did;
     const didDoc = await resolveDid(did);
     res.json(didDoc.didDocument);
+        
+    } catch (e) {
+        err(e);
+    }
 });
 
-app.get('/api/test/did-debug', async (req, res) => {
+app.get('/api/test/did-debug', (req, res) => {
     res.json(issuerState.didDebugging);
 });
 
 
 
-app.post('/api/test/validate-jws', async (req, res) => {
+app.post('/api/test/validate-jws', async (req, res, err) => {
     try {
         const jws = req.body.toString()
         const jwsVerified = await verifyJws(jws, keyGenerators);
         res.json(jwsVerified)
     } catch (e) {
-        res.status(500)
-        res.send(e);
+        err(e);
     }
 });
 
-app.post('/api/test/validate-jwe', async (req, res) => {
+app.post('/api/test/validate-jwe', async (req, res, err) => {
     try {
         const jwe = req.body.toString()
         const jwsVerified = await issuerState.ek.decrypt(jwe);
         res.json(jwsVerified)
     } catch (e) {
-        res.status(500)
-        res.send(e);
+        err(e);
     }
 });
 
-app.post('/api/test/encrypt-for-did', async (req, res) => {
+app.post('/api/test/encrypt-for-did', async (req, res, err) => {
     try {
         const did = req.body.did;
         const payload = req.body.payload;
-        const encrypted = await encryptFor(JSON.stringify(payload), did, keyGenerators)
+        const encrypted = await encryptFor(JSON.stringify(payload), did, keyGenerators, req.body.encryptForKeyId);
         res.json(encrypted)
     } catch (e) {
-        res.status(500)
-        res.send(e);
+        err(e);
     }
 });
 
