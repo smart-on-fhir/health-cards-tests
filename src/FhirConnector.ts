@@ -52,7 +52,7 @@ export default async (uiState: UiState, holderState: HolderState): Promise<FhirC
 
     const newSmartState: SmartState = { ...accessTokenResponse };
     const siopParameters = (await axios.get(uiState.fhirClient.server + `/Patient/${accessTokenResponse.patient}/$HealthWallet.connect`)).data;
-    const siopUrl = siopParameters.parameter.filter(p => p.name === 'openidUrl').map(p => p.valueUrl)[0];
+    const siopUrl = siopParameters.parameter.filter(p => p.name === 'openidUrl').map(p => p.valueUri)[0];
     return {
         newSmartState,
         siopUrl

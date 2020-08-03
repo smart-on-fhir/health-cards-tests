@@ -137,7 +137,7 @@ app.get('/api/fhir/Patient/:patientID/[\$]HealthWallet.connect', async (req, res
         'resourceType': 'Parameters',
         'parameter': [{
             'name': 'openidUrl',
-            'valueUrl': openidUrl
+            'valueUri': openidUrl
         }]
     });
 });
@@ -199,11 +199,11 @@ app.post('/api/fhir/Patient/:patientID/[\$]HealthWallet.issueVc', async (req, re
 
     const requestedCredentialType = (requestBody.parameter || [])
         .filter(p => p.name === 'credentialType')
-        .map(p => p.valueUrl)[0]
+        .map(p => p.valueUri)[0]
 
     const requestedPresentationContext = (requestBody.parameter || [])
         .filter(p => p.name === 'presentationContext')
-        .map(p => p.valueUrl)[0]
+        .map(p => p.valueUri)[0]
 
     const requestedCredentialIdentityClaims = (requestBody.parameter || [])
         .filter(p => p.name === 'includeIdentityClaim')
