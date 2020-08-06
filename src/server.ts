@@ -59,6 +59,7 @@ const siopCache: Record<string, {
     siopStateAfterRequest: VerifierState["siopRequest"],
     siopStateAfterResponse: Promise<VerifierState["siopResponse"]>,
     responseDeferred: {
+        pending: boolean,
         resolve: (r: VerifierResponse) => undefined;
         reject: (any) => undefined;
     }
@@ -156,6 +157,9 @@ async function getVcForPatient(patientId, details: CredentialGenerationDetals = 
     const state = patientToSiopResponse[patientId];
     if (!state) {
         return null
+    }
+    if (siopCache[state].responseDeferred.pending){
+        throw `No SIOP request has been completed for patient ${patientId}`;
     }
     const siopResponse = await siopCache[state].siopStateAfterResponse;
     const id_token = siopResponse.idTokenRaw;
@@ -321,11 +325,19 @@ const siopBegin = async (req, res, err?) => {
             siopResponsePollingUrl: null
         },
         siopStateAfterResponse: new Promise((resolveFn, rejectFn) => {
-            responseResolve = resolveFn;
-            responseReject = rejectFn;
+            responseResolve = (...args) => {
+                siopCache[id].responseDeferred.pending = false;
+                resolveFn(...args);
+            };
+            responseReject = (...args) => {
+                siopCache[id].responseDeferred.pending = false;
+                rejectFn(...args);
+            };
         }),
         responseDeferred: {
-            resolve: responseResolve, reject: responseReject
+            pending: true,
+            resolve: responseResolve,
+            reject: responseReject
         },
         ttl: new Date().getTime() + ttlMs
     };
