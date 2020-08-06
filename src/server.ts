@@ -162,6 +162,7 @@ async function getVcForPatient(patientId, details: CredentialGenerationDetals = 
     const withResponse = await issuerReducer(issuerState, await parseSiopResponse(id_token, issuerState));
     const afterIssued = await issuerReducer(withResponse, await issueVcToHolder(withResponse, details));
     const vc = afterIssued.issuedCredentials[0]
+
     return vc;
 }
 
@@ -239,6 +240,11 @@ app.post('/api/fhir/Patient/:patientID/[\$]HealthWallet.issueVc', async (req, re
         encryptVc,
         encryptVcForKeyId: encryptVc ? requestedEncryptionKeyId[0] : undefined
     });
+
+    if (!vc) {
+        throw "No VC Available matching requested claims, or VC generation failed";
+    }
+
 
     res.json({
         'resourceType': 'Parameters',
