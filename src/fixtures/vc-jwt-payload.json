@@ -1,145 +1,146 @@
 {
-  "@context": [
-    "https://www.w3.org/2018/credentials/v1"
-  ],
-  "type": [
-    "VerifiableCredential",
-    "https://healthwallet.cards#covid19",
-    "https://healthwallet.cards#presentation-context-online"
-  ],
-  "display": "COVID-19 Card for Eve Everywoman",
   "iss": "<<did:ion identifier for lab>>",
   "nbf": 1591037940,
   "iat": 1591037940,
   "sub": "<<did:identifier for subject if known>>",
-  "nonce": "pXwQ97uthrvLlh6HvsFjjQ",
+  "nonce": "f5qxXA6AxgY-5wdDOSYVzA",
   "vc": {
-    "fhirVersion": "1.0.2",
-    "fhirBundle": {
-      "resourceType": "Bundle",
-      "type": "collection",
-      "entry": [
-        {
-          "fullUrl": "urn:uuid:643e199d-1aaf-49af-8a3b-c7ae375d11ce",
-          "resource": {
-            "resourceType": "Patient",
-            "extension": [
-              {
-                "url": "https://github.com/TransparentHealth/800-63-3-trustmark#P",
-                "valueCode": "P2"
-              }
-            ],
-            "name": [
-              {
-                "family": [
-                  "Everywoman"
-                ],
-                "given": [
-                  "Eve"
+    "@context": [
+      "https://www.w3.org/2018/credentials/v1"
+    ],
+    "type": [
+      "VerifiableCredential",
+      "https://healthwallet.cards#covid19",
+      "https://healthwallet.cards#presentation-context-online"
+    ],
+    "credentialSubject": {
+      "fhirVersion": "1.0.2",
+      "fhirBundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "fullUrl": "urn:uuid:643e199d-1aaf-49af-8a3b-c7ae375d11ce",
+            "resource": {
+              "resourceType": "Patient",
+              "extension": [
+                {
+                  "url": "https://github.com/TransparentHealth/800-63-3-trustmark#P",
+                  "valueCode": "P2"
+                }
+              ],
+              "name": [
+                {
+                  "family": [
+                    "Everywoman"
+                  ],
+                  "given": [
+                    "Eve"
+                  ]
+                }
+              ],
+              "telecom": [
+                {
+                  "system": "phone",
+                  "value": "000-000-0000",
+                  "use": "mobile"
+                }
+              ]
+            }
+          },
+          {
+            "fullUrl": "urn:uuid:4fe4f8d4-9b6e-4780-8ea5-6b5791230c85",
+            "resource": {
+              "resourceType": "DiagnosticReport",
+              "status": "final",
+              "effectiveDateTime": "2020-06-01",
+              "subject": {
+                "reference": "urn:uuid:643e199d-1aaf-49af-8a3b-c7ae375d11ce"
+              },
+              "code": {
+                "coding": [
+                  {
+                    "system": "http://loinc.org",
+                    "code": "94508-9",
+                    "display": "SARS coronavirus 2 IgM Ab [Presence] in Serum or Plasma by Rapid immunoassay"
+                  }
+                ]
+              },
+              "issued": "2020-05-01T11:59:00-07:00",
+              "performer": {
+                "display": "Dr. Jones"
+              },
+              "result": [
+                {
+                  "reference": "urn:uuid:911791c4-5131-44ba-85bd-8e6bdf652fd4"
+                },
+                {
+                  "reference": "urn:uuid:05912d66-1e03-4dd1-91cf-b4769306c422"
+                }
+              ],
+              "conclusion": "Patient has passed through the acute phase of covid-19 infection as of May 1, 2020"
+            }
+          },
+          {
+            "fullUrl": "urn:uuid:911791c4-5131-44ba-85bd-8e6bdf652fd4",
+            "resource": {
+              "resourceType": "Observation",
+              "status": "final",
+              "effectiveDateTime": "2020-06-01",
+              "subject": {
+                "reference": "urn:uuid:643e199d-1aaf-49af-8a3b-c7ae375d11ce"
+              },
+              "code": {
+                "coding": [
+                  {
+                    "system": "http://loinc.org",
+                    "code": "94508-9",
+                    "display": "SARS coronavirus 2 IgM Ab [Presence] in Serum or Plasma by Rapid immunoassay"
+                  }
+                ]
+              },
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "system": "http://loinc.org",
+                    "code": "LA6577-6",
+                    "display": "Negative"
+                  }
                 ]
               }
-            ],
-            "telecom": [
-              {
-                "system": "phone",
-                "value": "000-000-0000",
-                "use": "mobile"
-              }
-            ]
-          }
-        },
-        {
-          "fullUrl": "urn:uuid:4fe4f8d4-9b6e-4780-8ea5-6b5791230c85",
-          "resource": {
-            "resourceType": "DiagnosticReport",
-            "status": "final",
-            "effectiveDateTime": "2020-06-01",
-            "subject": {
-              "reference": "urn:uuid:643e199d-1aaf-49af-8a3b-c7ae375d11ce"
-            },
-            "code": {
-              "coding": [
-                {
-                  "system": "http://loinc.org",
-                  "code": "94508-9",
-                  "display": "SARS coronavirus 2 IgM Ab [Presence] in Serum or Plasma by Rapid immunoassay"
-                }
-              ]
-            },
-            "issued": "2020-05-01T11:59:00-07:00",
-            "performer": {
-              "display": "Dr. Jones"
-            },
-            "result": [
-              {
-                "reference": "urn:uuid:911791c4-5131-44ba-85bd-8e6bdf652fd4"
+            }
+          },
+          {
+            "fullUrl": "urn:uuid:05912d66-1e03-4dd1-91cf-b4769306c422",
+            "resource": {
+              "resourceType": "Observation",
+              "status": "final",
+              "effectiveDateTime": "2020-06-01",
+              "subject": {
+                "reference": "urn:uuid:643e199d-1aaf-49af-8a3b-c7ae375d11ce"
               },
-              {
-                "reference": "urn:uuid:05912d66-1e03-4dd1-91cf-b4769306c422"
+              "code": {
+                "coding": [
+                  {
+                    "system": "http://loinc.org",
+                    "code": "94507-1",
+                    "display": "SARS coronavirus 2 IgG Ab [Presence] in Serum or Plasma by Rapid immunoassay"
+                  }
+                ]
+              },
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "system": "http://loinc.org",
+                    "code": "LA6576-8",
+                    "display": "Positive"
+                  }
+                ]
               }
-            ],
-            "conclusion": "Patient has passed through the acute phase of covid-19 infection as of May 1, 2020"
-          }
-        },
-        {
-          "fullUrl": "urn:uuid:911791c4-5131-44ba-85bd-8e6bdf652fd4",
-          "resource": {
-            "resourceType": "Observation",
-            "status": "final",
-            "effectiveDateTime": "2020-06-01",
-            "subject": {
-              "reference": "urn:uuid:643e199d-1aaf-49af-8a3b-c7ae375d11ce"
-            },
-            "code": {
-              "coding": [
-                {
-                  "system": "http://loinc.org",
-                  "code": "94508-9",
-                  "display": "SARS coronavirus 2 IgM Ab [Presence] in Serum or Plasma by Rapid immunoassay"
-                }
-              ]
-            },
-            "valueCodeableConcept": {
-              "coding": [
-                {
-                  "system": "http://loinc.org",
-                  "code": "LA6577-6",
-                  "display": "Negative"
-                }
-              ]
             }
           }
-        },
-        {
-          "fullUrl": "urn:uuid:05912d66-1e03-4dd1-91cf-b4769306c422",
-          "resource": {
-            "resourceType": "Observation",
-            "status": "final",
-            "effectiveDateTime": "2020-06-01",
-            "subject": {
-              "reference": "urn:uuid:643e199d-1aaf-49af-8a3b-c7ae375d11ce"
-            },
-            "code": {
-              "coding": [
-                {
-                  "system": "http://loinc.org",
-                  "code": "94507-1",
-                  "display": "SARS coronavirus 2 IgG Ab [Presence] in Serum or Plasma by Rapid immunoassay"
-                }
-              ]
-            },
-            "valueCodeableConcept": {
-              "coding": [
-                {
-                  "system": "http://loinc.org",
-                  "code": "LA6576-8",
-                  "display": "Positive"
-                }
-              ]
-            }
-          }
-        }
-      ]
+        ]
+      }
     }
   }
 }

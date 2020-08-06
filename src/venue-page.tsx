@@ -71,9 +71,9 @@ const App: React.FC<{
     let did, name, conclusion;
     if (displayResponse) {
         did = displayResponse.idTokenPayload.did.replace(/\?.*/, "");
-        const fhirName = displayResponse?.idTokenVcs[0].vc.fhirBundle.entry[0].resource.name[0]
+        const fhirName = displayResponse?.idTokenVcs[0].vc.credentialSubject.fhirBundle.entry[0].resource.name[0]
         name = fhirName?.given[0]  + " " + fhirName?.family[0]
-        conclusion = displayResponse?.idTokenVcs[0].vc.fhirBundle.entry[1].resource.conclusion
+        conclusion = displayResponse?.idTokenVcs[0].vc.credentialSubject.fhirBundle.entry[1].resource.conclusion
     }
 
     return <div style={{ paddingTop: "5em" }}>

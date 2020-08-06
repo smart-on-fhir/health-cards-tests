@@ -212,17 +212,21 @@ const presentationForEssentialClaims = (vcStore: HolderState["vcStore"], claims:
 
     const id_token = claims?.id_token;
 
-    const essential: string[] = Object
+    const essentialClaims: string[] = Object
         .entries(id_token || {})
         .filter(([k, v]) => v.essential)
         .map(([k, v]) => claimsForType(k as ClaimType, vcStore)[0])
     // TODO call flatMap to include all claims rather than 1st
 
-    if (!essential.length) return {};
+    if (!essentialClaims.length) return {};
 
     return {
         'vp': {
-            'verifiableCredential': essential
+            '@context': [
+                'https://www.w3.org/2018/credentials/v1',
+            ],
+            'type': ['VerifiablePresentation'],
+            'verifiableCredential': essentialClaims
         }
     }
 }

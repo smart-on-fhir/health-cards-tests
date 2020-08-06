@@ -101,7 +101,6 @@ export const issueVcToHolder = async (state: VerifierState, details: CredentialG
     const examplePatient = sampleVc.credentialSubject.fhirBundle.entry[0].resource
     const exampleClinicalResults = sampleVc.credentialSubject.fhirBundle.entry.slice(1).map(r => r.resource)
 
-    console.log("ISsue for", details)
     const examplePatientRestricted = defaultIdentityClaims[details.presentationContext]
         .filter(c => details.identityClaims === null || details.identityClaims.includes(c))
         .map(prop => prop.split(".")[1])
@@ -117,9 +116,6 @@ export const issueVcToHolder = async (state: VerifierState, details: CredentialG
     const vcPayload = CredentialManager.vcToJwtPayload(vc)
 
     const vcSigned = await state.sk.sign({ kid: state.did + '#signing-key-1' }, vcPayload);
-    const vcVerifiedInline = await state.sk.verify(vcSigned);
-    console.log("Verified?", vcSigned, vcVerifiedInline)
-
 
     const vcEncrypted = details.encryptVc ? 
          await encryptFor(vcSigned, subjectDid, state.config.keyGenerators, details.encryptVcForKeyId):

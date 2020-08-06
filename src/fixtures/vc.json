@@ -8,7 +8,6 @@
     "https://healthwallet.cards#presentation-context-online"],
   "issuer": "<<did:ion identifier for lab>>",
   "issuanceDate": "2020-06-01T11:59:00-07:00",
-  "display": "COVID-19 Card for Eve Everywoman",
   "credentialSubject": {
     "id": "<<did:identifier for subject if known>>",
     "fhirVersion": "1.0.2",

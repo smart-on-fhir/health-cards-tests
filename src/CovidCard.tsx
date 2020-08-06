@@ -84,12 +84,12 @@ const CovidCard: React.FC<{
     }, [smartState, holderState.interactions])
 
     const conclusions = holderState.vcStore.flatMap(vc =>
-        vc.vcPayload.vc.fhirBundle.entry
+        vc.vcPayload.vc.credentialSubject.fhirBundle.entry
             .filter(e => e.resource.resourceType === 'DiagnosticReport')
             .flatMap(e => e.resource.conclusion))
 
     const resources = holderState.vcStore.flatMap(vc =>
-        vc.vcPayload.vc.fhirBundle.entry
+        vc.vcPayload.vc.credentialSubject.fhirBundle.entry
             .flatMap(e => e.resource))
 
 
