@@ -239,7 +239,7 @@ export async function prepareSiopResponse(state: HolderState) {
     const idTokenPayload = {
         'iss': 'https://self-issued.me',
         'aud': interaction.siopRequest.client_id,
-        'nonce': base64url.encode(crypto.randomBytes(16)),
+        'nonce': interaction.siopRequest?.nonce,
         'iat': new Date().getTime() / 1000,
         'exp': new Date().getTime() / 1000 + 120,
         'did': state.did,
