@@ -157,12 +157,10 @@ async function getVcForPatient(patientId, details: CredentialGenerationDetals = 
     encryptVc: false
 }) {
     const state = patientToSiopResponse[patientId];
-    if (!state) {
-        return null
+    if (!state || siopCache[state].responseDeferred.pending){ 
+        throw new OperationOutcomeError("no-did-bound", `No SIOP request has been completed for patient ${patientId}`)
     }
-    if (siopCache[state].responseDeferred.pending){
-        throw `No SIOP request has been completed for patient ${patientId}`;
-    }
+    
     const siopResponse = await siopCache[state].siopStateAfterResponse;
     const id_token = siopResponse.idTokenRaw;
     const withResponse = await issuerReducer(issuerState, await parseSiopResponse(id_token, issuerState));
@@ -211,6 +209,15 @@ app.get('/api/fhir/DiagnosticReport', async (req, res, err) => {
     }
 });
 
+class OperationOutcomeError extends Error {
+  public code: string;
+  public display: string;
+  constructor(code: string, display: string) {
+    super();
+    this.code = code;
+    this.display = display;
+  }
+}
 
 app.post('/api/fhir/Patient/:patientID/[\$]HealthWallet.issueVc', async (req, res, err) => {
     try {
@@ -327,9 +334,6 @@ const siopBegin = async (req, res, err?) => {
 
     let responseResolve;
     let responseReject;
-
-    let vcResolve
-    let vcReject;
 
     siopCache[id] = {
         siopStateAfterRequest: {
@@ -497,6 +501,25 @@ app.post('/api/test/encrypt-for-did', async (req, res, err) => {
 app.use(express.static('dist/static', {
     extensions: ['html']
 }));
+
+
+app.use(function(err, req, res, next) {
+  console.error(err)
+  res.status(500).json({
+  "resourceType": "OperationOutcome",
+  "issue": [{
+      "severity": "error",
+      "code": "processing",
+      "diagnostics": err + "\n" + err.message + "\n" + err.stack,
+      "details": {
+          coding: err.code ? [{
+              "system": "https://healthwallet.cards",
+              "code": err.code,
+              "display": err.display
+          }] : undefined
+      },
+    }]});
+})
 
 // start the Express server
 app.listen(port, () => {
