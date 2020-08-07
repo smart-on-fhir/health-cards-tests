@@ -26,6 +26,8 @@ import * as s2 from '@decentralized-identity/sidetree/dist/lib/bitcoin/protocol-
 const app = express();
 app.use(express.raw({ type: 'application/x-www-form-urlencoded', limit: '5000kb' }));
 app.use(express.json({ type: 'application/json', limit: '5000kb'}));
+app.use(express.json({ type: 'application/fhir+json', limit: '5000kb'}));
+app.use(express.json({ type: 'application/json+fhir', limit: '5000kb'}));
 app.use(cors());
 const port = 8080; // default port to listen
 
@@ -215,14 +217,26 @@ app.post('/api/fhir/Patient/:patientID/[\$]HealthWallet.issueVc', async (req, re
 
     const requestBody = (req.body || {})
 
+    if (typeof req.body !== "object"){
+        throw "No request body found"
+    }
+
     const requestedCredentialType = (requestBody.parameter || [])
         .filter(p => p.name === 'credentialType')
         .map(p => p.valueUri)[0]
+
+    if (!requestedCredentialType){
+        throw "No credentialType found in the Parameters"
+    }
 
     const requestedPresentationContext = (requestBody.parameter || [])
         .filter(p => p.name === 'presentationContext')
         .map(p => p.valueUri)[0]
 
+    if (!requestedPresentationContext){
+        throw "No presentationContext found in the Parameters"
+    }
+ 
     const requestedCredentialIdentityClaims = (requestBody.parameter || [])
         .filter(p => p.name === 'includeIdentityClaim')
         .map(p => p.valueString)
