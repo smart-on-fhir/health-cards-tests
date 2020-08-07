@@ -84,7 +84,7 @@ export const defaultIdentityClaims = {
         "Patient.telecom",
         "Patient.name",
     ],
-    "https://healthwallet.cardspresentation-context-in-person": [
+    "https://healthwallet.cards#presentation-context-in-person": [
         "Patient.name",
         "Patient.photo"
     ]
