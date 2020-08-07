@@ -100,6 +100,9 @@ export const issueVcToHolder = async (state: VerifierState, details: CredentialG
     const subjectDid = state.siopResponse.idTokenPayload.did;
     const examplePatient = sampleVc.credentialSubject.fhirBundle.entry[0].resource
     const exampleClinicalResults = sampleVc.credentialSubject.fhirBundle.entry.slice(1).map(r => r.resource)
+    console.log("issuing VC details", details)
+    console.log("issuing VC defaultIdentityClaims", defaultIdentityClaims)
+    console.log("issuing VC state", JSON.stringify(state, null, 2))
 
     const examplePatientRestricted = defaultIdentityClaims[details.presentationContext]
         .filter(c => details.identityClaims === null || details.identityClaims.includes(c))
