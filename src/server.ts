@@ -88,7 +88,7 @@ setInterval(() => {
 }, 1000 * 60);
 */
 
-const didConfig = '.well-known/did-configuration';
+const didConfig = '.well-known/did-configuration.json';
 app.get('/'  + didConfig, async (req, res, err) => {
     try {
         const issued = Math.round(new Date().getTime() / 1000 - 10 * 60); // ten minutes ago
