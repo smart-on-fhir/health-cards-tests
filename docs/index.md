@@ -19,3 +19,5 @@ The following codes are defined in the `https://healthwallet.cards` system, for 
 * `covid19`: Used for tagging a FHIR "key resource" as containing a VC of type `https://healthwallet.cards#covid19`
 
 * `immunization`: Used for tagging a FHIR "key resource" as containing a VC of type `https://healthwallet.cards#immunization`
+
+* `no-did-bound`: Used for `OperationOutcome.issue.code` when the `Patient/:id/$HealthWallet.issueVc` operation fails because no DID is bound to the Patient record

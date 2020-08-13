@@ -20,12 +20,13 @@ export async function verifyJws(jws: string, {
 // TODO remove 'JwsVerificationKey2020' when prototypes have updated
 const ENCRYPTION_KEY_TYPES = ['RSAEncryptionPublicKey', 'JwsVerificationKey2020']; 
 
-export async function encryptFor(jws: string, did: string, { generateEncryptionKey }: KeyGenerators) {
-    console.log("Called encryptFor with", jws, did)
+export async function encryptFor(jws: string, did: string, { generateEncryptionKey }: KeyGenerators, keyId?: string) {
     const didDoc = (await axios.get(resolveUrl + encodeURIComponent(did))).data;
-    const encryptionKey = didDoc.publicKey.filter(k => ENCRYPTION_KEY_TYPES.includes(k.type))[0];
-    console.log(" encryptFor found didDoc", didDoc)
-    console.log(" encryptFor found public key", encryptionKey)
+    const encryptionKeys = didDoc.publicKey.filter(k => ENCRYPTION_KEY_TYPES.includes(k.type));
+    
+    const encryptionKey = keyId ? encryptionKeys.filter(k => k.id === keyId)[0] : 
+                                  encryptionKeys[0];
+
     const ek = await generateEncryptionKey(encryptionKey.publicKeyJwk);
     return ek.encrypt({ kid: encryptionKey.kid }, jws);
 }

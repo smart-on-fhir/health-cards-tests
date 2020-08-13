@@ -74,7 +74,9 @@ export async function prepareSiopRequest(state: VerifierState) {
 export interface CredentialGenerationDetals {
     type: string,
     presentationContext: string,
-    identityClaims: string[]
+    identityClaims: string[],
+    encryptVc?: boolean,
+    encryptVcForKeyId?: string // just the id portion, i.e., `#` and everything after
 }
 
 export const defaultIdentityClaims = {
@@ -82,7 +84,7 @@ export const defaultIdentityClaims = {
         "Patient.telecom",
         "Patient.name",
     ],
-    "https://healthwallet.cardspresentation-context-in-person": [
+    "https://healthwallet.cards#presentation-context-in-person": [
         "Patient.name",
         "Patient.photo"
     ]
@@ -91,14 +93,17 @@ export const defaultIdentityClaims = {
 export const issueVcToHolder = async (state: VerifierState, details: CredentialGenerationDetals = {
     type: 'covid19',
     presentationContext: 'https://healthwallet.cards#presentation-context-online',
-    identityClaims: null
+    identityClaims: null,
+    encryptVc: true,
 }): Promise<any> => {
 
     const subjectDid = state.siopResponse.idTokenPayload.did;
     const examplePatient = sampleVc.credentialSubject.fhirBundle.entry[0].resource
     const exampleClinicalResults = sampleVc.credentialSubject.fhirBundle.entry.slice(1).map(r => r.resource)
+    console.log("issuing VC details", details)
+    console.log("issuing VC defaultIdentityClaims", defaultIdentityClaims)
+    console.log("issuing VC state", JSON.stringify(state, null, 2))
 
-    console.log("ISsue for", details)
     const examplePatientRestricted = defaultIdentityClaims[details.presentationContext]
         .filter(c => details.identityClaims === null || details.identityClaims.includes(c))
         .map(prop => prop.split(".")[1])
@@ -110,14 +115,14 @@ export const issueVcToHolder = async (state: VerifierState, details: CredentialG
             extension: examplePatient.extension
         })
 
-
     const vc = CredentialManager.createVc(state.did, subjectDid, examplePatientRestricted, exampleClinicalResults)
     const vcPayload = CredentialManager.vcToJwtPayload(vc)
 
     const vcSigned = await state.sk.sign({ kid: state.did + '#signing-key-1' }, vcPayload);
-    const vcVerifiedInline = await state.sk.verify(vcSigned);
-    console.log("Verified?", vcSigned, vcVerifiedInline)
-    const vcEncrypted = await encryptFor(vcSigned, subjectDid, state.config.keyGenerators);
+
+    const vcEncrypted = details.encryptVc ? 
+         await encryptFor(vcSigned, subjectDid, state.config.keyGenerators, details.encryptVcForKeyId):
+         vcSigned;
 
     if (!state.config.skipVcPostToServer) {
         const vcCreated = await axios.post(`${serverBase}/lab/vcs/${encodeURIComponent(subjectDid)}`, {

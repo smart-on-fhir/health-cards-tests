@@ -26,6 +26,8 @@ import * as s2 from '@decentralized-identity/sidetree/dist/lib/bitcoin/protocol-
 const app = express();
 app.use(express.raw({ type: 'application/x-www-form-urlencoded', limit: '5000kb' }));
 app.use(express.json({ type: 'application/json', limit: '5000kb'}));
+app.use(express.json({ type: 'application/fhir+json', limit: '5000kb'}));
+app.use(express.json({ type: 'application/json+fhir', limit: '5000kb'}));
 app.use(cors());
 const port = 8080; // default port to listen
 
@@ -59,6 +61,7 @@ const siopCache: Record<string, {
     siopStateAfterRequest: VerifierState["siopRequest"],
     siopStateAfterResponse: Promise<VerifierState["siopResponse"]>,
     responseDeferred: {
+        pending: boolean,
         resolve: (r: VerifierResponse) => undefined;
         reject: (any) => undefined;
     }
@@ -84,6 +87,51 @@ setInterval(() => {
     enforceTtl(vcCache)
 }, 1000 * 60);
 */
+
+const didConfig = '.well-known/did-configuration.json';
+app.get('/'  + didConfig, async (req, res, err) => {
+    try {
+        const issued = Math.round(new Date().getTime() / 1000 - 10 * 60); // ten minutes ago
+        const expires = Math.round(new Date().getTime() / 1000 + 10 * 60); // ten minutes from now
+        const response = {
+            "@context": "https://identity.foundation/.well-known/contexts/did-configuration-v0.0.jsonld",
+            "entries": [
+            await issuerState.sk.sign({
+                kid: issuerState.did + '#signing-key-1',
+                }, {
+                    sub: issuerState.did,
+                    iss: issuerState.did,
+                    nbf: issued,
+                    exp: expires,
+                    vc: {
+                        "@context": [
+                            "https://www.w3.org/2018/credentials/v1",
+                            "https://identity.foundation/.well-known/contexts/did-configuration-v0.0.jsonld"],
+                        issuer: issuerState.did,
+                        issuanceDate: new Date(issued * 1000).toISOString(),
+                        expirationDate: new Date(expires * 1000).toISOString(),
+                        type: [
+                            "VerifiableCredential",
+                            "DomainLinkageCredential"
+                        ],
+                        credentialSubject: {
+                            id: issuerState.did,
+                            origin: new URL(issuerState.config.serverBase).origin,
+                        }
+                    }
+                })
+
+        ]};
+
+        res.json(response)
+
+    }
+    catch (e) {
+        err(e);
+    }
+});
+
+
 const smartConfig = '.well-known/smart-configuration';
 app.get('/api/fhir/' + smartConfig, (req, res) => {
 
@@ -128,7 +176,9 @@ app.post('/api/fhir/[\$]token', (req, res) => {
 });
 
 const patientToSiopResponse = {};
-app.get('/api/fhir/Patient/:patientID/[\$]HealthWallet.connect', async (req, res) => {
+app.get('/api/fhir/Patient/:patientID/[\$]HealthWallet.connect', async (req, res, err) => {
+    try {
+
     await dispatchToIssuer(prepareSiopRequest(issuerState));
 
     patientToSiopResponse[req.params.patientID] = issuerState.siopRequest.siopRequestPayload.state;
@@ -137,30 +187,38 @@ app.get('/api/fhir/Patient/:patientID/[\$]HealthWallet.connect', async (req, res
         'resourceType': 'Parameters',
         'parameter': [{
             'name': 'openidUrl',
-            'valueUrl': openidUrl
+            'valueUri': openidUrl
         }]
     });
+    } catch (e) {
+        err(e);
+    }
 });
 
 async function getVcForPatient(patientId, details: CredentialGenerationDetals = {
     type: 'https://healthwallet.cards#covid19',
     presentationContext: 'https://healthwallet.cards#presentation-context-online',
-    identityClaims: null
+    identityClaims: null,
+    encryptVc: false
 }) {
     const state = patientToSiopResponse[patientId];
-    if (!state) {
-        return null
+    if (!state || siopCache[state].responseDeferred.pending){ 
+        throw new OperationOutcomeError("no-did-bound", `No SIOP request has been completed for patient ${patientId}`)
     }
+    
     const siopResponse = await siopCache[state].siopStateAfterResponse;
     const id_token = siopResponse.idTokenRaw;
     const withResponse = await issuerReducer(issuerState, await parseSiopResponse(id_token, issuerState));
     const afterIssued = await issuerReducer(withResponse, await issueVcToHolder(withResponse, details));
     const vc = afterIssued.issuedCredentials[0]
+
     return vc;
 }
 
 
-app.get('/api/fhir/DiagnosticReport', async (req, res) => {
+app.get('/api/fhir/DiagnosticReport', async (req, res, err) => {
+    try {
+
 
     const vc = await getVcForPatient(req.query.patient);
     const fullUrl = issuerState.config.serverBase;
@@ -190,30 +248,73 @@ app.get('/api/fhir/DiagnosticReport', async (req, res) => {
             }
         }]
     })
+    
+    } catch (e) {
+        err(e);
+    }
 });
 
+class OperationOutcomeError extends Error {
+  public code: string;
+  public display: string;
+  constructor(code: string, display: string) {
+    super();
+    this.code = code;
+    this.display = display;
+  }
+}
 
-app.post('/api/fhir/Patient/:patientID/[\$]HealthWallet.issueVc', async (req, res) => {
+app.post('/api/fhir/Patient/:patientID/[\$]HealthWallet.issueVc', async (req, res, err) => {
+    try {
 
     const requestBody = (req.body || {})
 
+    if (typeof req.body !== "object"){
+        throw "No request body found"
+    }
+
     const requestedCredentialType = (requestBody.parameter || [])
         .filter(p => p.name === 'credentialType')
-        .map(p => p.valueUrl)[0]
+        .map(p => p.valueUri)[0]
+
+    if (!requestedCredentialType){
+        throw "No credentialType found in the Parameters"
+    }
 
     const requestedPresentationContext = (requestBody.parameter || [])
         .filter(p => p.name === 'presentationContext')
-        .map(p => p.valueUrl)[0]
+        .map(p => p.valueUri)[0]
 
+    if (!requestedPresentationContext){
+        throw "No presentationContext found in the Parameters"
+    }
+ 
     const requestedCredentialIdentityClaims = (requestBody.parameter || [])
         .filter(p => p.name === 'includeIdentityClaim')
         .map(p => p.valueString)
 
+    const requestedEncryptionKeyId = (requestBody.parameter || [])
+        .filter(p => p.name === 'encryptForKeyId')
+        .map(p => p.valueString)
+
+    if (requestedEncryptionKeyId.length > 0 && requestedEncryptionKeyId[0][0] !== "#") {
+        throw "Requested encryption key ID must start with '#', e.g., '#encryption-key-1'.";
+    }
+
+
+    const encryptVc =  requestedEncryptionKeyId.length === 1;
     const vc = await getVcForPatient(req.params.patientID, {
         type: requestedCredentialType,
         presentationContext: requestedPresentationContext,
-        identityClaims: requestedCredentialIdentityClaims.length > 0 ? requestedCredentialIdentityClaims : null
+        identityClaims: requestedCredentialIdentityClaims.length > 0 ? requestedCredentialIdentityClaims : null,
+        encryptVc,
+        encryptVcForKeyId: encryptVc ? requestedEncryptionKeyId[0] : undefined
     });
+
+    if (!vc) {
+        throw "No VC Available matching requested claims, or VC generation failed";
+    }
+
 
     res.json({
         'resourceType': 'Parameters',
@@ -224,6 +325,10 @@ app.post('/api/fhir/Patient/:patientID/[\$]HealthWallet.issueVc', async (req, re
             }
         }]
     });
+        
+    } catch (e) {
+        err(e);
+    }
 });
 
 const initializeIssuer = async (): Promise<VerifierState> => {
@@ -267,14 +372,13 @@ const dispatchToIssuer = async (ePromise) => {
     issuerState = await issuerReducer(issuerState, e);
 };
 
-const siopBegin = async (req, res) => {
+const siopBegin = async (req, res, err?) => {
+    try {
+
     const id: string = (JWT.decode(req.body.siopRequest) as any).state;
 
     let responseResolve;
     let responseReject;
-
-    let vcResolve
-    let vcReject;
 
     siopCache[id] = {
         siopStateAfterRequest: {
@@ -284,11 +388,19 @@ const siopBegin = async (req, res) => {
             siopResponsePollingUrl: null
         },
         siopStateAfterResponse: new Promise((resolveFn, rejectFn) => {
-            responseResolve = resolveFn;
-            responseReject = rejectFn;
+            responseResolve = (...args) => {
+                siopCache[id].responseDeferred.pending = false;
+                resolveFn(...args);
+            };
+            responseReject = (...args) => {
+                siopCache[id].responseDeferred.pending = false;
+                rejectFn(...args);
+            };
         }),
         responseDeferred: {
-            resolve: responseResolve, reject: responseReject
+            pending: true,
+            resolve: responseResolve,
+            reject: responseReject
         },
         ttl: new Date().getTime() + ttlMs
     };
@@ -297,23 +409,36 @@ const siopBegin = async (req, res) => {
         responsePollingUrl: `/siop/${id}/response`,
         ...siopCache[id]
     });
+    } catch (e){ 
+        err && err(e);
+    }
 };
 app.post('/api/siop/begin', siopBegin);
 
-app.get('/api/siop/:id/response', async (req, res) => {
+app.get('/api/siop/:id/response', async (req, res, err) => {
+    try {
     const r = await siopCache[req.params.id].siopStateAfterResponse;
     res.send({
         state: req.params.id,
         id_token: r.idTokenRaw
     });
+        
+    } catch(e) {
+        err(e);
+    }
 });
 
-app.get('/api/siop/:id', async (req, res) => {
+app.get('/api/siop/:id', async (req, res, err) => {
+    try {
     const r = siopCache[req.params.id].siopStateAfterRequest;
     res.send(r.siopRequestPayloadSigned);
+    } catch (e) {
+        err(e);
+    }
 });
 
-app.post('/api/siop', async (req, res) => {
+app.post('/api/siop', async (req, res, err) => {
+    try {
     const body = qs.parse(req.body.toString());
     const state = body.state as string;
     const idTokenRaw = body.id_token as string;
@@ -323,15 +448,25 @@ app.post('/api/siop', async (req, res) => {
         idTokenPayload: null
     });
     res.send('Received SIOP Response');
+    } catch(e) {
+        err(e);
+    }
 });
 
-app.get('/api/did/:did', async (req, res) => {
+app.get('/api/did/:did', async (req, res, err) => {
+    try  {
     const didLong = decodeURIComponent(req.params.did);
     const didDoc = await resolveDid(didLong);
     res.json(didDoc.didDocument);
+    } catch (e) {
+        err(e)
+    }
 });
 
-app.post('/api/lab/vcs/:did', async (req, res) => {
+app.post('/api/lab/vcs/:did', async (req, res, err) => {
+    try {
+    
+        
     const did = decodeURIComponent(req.params.did);
     const vcs = req.body.vcs;
     const entry = {
@@ -340,57 +475,67 @@ app.post('/api/lab/vcs/:did', async (req, res) => {
     };
     vcCache[did] = entry;
     res.send('Received VC for DID');
+        
+    } catch (e) {
+        err(e);
+    }
 });
 
-app.get('/api/lab/vcs/:did', async (req, res) => {
+app.get('/api/lab/vcs/:did', async (req, res, err) => {
+    try {
     const did = decodeURIComponent(req.params.did);
     res.json(vcCache[did]);
+    } catch (e) {
+        err(e);
+    }
 });
 
 
-app.get('/api/test/did-doc', async (req, res) => {
+app.get('/api/test/did-doc', async (req, res, err) => {
+    try {
     const did = issuerState.did;
     const didDoc = await resolveDid(did);
     res.json(didDoc.didDocument);
+        
+    } catch (e) {
+        err(e);
+    }
 });
 
-app.get('/api/test/did-debug', async (req, res) => {
+app.get('/api/test/did-debug', (req, res) => {
     res.json(issuerState.didDebugging);
 });
 
 
 
-app.post('/api/test/validate-jws', async (req, res) => {
+app.post('/api/test/validate-jws', async (req, res, err) => {
     try {
         const jws = req.body.toString()
         const jwsVerified = await verifyJws(jws, keyGenerators);
         res.json(jwsVerified)
     } catch (e) {
-        res.status(500)
-        res.send(e);
+        err(e);
     }
 });
 
-app.post('/api/test/validate-jwe', async (req, res) => {
+app.post('/api/test/validate-jwe', async (req, res, err) => {
     try {
         const jwe = req.body.toString()
         const jwsVerified = await issuerState.ek.decrypt(jwe);
         res.json(jwsVerified)
     } catch (e) {
-        res.status(500)
-        res.send(e);
+        err(e);
     }
 });
 
-app.post('/api/test/encrypt-for-did', async (req, res) => {
+app.post('/api/test/encrypt-for-did', async (req, res, err) => {
     try {
         const did = req.body.did;
         const payload = req.body.payload;
-        const encrypted = await encryptFor(JSON.stringify(payload), did, keyGenerators)
+        const encrypted = await encryptFor(JSON.stringify(payload), did, keyGenerators, req.body.encryptForKeyId);
         res.json(encrypted)
     } catch (e) {
-        res.status(500)
-        res.send(e);
+        err(e);
     }
 });
 
@@ -401,6 +546,25 @@ app.post('/api/test/encrypt-for-did', async (req, res) => {
 app.use(express.static('dist/static', {
     extensions: ['html']
 }));
+
+
+app.use(function(err, req, res, next) {
+  console.error(err)
+  res.status(500).json({
+  "resourceType": "OperationOutcome",
+  "issue": [{
+      "severity": "error",
+      "code": "processing",
+      "diagnostics": err + "\n" + err.message + "\n" + err.stack,
+      "details": {
+          coding: err.code ? [{
+              "system": "https://healthwallet.cards",
+              "code": err.code,
+              "display": err.display
+          }] : undefined
+      },
+    }]});
+})
 
 // start the Express server
 app.listen(port, () => {

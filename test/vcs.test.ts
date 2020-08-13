@@ -17,7 +17,7 @@ const clinicalResource = {
 
 describe('CredentialManager', () => {
 
-    test('Does not alter inpupts', () => {
+    test('Does not alter inputs', () => {
         const asVc = CredentialManager.createVc(issuer, subject, idResource, [clinicalResource])
 
         expect(asVc.issuer).toEqual(issuer)
@@ -52,6 +52,8 @@ describe('CredentialManager', () => {
         expect(asJwtPayload.credentialSubject).toBeUndefined()
         expect(asJwtPayload.vc.id).toBeUndefined()
         expect(asJwtPayload.iss).toEqual(asVc.issuer)
+        expect(asJwtPayload.vc.type).toHaveLength(3);
+        expect(asJwtPayload.vc["@context"]).toBeDefined();
 
         expect(typeof asJwtPayload.iat).toBe('number')
         expect(asJwtPayload.iat).toEqual(CredentialManager.isoToNumericDate(asVc.issuanceDate))
@@ -60,7 +62,7 @@ describe('CredentialManager', () => {
         expect(asJwtPayload.nbf).toEqual(CredentialManager.isoToNumericDate(asVc.issuanceDate))
 
         expect(asJwtPayload.jti).toEqual(asVc.id)
-        expect(asJwtPayload.vc).toEqual({
+        expect(asJwtPayload.vc.credentialSubject).toEqual({
             ...asVc.credentialSubject,
             id: undefined
         })
@@ -80,7 +82,6 @@ describe('CredentialManager', () => {
 
 
     test('prints', ()=>{
-        
         const x = require('../src/fixtures/vc.json')
         const asVc = CredentialManager.vcToJwtPayload(x)
         console.log(JSON.stringify(asVc, null, 2))

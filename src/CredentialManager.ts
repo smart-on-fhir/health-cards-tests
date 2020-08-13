@@ -40,6 +40,8 @@ export const createVc = (issuer: string, subject: string, fhirIdentityResource: 
 }
 
 interface VC {
+    "@context": string[],
+    type: string[],
     id?: string;
     issuer?: string;
     issuanceDate?: string;
@@ -68,28 +70,24 @@ export const vcToJwtPayload = (vcIn: VC): VcJWTPayload => {
     const vc = deepcopy(vcIn) as VC
 
     const ret: VcJWTPayload = {
-        ...vc,
         iss: vc.issuer,
         nbf: isoToNumericDate( vc.issuanceDate),
         iat: isoToNumericDate(vc.issuanceDate),
+        exp: vc.expirationDate ?  isoToNumericDate(vc.expirationDate) : undefined,
         jti: vc.id,
         sub: vc.credentialSubject.id,
         nonce: base64url.encode(crypto.randomBytes(16)),
         vc: {
-            ...vc.credentialSubject,
+            ...vc,
+            issuer: undefined,
+            issuanceDate: undefined,
+            id: undefined,
+            credentialSubject: {
+                ...vc.credentialSubject,
+                id: undefined
+            },
         }
     }
-
-    if (vc.expirationDate){
-        ret.exp = isoToNumericDate(vc.expirationDate);
-    }
-
-    delete ret["credentialSubject"]
-    delete ret.vc["id"]
-    delete ret["issuer"]
-    delete ret["issuanceDate"]
-    delete ret["expirationDate"]
-    delete ret["id"]
 
     return ret
 }
@@ -98,28 +96,24 @@ export const jwtPayloadToVc = (pIn: VcJWTPayload): VC => {
     const p = deepcopy(pIn)
 
     const ret ={
-        ...p,
+        ...(p.vc),
+        vc: undefined,
         issuer: p.iss,
+        iss: undefined,
+        iat: undefined,
         issuanceDate: numericToIsoDate(p.nbf),
+        nbf: undefined,
         id: p.jti,
+        jti: undefined,
         credentialSubject: {
-            ...(p.vc),
+            ...(p.vc.credentialSubject),
             id: p.sub
-        }
+        },
+        sub: undefined,
+        expirationDate: p.exp ? numericToIsoDate(p.exp) : undefined,
+        exp: undefined
     }
-    if (p.exp) {
-        ret.expirationDate = numericToIsoDate(p.exp)
-    }
-
-    delete ret.iss;
-    delete ret.iat;
-    delete ret.nbf;
-    delete ret.exp;
-    delete ret.jti;
-    delete ret.sub;
+    
     delete ret.nonce;
-    delete ret.vc;
-
     return JSON.parse(JSON.stringify(ret))
-
 }

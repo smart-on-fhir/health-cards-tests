@@ -67,10 +67,13 @@ const CovidCard: React.FC<{
                 "resourceType": "Parameters",
                 "parameter": [{
                     "name": "credentialType",
-                    "valueUrl": "https://healthwallet.cards#covid19"
+                    "valueUri": "https://healthwallet.cards#covid19"
                 }, {
                     "name": "presentationContext",
-                    "valueUrl": "https://healthwallet.cards#presentation-context-online"
+                    "valueUri": "https://healthwallet.cards#presentation-context-online"
+                }, {
+                    "name": "encryptForKeyId",
+                    "valueString": "#encryption-key-1"
                 }]
             })
             credentials.then(response => {
@@ -81,12 +84,12 @@ const CovidCard: React.FC<{
     }, [smartState, holderState.interactions])
 
     const conclusions = holderState.vcStore.flatMap(vc =>
-        vc.vcPayload.vc.fhirBundle.entry
+        vc.vcPayload.vc.credentialSubject.fhirBundle.entry
             .filter(e => e.resource.resourceType === 'DiagnosticReport')
             .flatMap(e => e.resource.conclusion))
 
     const resources = holderState.vcStore.flatMap(vc =>
-        vc.vcPayload.vc.fhirBundle.entry
+        vc.vcPayload.vc.credentialSubject.fhirBundle.entry
             .flatMap(e => e.resource))
 
 
