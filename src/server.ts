@@ -341,7 +341,8 @@ const initializeIssuer = async (): Promise<VerifierState> => {
         encryptionPublicJwk: ek.publicJwk,
         signingPublicJwk: sk.publicJwk,
         recoveryPublicJwk: rk.publicJwk,
-        updatePublicJwk: uk.publicJwk
+        updatePublicJwk: uk.publicJwk,
+        domains: [new URL(process.env.SERVER_BASE).origin]
     });
     return {
         config: {
