@@ -35,7 +35,7 @@ const resolveKeyId = async (kid: string): Promise<JsonWebKey> => {
     const didDoc = (await axios.get(resolveUrl + encodeURIComponent(kid))).data;
     return didDoc.publicKey.filter(k => k.id === fragment)[0].publicKeyJwk;
 };
-export async function generateDid({ signingPublicJwk, encryptionPublicJwk, recoveryPublicJwk, updatePublicJwk }) {
+export async function generateDid({ signingPublicJwk, encryptionPublicJwk, recoveryPublicJwk, updatePublicJwk, domains = [] as string[]}) {
     const hashAlgorithmName = multihashes.codes[18];
     const hash = (b: string|Buffer) => multihashes.encode(crypto.createHash('sha256').update(b).digest(), hashAlgorithmName);
 
@@ -47,10 +47,7 @@ export async function generateDid({ signingPublicJwk, encryptionPublicJwk, recov
     };
     const [recoveryValue, recoveryCommitment] = revealCommitPair(recoveryPublicJwk);
     const [updateValue, updateCommitment] = revealCommitPair(updatePublicJwk);
-
-    const delta: Record<string, any> = {
-        'update_commitment': updateCommitment,
-        'patches': [{
+    let patches: {action: string, public_keys?: any, service_endpoints?: any}[] = [{
             action: 'add-public-keys',
             public_keys: [{
                 id: 'signing-key-1',
@@ -64,6 +61,20 @@ export async function generateDid({ signingPublicJwk, encryptionPublicJwk, recov
                 jwk: encryptionPublicJwk
             }]
         }]
+    if (domains.length > 0) {
+        patches.push({
+            "action": "add-service-endpoints",
+            "service_endpoints": [{
+                "id": "linked-domain",
+                "type": "LinkedDomains",
+                "endpoint": domains[0]
+                }]
+            });
+    } 
+    console.log("Patches", JSON.stringify(patches, null, 2));
+    const delta: Record<string, any> = {
+        'update_commitment': updateCommitment,
+        patches
     };
     const deltaCanonical = JSON.stringify(delta);
     const deltaEncoded = base64url.encode(deltaCanonical);
