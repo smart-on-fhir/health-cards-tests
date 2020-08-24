@@ -76,7 +76,7 @@ export interface HolderState {
     qrCodeUrl?: string;
     interactions: SiopInteraction[];
     vcStore: {
-        type: ClaimType,
+        type: ClaimType[],
         vcSigned: string,
         vcPayload: any;
     }[]
@@ -170,14 +170,15 @@ export async function holderReducer(state: HolderState, event: any): Promise<Hol
 
 
     }
+
     if (event.type === 'vc-retrieved') {
         return {
             ...state,
-            vcStore: [...state.vcStore, {
-                type: 'https://healthwallet.cards#covid19', // TODO inspect VC for type
-                vcSigned: event.vc,
-                vcPayload: event.vcPayload
-            }]
+            vcStore: [...state.vcStore, ...event.vcs.map(vcDetails => ({
+                type: vcDetails.type,
+                vcSigned: vcDetails.vcSigned,
+                vcPayload: vcDetails.vcPayload
+            }))]
         }
 
     }
@@ -201,7 +202,7 @@ export async function receiveSiopRequest(qrCodeUrl: string, state: HolderState) 
 }
 
 const claimsForType = (k: ClaimType, vcStore: HolderState["vcStore"]) => {
-    return vcStore.filter(({ type }) => type === k).map(({ vcSigned }) => vcSigned)
+    return vcStore.filter(({ type }) => type.find(t => t === k)).map(({ vcSigned }) => vcSigned)
 }
 
 const presentationForEssentialClaims = (vcStore: HolderState["vcStore"], claims: {
@@ -273,11 +274,25 @@ export async function prepareSiopResponse(state: HolderState) {
     });
 }
 
-export async function retrieveVcs(vcs: any, state: HolderState) {
-    const vcRetrieved = vcs[0]
-    const vcDecrypted = await state.ek.decrypt(vcs[0]);
-    const vcVerified = await verifyJws(vcDecrypted, keyGenerators);
-    if (vcVerified.valid) {
-        return ({ 'type': 'vc-retrieved', vc: vcDecrypted, verified: vcVerified.valid, vcPayload: vcVerified.payload })
-    }
+export async function retrieveVcs(vcs: string[], state: HolderState) {
+
+    const vcsExpanded = await Promise.all(vcs.map(async (vcEncrypted) => {
+        const vcSigned = await state.ek.decrypt(vcEncrypted);
+        const vcVerified = await verifyJws(vcSigned, keyGenerators);
+
+        if (!vcVerified.valid) {
+            throw `Invalid Vc signature on ${vcSigned} --> ${vcSigned}`
+        }
+
+
+        return {
+            type: vcVerified.payload.vc.type,
+            vcSigned,
+            verified: vcVerified.valid,
+            vcPayload: vcVerified.payload
+        }
+    }))
+    console.log({ 'type': 'vc-retrieved', vcs: vcsExpanded })
+
+    return ({ 'type': 'vc-retrieved', vcs: vcsExpanded })
 }

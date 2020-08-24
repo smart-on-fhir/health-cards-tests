@@ -1,0 +1,86 @@
+{
+  "iss": "<<did:ion identifier for lab>>",
+  "nbf": 1597957752,
+  "iat": 1597957752,
+  "sub": "<<did:ion identifier for subject>>",
+  "nonce": "FD790F250D50-BCF95D9ECB7E",
+  "vc": {
+    "@context": [
+      "https://www.w3.org/2018/credentials/v1"
+    ],
+    "type": [
+      "VerifiableCredential",
+      "https://healthwallet.cards#health-card",
+      "https://healthwallet.cards#immunization",
+      "https://healthwallet.cards#tdap",
+      "https://healthwallet.cards#presentation-context-online"
+    ],
+    "credentialSubject": {
+      "fhirVersion": "1.0.2",
+      "fhirBundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "fullUrl": "urn:uuid:5372596F-4D2F-48D1-A2BC-19A3D8F583A8",
+            "resource": {
+              "resourceType": "Patient",
+              "extension": [
+                {
+                  "url": "https://github.com/TransparentHealth/800-63-3-trustmark#P",
+                  "valueCode": "P1"
+                }
+              ],
+              "name": [
+                {
+                  "family": [
+                    "Everywoman"
+                  ],
+                  "given": [
+                    "Evelyn"
+                  ]
+                }
+              ],
+              "telecom": [
+                {
+                  "system": "phone",
+                  "value": "617-000-0000",
+                  "use": "mobile"
+                }
+              ]
+            }
+          },
+          {
+            "fullUrl": "urn:uuid:DCA0BCF9-0814-430D-904A-4B834900B915",
+            "resource": {
+              "resourceType": "Immunization",
+              "status": "completed",
+              "date": "2020-04-28",
+              "vaccineCode": {
+                "coding": [
+                  {
+                    "system": "http://hl7.org/fhir/sid/cvx",
+                    "code": "115",
+                    "display": "tetanus toxoid, reduced diphtheria toxoid, and acellular pertussis vaccine, adsorbed"
+                  }
+                ]
+              },
+              "location": {
+                "display": "ACME Labs, 101 Main Street, Springfield ST"
+              },
+              "lotNumber": "ASX-3528",
+              "patient": {
+                "reference": "urn:uuid:5372596F-4D2F-48D1-A2BC-19A3D8F583A8"
+              },
+              "performer": {
+                "display": "Maria S, RN"
+              },
+              "reported": false,
+              "wasNotGiven": false
+            }
+          }
+        ]
+      }
+    }
+  }
+}

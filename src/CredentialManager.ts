@@ -1,10 +1,11 @@
-import sampleVc from './fixtures/vc.json';
+import emptyVc from './fixtures/vc-empty.json';
 import deepcopy from 'deepcopy';
 import * as uuid from 'uuid';
 import crypto from 'crypto'
 
 import { randomBytes } from 'crypto';
 import base64url from 'base64url';
+import { relative } from 'path';
 
 const generateUri = () => `urn:uuid:${uuid.v4()}`
 
@@ -13,8 +14,14 @@ interface Entry {
     resource: any;
 }
 
-export const createVc = (issuer: string, subject: string, fhirIdentityResource: any, fhirClniicalResources: any[]) => {
-    const vc: VC = deepcopy(sampleVc);
+
+const unique = (values: string[]): string[]  => {
+    let ret = Object.keys(values.reduce((types, t) => {types[t]=true; return types}, {}));
+    ret.sort();
+    return ret;
+}
+export const createVc = (presentationContext: string, types: string[], issuer: string, subject: string, fhirIdentityResource: any, fhirClniicalResources: any[]) => {
+    const vc: VC = deepcopy(emptyVc);
 
     vc.issuanceDate = new Date(vc.issuanceDate).toISOString()
 
@@ -34,6 +41,8 @@ export const createVc = (issuer: string, subject: string, fhirIdentityResource: 
     }))
 
     vc.issuer = issuer;
+
+    vc.type = unique([presentationContext, ...types])
     vc.credentialSubject.id = subject;
     vc.credentialSubject.fhirBundle.entry = [identityEntry, ...clinicalEntries]
     return vc

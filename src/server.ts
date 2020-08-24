@@ -17,7 +17,7 @@ import exampleDr from './fixtures/diagnostic-report.json'
 
 import { VerifierState } from './VerifierState';
 import { generateDid, verifyJws, encryptFor } from './dids';
-import { issuerReducer, prepareSiopRequest, issueVcToHolder, parseSiopResponse, CredentialGenerationDetals } from './VerifierLogic';
+import { issuerReducer, prepareSiopRequest, issueVcsToHolder, parseSiopResponse, CredentialGenerationDetals } from './VerifierLogic';
 
 import * as s1 from '@decentralized-identity/sidetree/dist/lib/core/versions/latest/protocol-parameters.json';
 import * as s2 from '@decentralized-identity/sidetree/dist/lib/bitcoin/protocol-parameters.json';
@@ -195,7 +195,7 @@ app.get('/api/fhir/Patient/:patientID/[\$]HealthWallet.connect', async (req, res
     }
 });
 
-async function getVcForPatient(patientId, details: CredentialGenerationDetals = {
+async function getVcsForPatient(patientId, details: CredentialGenerationDetals = {
     type: 'https://healthwallet.cards#covid19',
     presentationContext: 'https://healthwallet.cards#presentation-context-online',
     identityClaims: null,
@@ -209,10 +209,10 @@ async function getVcForPatient(patientId, details: CredentialGenerationDetals = 
     const siopResponse = await siopCache[state].siopStateAfterResponse;
     const id_token = siopResponse.idTokenRaw;
     const withResponse = await issuerReducer(issuerState, await parseSiopResponse(id_token, issuerState));
-    const afterIssued = await issuerReducer(withResponse, await issueVcToHolder(withResponse, details));
-    const vc = afterIssued.issuedCredentials[0]
+    const afterIssued = await issuerReducer(withResponse, await issueVcsToHolder(withResponse, details));
+    const vcs = afterIssued.issuedCredentials
 
-    return vc;
+    return vcs;
 }
 
 
@@ -220,7 +220,9 @@ app.get('/api/fhir/DiagnosticReport', async (req, res, err) => {
     try {
 
 
-    const vc = await getVcForPatient(req.query.patient);
+    // TODO if we need to handle >1 result, remove [0].
+    // But might just phase this out in favor of $HealthWallet.issueVc
+    const vc = await getVcsForPatient(req.query.patient)[0];
     const fullUrl = issuerState.config.serverBase;
 
     res.json({
@@ -273,11 +275,11 @@ app.post('/api/fhir/Patient/:patientID/[\$]HealthWallet.issueVc', async (req, re
         throw "No request body found"
     }
 
-    const requestedCredentialType = (requestBody.parameter || [])
+    const requestedCredentialType: string[] = (requestBody.parameter || [])
         .filter(p => p.name === 'credentialType')
-        .map(p => p.valueUri)[0]
+        .map(p => p.valueUri);
 
-    if (!requestedCredentialType){
+    if (!requestedCredentialType.length){
         throw "No credentialType found in the Parameters"
     }
 
@@ -301,29 +303,32 @@ app.post('/api/fhir/Patient/:patientID/[\$]HealthWallet.issueVc', async (req, re
         throw "Requested encryption key ID must start with '#', e.g., '#encryption-key-1'.";
     }
 
-
     const encryptVc =  requestedEncryptionKeyId.length === 1;
-    const vc = await getVcForPatient(req.params.patientID, {
-        type: requestedCredentialType,
-        presentationContext: requestedPresentationContext,
-        identityClaims: requestedCredentialIdentityClaims.length > 0 ? requestedCredentialIdentityClaims : null,
-        encryptVc,
-        encryptVcForKeyId: encryptVc ? requestedEncryptionKeyId[0] : undefined
-    });
 
-    if (!vc) {
-        throw "No VC Available matching requested claims, or VC generation failed";
+    let vcs = [];
+    for (const vcType of requestedCredentialType) {
+        const newVcs = await getVcsForPatient(req.params.patientID, {
+            type: vcType,
+            presentationContext: requestedPresentationContext,
+            identityClaims: requestedCredentialIdentityClaims.length > 0 ? requestedCredentialIdentityClaims : null,
+            encryptVc,
+            encryptVcForKeyId: encryptVc ? requestedEncryptionKeyId[0] : undefined
+        });
+
+        if (!newVcs.length) {
+            throw "No VC Available matching requested claims, or VC generation failed";
+        }
+        vcs = [...vcs, ...newVcs]
     }
-
 
     res.json({
         'resourceType': 'Parameters',
-        'parameter': [{
+        'parameter': vcs.map(vc => ({
             'name': 'verifiableCredential',
             'valueAttachment': {
                 "data": base64.encode(vc)
             }
-        }]
+        })) 
     });
         
     } catch (e) {

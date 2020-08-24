@@ -10,6 +10,7 @@
     ],
     "type": [
       "VerifiableCredential",
+      "https://healthwallet.cards#health-card",
       "https://healthwallet.cards#covid19",
       "https://healthwallet.cards#presentation-context-online"
     ],
