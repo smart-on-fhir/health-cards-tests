@@ -5,7 +5,7 @@ import { serverBase } from './config';
 import { encryptFor, generateDid, verifyJws } from './dids';
 import { VerifierState, SiopResponseMode } from './VerifierState';
 import { keyGenerators } from './keys';
-import { prepareSiopRequest, verifierReducer, issuerReducer, issueVcToHolder } from './VerifierLogic';
+import { prepareSiopRequest, verifierReducer, issuerReducer, issueVcsToHolder } from './VerifierLogic';
 
 export async function issuerWorld(requestMode: SiopResponseMode  = 'form_post', reset = false) {
     let state = await initializeVerifier({
@@ -33,7 +33,7 @@ export async function issuerWorld(requestMode: SiopResponseMode  = 'form_post', 
 
     if (!state.siopResponse) {
         await dispatch(receiveSiopResponse(state));
-        await dispatch(issueVcToHolder(state));
+        await dispatch(issueVcsToHolder(state));
     }
 
     if (state.fragment?.id_token) {

@@ -67,8 +67,8 @@ const CovidCard: React.FC<{
                 "resourceType": "Parameters",
                 "parameter": [{
                     "name": "credentialType",
-                    "valueUri": "https://healthwallet.cards#covid19"
-                }, {
+                    "valueUri": "https://healthwallet.cards#health-card"
+                },{
                     "name": "presentationContext",
                     "valueUri": "https://healthwallet.cards#presentation-context-online"
                 }, {

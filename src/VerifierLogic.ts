@@ -5,7 +5,8 @@ import qs from 'querystring';
 import { ALLOW_INVALID_SIGNATURES, serverBase } from './config';
 import * as CredentialManager from './CredentialManager';
 import { encryptFor, verifyJws } from './dids';
-import sampleVc from './fixtures/vc.json';
+import sampleVcCovidAb from './fixtures/vc-jwt-payload.json';
+import sampleVcTdap from './fixtures/vc-tdap-jwt-payload.json'
 import { VerifierState } from './VerifierState';
 import { VerificationResult } from './KeyTypes';
 
@@ -90,52 +91,67 @@ export const defaultIdentityClaims = {
     ]
 }
 
-export const issueVcToHolder = async (state: VerifierState, details: CredentialGenerationDetals = {
-    type: 'covid19',
+export const issueVcsToHolder = async (state: VerifierState, details: CredentialGenerationDetals = {
+    type: 'https://healthwallet.cards#covid19',
     presentationContext: 'https://healthwallet.cards#presentation-context-online',
     identityClaims: null,
     encryptVc: true,
-}): Promise<any> => {
+}): Promise<{
+    type: 'credential-ready',
+    vcs: string[]
+}> => {
 
     const subjectDid = state.siopResponse.idTokenPayload.did;
-    const examplePatient = sampleVc.credentialSubject.fhirBundle.entry[0].resource
-    const exampleClinicalResults = sampleVc.credentialSubject.fhirBundle.entry.slice(1).map(r => r.resource)
-    console.log("issuing VC details", details)
-    console.log("issuing VC defaultIdentityClaims", defaultIdentityClaims)
-    console.log("issuing VC state", JSON.stringify(state, null, 2))
+    let examplePatient, exampleClinicalResults;
 
-    const examplePatientRestricted = defaultIdentityClaims[details.presentationContext]
-        .filter(c => details.identityClaims === null || details.identityClaims.includes(c))
-        .map(prop => prop.split(".")[1])
-        .reduce((prev, element) => ({
-            ...prev,
-            [element]: examplePatient[element]
-        }), {
-            resourceType: examplePatient.resourceType,
-            extension: examplePatient.extension
-        })
+    const vcsAvailableToIssue = [
+        sampleVcCovidAb,
+        sampleVcTdap
+    ]
 
-    const vc = CredentialManager.createVc(state.did, subjectDid, examplePatientRestricted, exampleClinicalResults)
-    const vcPayload = CredentialManager.vcToJwtPayload(vc)
+    const vcs: string[] = [];
+    for (const vcAvailable of vcsAvailableToIssue){
+        if (vcAvailable.vc.type.find(t => t === details.type)) {
+            examplePatient = vcAvailable.vc.credentialSubject.fhirBundle.entry[0].resource
+            exampleClinicalResults = (vcAvailable as any).vc.credentialSubject.fhirBundle.entry.slice(1).map(r => r.resource)
+            const examplePatientRestricted = defaultIdentityClaims[details.presentationContext]
+                .filter(c => details.identityClaims === null || details.identityClaims.includes(c))
+                .map(prop => prop.split(".")[1])
+                .reduce((prev, element) => ({
+                    ...prev,
+                    [element]: examplePatient[element]
+                }), {
+                    resourceType: examplePatient.resourceType,
+                    extension: examplePatient.extension
+                })
 
-    const vcSigned = await state.sk.sign({ kid: state.did + '#signing-key-1' }, vcPayload);
+                const vc = CredentialManager.createVc(details.presentationContext, vcAvailable.vc.type, state.did, subjectDid, examplePatientRestricted, exampleClinicalResults)
+                const vcPayload = CredentialManager.vcToJwtPayload(vc)
 
-    const vcEncrypted = details.encryptVc ? 
-         await encryptFor(vcSigned, subjectDid, state.config.keyGenerators, details.encryptVcForKeyId):
-         vcSigned;
+                const vcSigned = await state.sk.sign({ kid: state.did + '#signing-key-1' }, vcPayload);
+
+                const vcEncrypted = details.encryptVc ? 
+                    await encryptFor(vcSigned, subjectDid, state.config.keyGenerators, details.encryptVcForKeyId):
+                    vcSigned;
+
+                vcs.push(vcEncrypted)
+        }
+    }
+
 
     if (!state.config.skipVcPostToServer) {
         const vcCreated = await axios.post(`${serverBase}/lab/vcs/${encodeURIComponent(subjectDid)}`, {
-            vcs: [vcEncrypted]
+            vcs
         });
     }
 
     return ({
         type: 'credential-ready',
-        vcs: [vcEncrypted]
+        vcs
     });
 
 };
+
 
 
 export async function parseSiopResponse(idTokenRetrieved: string, state: VerifierState) {
