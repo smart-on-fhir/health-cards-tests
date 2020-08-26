@@ -83,12 +83,14 @@ const CovidCard: React.FC<{
         }
     }, [smartState, holderState.interactions])
 
-    const conclusions = holderState.vcStore.flatMap(vc =>
+
+    const covidVcs = holderState.vcStore.filter(vc => vc.type.includes("https://healthwallet.cards#covid19"));
+    const conclusions = covidVcs.flatMap(vc =>
         vc.vcPayload.vc.credentialSubject.fhirBundle.entry
             .filter(e => e.resource.resourceType === 'DiagnosticReport')
             .flatMap(e => e.resource.conclusion))
 
-    const resources = holderState.vcStore.flatMap(vc =>
+    const resources = covidVcs.flatMap(vc =>
         vc.vcPayload.vc.credentialSubject.fhirBundle.entry
             .flatMap(e => e.resource))
 
@@ -96,22 +98,20 @@ const CovidCard: React.FC<{
     return <> {
         currentStep === CardStep.COMPLETE && <Card style={{ border: "1px solid grey", padding: ".5em", marginBottom: "1em" }}>
             <CardTitle style={{ fontWeight: "bolder" }}>
-                COVID Card
+                COVID Cards
                 </CardTitle>
 
             <CardSubtitle className="text-muted">Your COVID results are ready to share, based on {" "}
                 {resources && <>{resources.length} FHIR Resource{resources.length > 1 ? "s" : ""} <br /> </>}
             </CardSubtitle>
-            <CardText style={{ fontFamily: "monospace" }}>
-                <span>
-                    Conclusions: {conclusions && conclusions.join("\n ")}
-                </span>
-            </CardText>
+                    Conclusions: {conclusions && <ul>
+                        {conclusions.map(c => <li key={c}>{c}</li>)}
+                    </ul>}
         </Card>
     } {currentStep < CardStep.COMPLETE &&
         <Card style={{ border: ".25em dashed grey", padding: ".5em", marginBottom: "1em" }}>
-            <CardTitle>COVID Card </CardTitle>
-            <CardSubtitle className="text-muted">You don't have a COVID card in your wallet yet.</CardSubtitle>
+            <CardTitle>COVID Cards </CardTitle>
+            <CardSubtitle className="text-muted">You don't have any COVID cards in your wallet yet.</CardSubtitle>
 
             <Button disabled={true} className="mb-1" color="info">
                 {currentStep > CardStep.CONFIGURE_WALLET && '✓ '} 1. Set up your Health Wallet</Button>

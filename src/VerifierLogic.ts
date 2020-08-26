@@ -7,6 +7,7 @@ import * as CredentialManager from './CredentialManager';
 import { encryptFor, verifyJws } from './dids';
 import sampleVcCovidAb from './fixtures/vc-jwt-payload.json';
 import sampleVcTdap from './fixtures/vc-tdap-jwt-payload.json'
+import sampleVcCovidPcr from './fixtures/vc-c19-pcr-jwt-payload.json';
 import { VerifierState } from './VerifierState';
 import { VerificationResult } from './KeyTypes';
 
@@ -106,7 +107,8 @@ export const issueVcsToHolder = async (state: VerifierState, details: Credential
 
     const vcsAvailableToIssue = [
         sampleVcCovidAb,
-        sampleVcTdap
+        sampleVcCovidPcr,
+        sampleVcTdap,
     ]
 
     const vcs: string[] = [];

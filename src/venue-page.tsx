@@ -73,7 +73,7 @@ const App: React.FC<{
         did = displayResponse.idTokenPayload.did.replace(/\?.*/, "");
         const fhirName = displayResponse?.idTokenVcs[0].vc.credentialSubject.fhirBundle.entry[0].resource.name[0]
         name = fhirName?.given[0]  + " " + fhirName?.family[0]
-        conclusion = displayResponse?.idTokenVcs[0].vc.credentialSubject.fhirBundle.entry[1].resource.conclusion
+        conclusion = displayResponse?.idTokenVcs.map(jwtPayload => jwtPayload.vc.credentialSubject.fhirBundle.entry[1].resource.conclusion)
     }
 
     return <div style={{ paddingTop: "5em" }}>
@@ -110,7 +110,7 @@ const App: React.FC<{
                                     COVID Card Shared!
                                 </RS.CardTitle>
                                 <RS.CardSubtitle className="text-muted">Verified name: {JSON.stringify(name)}</RS.CardSubtitle>
-                                <RS.CardText style={{ fontFamily: "monospace" }}> {conclusion}</RS.CardText>
+                                <RS.CardText style={{ fontFamily: "monospace" }}> {conclusion.join("; ")}</RS.CardText>
                             </RS.Card>
                         </RS.Col>
                     </RS.Row>
