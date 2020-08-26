@@ -216,8 +216,7 @@ const presentationForEssentialClaims = (vcStore: HolderState["vcStore"], claims:
     const essentialClaims: string[] = Object
         .entries(id_token || {})
         .filter(([k, v]) => v.essential)
-        .map(([k, v]) => claimsForType(k as ClaimType, vcStore)[0])
-    // TODO call flatMap to include all claims rather than 1st
+        .flatMap(([k, v]) => claimsForType(k as ClaimType, vcStore))
 
     if (!essentialClaims.length) return {};
 

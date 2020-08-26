@@ -1,0 +1,115 @@
+{
+  "iss": "<<did:ion identifier for lab>>",
+  "nbf": 1591037940,
+  "iat": 1591037940,
+  "sub": "<<did:identifier for subject if known>>",
+  "nonce": "f5qxXA6AxgY-5wdDOSYVzA",
+  "vc": {
+    "@context": [
+      "https://www.w3.org/2018/credentials/v1"
+    ],
+    "type": [
+      "VerifiableCredential",
+      "https://healthwallet.cards#health-card",
+      "https://healthwallet.cards#covid19",
+      "https://healthwallet.cards#presentation-context-online"
+    ],
+    "credentialSubject": {
+      "fhirVersion": "1.0.2",
+      "fhirBundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "fullUrl": "urn:uuid:643e199d-1aaf-49af-8a3b-c7ae375d11ce",
+            "resource": {
+              "resourceType": "Patient",
+              "extension": [
+                {
+                  "url": "https://github.com/TransparentHealth/800-63-3-trustmark#P",
+                  "valueCode": "P2"
+                }
+              ],
+              "name": [
+                {
+                  "family": [
+                    "Everywoman"
+                  ],
+                  "given": [
+                    "Eve"
+                  ]
+                }
+              ],
+              "telecom": [
+                {
+                  "system": "phone",
+                  "value": "000-000-0000",
+                  "use": "mobile"
+                }
+              ]
+            }
+          },
+          {
+            "fullUrl": "urn:uuid:4fe4f8d4-9b6e-4780-8ea5-6b5791230c85",
+            "resource": {
+              "resourceType": "DiagnosticReport",
+              "status": "final",
+              "effectiveDateTime": "2020-08-10",
+              "subject": {
+                "reference": "urn:uuid:643e199d-1aaf-49af-8a3b-c7ae375d11ce"
+              },
+              "code": {
+                "coding": [
+                  {
+                    "system": "http://loinc.org",
+                    "code": "95423-0",
+                    "display": "Influenza virus A and B and SARS-CoV-2 (COVID-19) identified NAA+probe Nom (Resp)"
+                  }
+                ]
+              },
+              "issued": "2020-08-10T11:59:00-07:00",
+              "performer": {
+                "display": "Dr. Jones"
+              },
+              "result": [
+                {
+                  "reference": "urn:uuid:911791c4-5131-44ba-85bd-8e6bdf652fd4"
+                }
+              ],
+              "conclusion": "No evidence of COVID-19 or Influenza infection on August 10, 2020"
+            }
+          },
+          {
+            "fullUrl": "urn:uuid:911791c4-5131-44ba-85bd-8e6bdf652fd4",
+            "resource": {
+              "resourceType": "Observation",
+              "status": "final",
+              "effectiveDateTime": "2020-06-01",
+              "subject": {
+                "reference": "urn:uuid:643e199d-1aaf-49af-8a3b-c7ae375d11ce"
+              },
+              "code": {
+                "coding": [
+                  {
+                    "system": "http://loinc.org",
+                    "code": "95423-0",
+                    "display": "Influenza virus A and B and SARS-CoV-2 (COVID-19) identified NAA+probe Nom (Resp)"
+                  }
+                ]
+              },
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "system": "http://loinc.org",
+                    "code": "LA11883-8",
+                    "display": "Not detected"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}
