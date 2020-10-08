@@ -48,7 +48,7 @@ export async function generateEncryptionKey(inputPublic?: JsonWebKey, inputPriva
 
     const cryptographer = new Jose.WebCryptographer();
     cryptographer.setKeyEncryptionAlgorithm('RSA-OAEP');
-    cryptographer.setContentEncryptionAlgorithm('A128CBC-HS256');
+    cryptographer.setContentEncryptionAlgorithm('A256GCM');
     return {
         decrypt: async (payload) => {
             // TODO assertions about header

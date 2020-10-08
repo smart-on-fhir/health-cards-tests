@@ -44,7 +44,10 @@ export async function generateEncryptionKey (inputPublic?: JsonWebKey, inputPriv
             return (await jose.JWE.decrypt(payload, privateKey)).toString();
         },
         encrypt: async (header, payload) => {
-            return jose.JWE.encrypt(payload, publicJwk, header);
+            return jose.JWE.encrypt(payload, publicJwk, {
+                ...header,
+                enc: "A256GCM"
+            });
         },
         publicJwk,
         privateJwk
