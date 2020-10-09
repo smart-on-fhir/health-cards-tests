@@ -95,9 +95,10 @@ const output = {
         })
 }
 
-if (!v.validate(output, schema).valid) {
+// TODO remove the "as" when fix for https://github.com/tdegrunt/jsonschema/issues/315 is released
+if (!v.validate(output, schema as unknown as jsonschema.Schema).valid) {
     console.log("Invalid!");
-    console.log(v.validate(output, schema));
+    console.log(v.validate(output, schema as unknown as jsonschema.Schema));
     process.exit(1);
 }
 
