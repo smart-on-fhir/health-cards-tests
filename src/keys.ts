@@ -1,5 +1,7 @@
 import base64url from 'base64url';
 import { Jose } from 'jose-jwe-jws';
+import jose from 'node-jose';
+
 import { EncryptionKey, SigningKey, KeyGenerators } from './KeyTypes';
 
 import elliptic from 'elliptic'
@@ -7,6 +9,7 @@ import sha256 from './sha256';
 
 const EC = elliptic.ec;
 const ec = new EC('secp256k1');
+const keystore = jose.JWK.createKeyStore();
 
 export function encodeSection(data: any): string {
     return base64url.encode(JSON.stringify(data));
@@ -17,57 +20,54 @@ export const keyGenerators: KeyGenerators = {
     generateSigningKey
 };
 
+const encryptionKeyPros = {
+    "kty": "EC",
+    "crv": "P-256",
+    "alg": 'ECDH-ES',
+}
 export async function generateEncryptionKey(inputPublic?: JsonWebKey, inputPrivate?: JsonWebKey): Promise<EncryptionKey> {
-    let publicKey: CryptoKey | null = null;
-    let privateKey: CryptoKey | null = null;
+    let publicKey: jose.JWK.Key | null = null;
+    let privateKey: jose.JWK.Key | null = null;
+
     if (inputPublic) {
-        publicKey = await window.crypto.subtle.importKey('jwk', inputPublic, {
-            name: 'RSA-OAEP',
-            hash: { name: 'SHA-1' }
-        }, true, ['encrypt', 'wrapKey']);
+        publicKey = await jose.JWK.asKey(inputPublic);
+
         if (inputPrivate) {
-            privateKey = await window.crypto.subtle.importKey('jwk', inputPrivate, {
-                name: 'RSA-OAEP',
-                hash: { name: 'SHA-1' }
-            }, true, ['decrypt', 'unwrapKey']);
+            privateKey = await jose.JWK.asKey(inputPrivate)
         }
     } else {
-        const k = await window.crypto.subtle.generateKey({
-            name: 'RSA-OAEP',
-            modulusLength: 2048,
-            publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
-            hash: { name: 'SHA-1' }
-        }, true, // extractable
-            ['encrypt', 'wrapKey', 'decrypt', 'unwrapKey']);
-        publicKey = k.publicKey;
-        privateKey = k.privateKey;
+        publicKey = privateKey = await keystore.generate("EC", "P-256", encryptionKeyPros);
     }
 
-    const publicJwk = await window.crypto.subtle.exportKey('jwk', publicKey);
-    const privateJwk = privateKey ? await window.crypto.subtle.exportKey('jwk', privateKey) : null;
+    const publicJwk = publicKey.toJSON(false);
+    const privateJwk = privateKey ? privateKey.toJSON(true) : null;
 
-    const cryptographer = new Jose.WebCryptographer();
-    cryptographer.setKeyEncryptionAlgorithm('RSA-OAEP');
-    cryptographer.setContentEncryptionAlgorithm('A256GCM');
     return {
         decrypt: async (payload) => {
             // TODO assertions about header
             if (!privateKey) {
                 throw new Error('Cannot decrypt with a public key');
             }
-            const decrypter = new Jose.JoseJWE.Decrypter(cryptographer, Promise.resolve(privateKey));
+
             try {
-                const ret = await decrypter.decrypt(payload);
-                return ret;
+                const ret = await jose.JWE.createDecrypt(privateKey).decrypt(payload);
+                return ret.plaintext.toString();
             } catch (e) {
                 console.log("Error decrypting", e)
             }
         },
         encrypt: async (header, payload) => {
             const input = payload;
-            const encrypter = new Jose.JoseJWE.Encrypter(cryptographer, publicKey);
-            Object.entries(header).forEach(([k, v]) => encrypter.addHeader(k, v));
-            return encrypter.encrypt(input);
+            const jwe = await jose.JWE
+            .createEncrypt({
+                format: 'compact',
+                fields: {
+                    ...header,
+                    enc: 'A256GCM',
+                }
+            }, publicKey)
+            .update(jose.util.asBuffer(input)).final()
+            return jwe;
         },
         publicJwk,
         privateJwk

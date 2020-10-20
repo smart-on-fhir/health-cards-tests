@@ -21,6 +21,7 @@
   "license": "ISC",
   "dependencies": {
     "@decentralized-identity/sidetree": "^0.9.1",
+    "@types/node-jose": "^1.1.5",
     "@types/react": "^16.9.34",
     "@types/react-dom": "^16.9.6",
     "axios": "^0.19.2",
@@ -42,6 +43,7 @@
     "json-canonicalize": "^1.0.3",
     "jsonschema": "^1.2.10",
     "multihashes": "^0.4.19",
+    "node-jose": "^2.0.0",
     "qr-scanner": "^1.1.1",
     "qrcode": "^1.4.4",
     "querystring": "^0.2.0",

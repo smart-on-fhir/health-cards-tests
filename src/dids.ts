@@ -18,17 +18,20 @@ export async function verifyJws(jws: string, {
 }
 
 // TODO remove 'JwsVerificationKey2020' when prototypes have updated
-const ENCRYPTION_KEY_TYPES = ['RSAEncryptionPublicKey', 'JwsVerificationKey2020']; 
+const ENCRYPTION_KEY_TYPES = ['JsonWebKey2020', 'JwsVerificationKey2020']; 
 
-export async function encryptFor(jws: string, did: string, { generateEncryptionKey }: KeyGenerators, keyId?: string) {
+export async function encryptFor(jws: string, did: string, { generateEncryptionKey }: KeyGenerators, keyIdIn?: string) {
     const didDoc = (await axios.get(resolveUrl + encodeURIComponent(did))).data;
     const encryptionKeys = didDoc.publicKey.filter(k => ENCRYPTION_KEY_TYPES.includes(k.type));
     
-    const encryptionKey = keyId ? encryptionKeys.filter(k => k.id === keyId)[0] : 
-                                  encryptionKeys[0];
+    const keyId = keyIdIn ? keyIdIn : encryptionKeys[0].id;
+    const encryptionKey = encryptionKeys.filter(k => k.id === keyId)[0]
 
-    const ek = await generateEncryptionKey(encryptionKey.publicKeyJwk);
-    return ek.encrypt({ kid: encryptionKey.kid }, jws);
+    const ek = await generateEncryptionKey({
+        ...encryptionKey.publicKeyJwk,
+        kid: keyId
+    });
+    return ek.encrypt({ kid: keyId }, jws);
 }
 const resolveKeyId = async (kid: string): Promise<JsonWebKey> => {
     const fragment = '#' + kid.split('#')[1];
@@ -57,7 +60,7 @@ export async function generateDid({ signingPublicJwk, encryptionPublicJwk, recov
             }, {
                 id: 'encryption-key-1',
                 purpose: ['general', 'auth'],
-                type: 'RSAEncryptionPublicKey',
+                type: 'JsonWebKey2020',
                 jwk: encryptionPublicJwk
             }]
         }]
