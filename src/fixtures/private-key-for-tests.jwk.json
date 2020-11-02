@@ -1,0 +1,9 @@
+{
+  kty: 'EC',
+  kid: 'CiVb1OtXKmnHXd2MVz7oyc7C4-5ens_t9Yq8tz59AXc',
+  alg: 'ECDH-ES',
+  crv: 'P-256',
+  x: 'h-JHaKNXfW0nuKdt1WvXtDfJl0Uy5msOS9LEqiOb1Pc',
+  y: '4ifFi-Tz29108aForBOehga1zf4WuVx0BMSkDTVqStI',
+  d: 'Sszfrj2Ge_6D_N5Q-ZIjGyXtTkYoItXyyoaFxLKENsk'
+}
