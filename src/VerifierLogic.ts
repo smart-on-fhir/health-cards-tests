@@ -46,8 +46,8 @@ export async function prepareSiopRequest(state: VerifierState) {
         'response_context': state.config.responseMode === 'form_post' ? 'wallet' : 'rp',
         'nonce': base64url.encode(crypto.randomBytes(16)),
         'registration': {
-            'id_token_encrypted_response_alg': state.config.skipEncryptedResponse ? undefined : 'RSA-OAEP',
-            'id_token_encrypted_response_enc': state.config.skipEncryptedResponse ? undefined : 'A128CBC-HS256',
+            'id_token_encrypted_response_alg': state.config.skipEncryptedResponse ? undefined : 'ECDH-ES',
+            'id_token_encrypted_response_enc': state.config.skipEncryptedResponse ? undefined : 'A256GCM',
             'id_token_signed_response_alg': 'ES256K',
             'client_uri': serverBase
         }
