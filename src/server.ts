@@ -14,6 +14,7 @@ import OperationProcessor from '@decentralized-identity/sidetree/dist/lib/core/v
 import { generateEncryptionKey, generateSigningKey, keyGenerators } from './keys-server';
 
 import exampleDr from './fixtures/diagnostic-report.json'
+import examplePt from './fixtures/patient.json'
 
 import { VerifierState } from './VerifierState';
 import { generateDid, verifyJws, encryptFor } from './dids';
@@ -249,6 +250,43 @@ app.get('/api/fhir/DiagnosticReport', async (req, res, err) => {
                 ...exampleDr,
             }
         }]
+    })
+    
+    } catch (e) {
+        err(e);
+    }
+});
+
+app.get('/api/fhir/Patient', async (req, res, err) => {
+    try {
+
+        const fullUrl = issuerState.config.serverBase;
+        const patientID = req.query._id || examplePt.id
+
+        res.json({
+            resourceType: 'Bundle',
+            entry: [{
+                fullUrl: `${fullUrl}/fhir/Patient/${patientID}`,
+                search: {
+                    mode: "match"
+                },
+                resource: {
+                    ...examplePt,
+                    id: patientID
+                }
+            }]
+        })
+    
+    } catch (e) {
+        err(e);
+    }
+});
+
+app.get('/api/fhir/Patient/:patientID', async (req, res, err) => {
+    try {
+    res.json({
+        ...examplePt,
+        id: req.params.patientID
     })
     
     } catch (e) {
