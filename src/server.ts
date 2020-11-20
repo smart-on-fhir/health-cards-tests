@@ -225,7 +225,7 @@ app.get('/api/fhir/metadata', async (req, res, err) => {
 
         const implementation = {
             description: exampleConformance.implementation.description,
-            url: issuerState.config.serverBase
+            url: fullUrl + '/fhir'
         }
 
         const oauthExtension = [
