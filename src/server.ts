@@ -11,7 +11,7 @@ import AnchoredOperationModel from '@decentralized-identity/sidetree/dist/lib/co
 import Did from '@decentralized-identity/sidetree/dist/lib/core/versions/latest/Did';
 import DocumentComposer from '@decentralized-identity/sidetree/dist/lib/core/versions/latest/DocumentComposer';
 import OperationProcessor from '@decentralized-identity/sidetree/dist/lib/core/versions/latest/OperationProcessor';
-import { generateEncryptionKey, generateSigningKey, keyGenerators } from './keys-server';
+import { generateEncryptionKey, generateSigningKey, keyGenerators } from './keys';
 
 import exampleDr from './fixtures/diagnostic-report.json'
 
