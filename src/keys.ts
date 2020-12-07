@@ -1,19 +1,10 @@
 import base64url from 'base64url';
-import { Jose } from 'jose-jwe-jws';
 import jose from 'node-jose';
 
-import { EncryptionKey, SigningKey, KeyGenerators } from './KeyTypes';
-
-import elliptic from 'elliptic'
+import { EncryptionKey, SigningKey, KeyGenerators, SignatureResult } from './KeyTypes';
 import sha256 from './sha256';
 
-const EC = elliptic.ec;
-const ec = new EC('secp256k1');
 const keystore = jose.JWK.createKeyStore();
-
-export function encodeSection(data: any): string {
-    return base64url.encode(JSON.stringify(data));
-}
 
 export const keyGenerators: KeyGenerators = {
     generateEncryptionKey,
@@ -25,6 +16,12 @@ const encryptionKeyPros = {
     "crv": "P-256",
     "alg": 'ECDH-ES',
 }
+const signingKeyProps = {
+    "kty": "EC",
+    "crv": "P-256",
+    "alg": 'ES256',
+}
+
 export async function generateEncryptionKey(inputPublic?: JsonWebKey, inputPrivate?: JsonWebKey): Promise<EncryptionKey> {
     let publicKey: jose.JWK.Key | null = null;
     let privateKey: jose.JWK.Key | null = null;
@@ -74,69 +71,46 @@ export async function generateEncryptionKey(inputPublic?: JsonWebKey, inputPriva
     };
 }
 export async function generateSigningKey(inputPublic?: JsonWebKey, inputPrivate?: JsonWebKey): Promise<SigningKey> {
-    let publicKey;
-    let privateKey;
-    let publicJwk;
-    let privateJwk;
+    let publicKey: jose.JWK.Key | null = null;
+    let privateKey: jose.JWK.Key | null = null;
 
     if (inputPublic) {
-        const uncompressed = new Uint8Array(Buffer.from([0x04, ...base64url.toBuffer(inputPublic.x), ...base64url.toBuffer(inputPublic.y)]));
-        publicKey = ec.keyFromPublic(uncompressed);
-        publicJwk = inputPublic;
+        publicKey = await jose.JWK.asKey(inputPublic);
 
         if (inputPrivate) {
-            privateKey = ec.keyFromPrivate(base64url.toBuffer(inputPrivate.d));
-            privateJwk = {
-                ...publicJwk,
-                'd': base64url.encode(privateKey.getPrivate().toArrayLike(Buffer))
-            };
-
+            privateKey = await jose.JWK.asKey(inputPrivate)
         }
     } else {
-        privateKey = ec.genKeyPair();
-
-        publicJwk = {
-            'kty': 'EC',
-            'crv': 'secp256k1',
-            'x': base64url.encode(privateKey.getPublic().getX().toArrayLike(Buffer)),
-            'y': base64url.encode(privateKey.getPublic().getY().toArrayLike(Buffer))
-        };
-
-        publicKey = ec.keyFromPublic(privateKey.getPublic());
-
-        privateJwk = {
-            ...publicJwk,
-            'd': base64url.encode(privateKey.getPrivate().toArrayLike(Buffer))
-        };
+        publicKey = privateKey = await keystore.generate("EC", "P-256", signingKeyProps);
     }
+
+    const publicJwk = publicKey.toJSON(false);
+    const privateJwk = privateKey ? privateKey.toJSON(true) : null;
 
     return {
         sign: async (header, payload) => {
-            const headerToSign = { ...header, alg: 'ES256K' };
-            const signingInput: string = [
-                encodeSection(headerToSign),
-                encodeSection(payload)
-            ].join('.');
-            const hashOfInput = sha256(signingInput)
-            const signature = privateKey.sign(hashOfInput);
-            const signatureBuffer = Uint8Array.from([...signature.r.toArrayLike(Buffer) as Uint8Array, ...signature.s.toArrayLike(Buffer) as Uint8Array]);
-            const jwt = [signingInput, base64url.encode(Buffer.from(signatureBuffer))].join('.');
-            return jwt;
+            const jws = await jose.JWS
+            .createSign({
+                format: 'compact',
+                fields: header,
+                }, privateKey)
+            .update(JSON.stringify(payload))
+            .final();
+
+            return jws as unknown as SignatureResult;
         },
         verify: async (jwt) => {
-            const parts = jwt.split('.');
-            const signature = parts[2];
-            const signedContent = parts.slice(0, 2).join('.');
-            const signatureBuffer = base64url.toBuffer(signature);
-            const hashOfInput = sha256(signedContent)
-            const valid = publicKey.verify(hashOfInput, {
-                r: signatureBuffer.slice(0, 32),
-                s: signatureBuffer.slice(32)
-            });
-            return {
-                valid,
-                payload: valid ? JSON.parse(base64url.decode(parts[1])) : undefined
-            };
+            try {
+                let verified = await jose.JWS.createVerify(publicKey).verify(jwt)
+                return {
+                    valid: true,
+                    payload: JSON.parse(verified.payload.toString())
+                }
+            } catch {
+                return {
+                    valid: false
+                }
+            }
         },
         publicJwk,
         privateJwk

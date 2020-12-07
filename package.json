@@ -34,8 +34,6 @@
     "cors": "^2.8.5",
     "csv-parse": "^4.12.0",
     "deepcopy": "^2.1.0",
-    "eccrypto": "^1.1.5",
-    "elliptic": "^6.5.3",
     "express": "^4.17.1",
     "fhirclient": "^2.3.10",
     "jose": "^1.28.0",
@@ -51,7 +49,6 @@
     "react": "^16.14.0",
     "react-dom": "^16.14.0",
     "reactstrap": "^8.6.0",
-    "secp256k1": "^4.0.2",
     "tslint-react": "^5.0.0",
     "uuid": "^8.3.1"
   },

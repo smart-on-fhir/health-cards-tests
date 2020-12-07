@@ -27,11 +27,11 @@ const QrDisplay: React.FC<{ url: string }> = (props) => {
         });
     }, [props.url])
 
-    return <>
+    return <div>
         <a href={props.url}>
             <canvas ref={canvasCallback} style={{ maxHeight: "50vmin", maxWidth: "50vmin", width: undefined, height: undefined }} />
         </a>
-    </>
+    </div>
 }
 
 const App: React.FC<{
