@@ -55,7 +55,7 @@ export async function generateDid({ signingPublicJwk, encryptionPublicJwk, recov
             public_keys: [{
                 id: 'signing-key-1',
                 purpose: ['general', 'auth'],
-                type: 'EcdsaSecp256k1VerificationKey2019',
+                type: 'JsonWebKey2020',
                 jwk: signingPublicJwk
             }, {
                 id: 'encryption-key-1',
