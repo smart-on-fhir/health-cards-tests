@@ -48,7 +48,7 @@ export async function prepareSiopRequest(state: VerifierState) {
         'registration': {
             'id_token_encrypted_response_alg': state.config.skipEncryptedResponse ? undefined : 'ECDH-ES',
             'id_token_encrypted_response_enc': state.config.skipEncryptedResponse ? undefined : 'A256GCM',
-            'id_token_signed_response_alg': 'ES256K',
+            'id_token_signed_response_alg': 'ES256',
             'client_uri': serverBase
         }
     };
