@@ -38,4 +38,5 @@
     export SERVER_BASE=http://localhost:8080/api
     npm run start
 
-## Testing endpoin
+## Testing endpoins
+See [testing-endpoints.md](./testing-endpoints.md) for details.
