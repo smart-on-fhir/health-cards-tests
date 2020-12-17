@@ -19,24 +19,28 @@
 * No UI provided -- just an automatic "sign-in" workflow that redirects back to your Mobile Wallet
 
 
-## Getting started in dev, with node and web pack watchers
-    git clone https://github.com/microsoft-healthcare-madison/did-siop-vc
-    cd did-siop-vc
-    git clone https://github.com/decentralized-identity/sidetree
-    npm install
+## Run locally in dev, with node and web pack watchers
 
+This demo should work wiht Node.js 15 (current LTS) as well as Node.js 13. See `Dockerfile` for details if you want to build/develop locally using docker; otherwise, you can get started with:
+
+    git clone https://github.com/microsoft-healthcare-madison/health-wallet-demo
+    cd health-wallet-demo
+
+    # In first terminal
     export SERVER_BASE=http://localhost:8080/api
     npm run dev-ui # Terminal 1
+
+    # In second terminal
+    export SERVER_BASE=http://localhost:8080/api
     npm run dev    # Terminal 2
 
 
-
-## Build and run
+## Build and run locally (no watchers)
     npm run build-ui
     npm run build
 
     export SERVER_BASE=http://localhost:8080/api
-    npm run start
+    npm run dev
 
 ## Testing endpoins
 See [testing-endpoints.md](./testing-endpoints.md) for details.
