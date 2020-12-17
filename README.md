@@ -19,6 +19,7 @@
 * No UI provided -- just an automatic "sign-in" workflow that redirects back to your Mobile Wallet
 
 
+
 ## Run locally in dev, with node and web pack watchers
 
 This demo should work wiht Node.js 15 (current LTS) as well as Node.js 13. See `Dockerfile` for details if you want to build/develop locally using docker; otherwise, you can get started with:
@@ -41,6 +42,10 @@ This demo should work wiht Node.js 15 (current LTS) as well as Node.js 13. See `
 
     export SERVER_BASE=http://localhost:8080/api
     npm run dev
+    
+## Run locally in Docker
+    docker build -t health-wallet-demo .
+    docker run --rm -it --env SERVER_BASE=http://localhost:8080/api -p 8080:8080 health-wallet-demo
 
 ## Testing endpoins
 See [testing-endpoints.md](./testing-endpoints.md) for details.
