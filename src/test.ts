@@ -1,4 +1,3 @@
-import * as crypto from 'crypto';
 import { issuerWorld } from './issuer';
 import { holderWorld } from './holder';
 import { verifierWorld } from './verifier';

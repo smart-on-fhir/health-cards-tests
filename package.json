@@ -20,7 +20,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@decentralized-identity/sidetree": "^0.9.1",
+    "@decentralized-identity/sidetree": "^0.12.1",
     "@types/node-jose": "^1.1.5",
     "@types/react": "^16.9.55",
     "@types/react-dom": "^16.9.9",
@@ -29,6 +29,7 @@
     "base-64": "^0.1.0",
     "base64url": "^3.0.1",
     "bootstrap": "^4.5.3",
+    "canonicalize": "^1.0.5",
     "cbor": "^5.1.0",
     "cheerio": "^1.0.0-rc.3",
     "cors": "^2.8.5",
