@@ -20,8 +20,6 @@ import { generateDid, verifyJws, encryptFor } from './dids';
 import { issuerReducer, prepareSiopRequest, issueVcsToHolder, parseSiopResponse, CredentialGenerationDetals } from './VerifierLogic';
 
 import * as s1 from '@decentralized-identity/sidetree/dist/lib/core/versions/latest/protocol-parameters.json';
-import * as s2 from '@decentralized-identity/sidetree/dist/lib/bitcoin/protocol-parameters.json';
-
 
 const app = express();
 app.use(express.raw({ type: 'application/x-www-form-urlencoded', limit: '5000kb' }));
@@ -34,7 +32,9 @@ const port = 8080; // default port to listen
 const fhirBase = 'https://hapi.fhir.org/baseR4';
 
 async function resolveDid(did: string) {
+    console.log("preparsed", did);
     const parsedDid = await Did.create(did, 'ion');
+    console.log("Parsed", parsedDid);
     const operationWithMockedAnchorTime: AnchoredOperationModel = {
         didUniqueSuffix: parsedDid.uniqueSuffix,
         type: OperationType.Create,
@@ -47,7 +47,7 @@ async function resolveDid(did: string) {
     const processor = new OperationProcessor();
 
     const newDidState = await processor.apply(operationWithMockedAnchorTime, undefined);
-    const document = DocumentComposer.transformToExternalDocument(newDidState, did);
+    const document = DocumentComposer.transformToExternalDocument(newDidState, did, false);
     return document;
 }
 
