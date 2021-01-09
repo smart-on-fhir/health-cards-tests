@@ -22,7 +22,7 @@ const ENCRYPTION_KEY_TYPES = ['JsonWebKey2020', 'JwsVerificationKey2020'];
 
 export async function encryptFor(jws: string, did: string, { generateEncryptionKey }: KeyGenerators, keyIdIn?: string) {
     const didDoc = (await axios.get(resolveUrl + encodeURIComponent(did))).data;
-    const encryptionKeys = didDoc.publicKey.filter(k => ENCRYPTION_KEY_TYPES.includes(k.type));
+    const encryptionKeys = didDoc.publicKey.filter(k => k.publicKeyJwk.alg === 'ECDH-ES');
     
     const keyId = keyIdIn ? keyIdIn : encryptionKeys[0].id;
     const encryptionKey = encryptionKeys.filter(k => k.id === keyId)[0]
