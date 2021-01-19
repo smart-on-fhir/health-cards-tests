@@ -545,6 +545,14 @@ app.post('/api/test/encrypt-for-did', async (req, res, err) => {
     }
 });
 
+app.post('/api/test/generate-did', async (req, res, err) => {
+    try {
+        const did = await generateDid(req.body);
+        res.json(did.didLong);
+    } catch (e) {
+        err(e);
+    }
+});
 
 
 

@@ -36,7 +36,7 @@ const resolveKeyId = async (kid: string): Promise<JsonWebKey> => {
     const didDoc = (await axios.get(resolveUrl +kid)).data;
     return didDoc.verificationMethod.filter(k => k.id === fragment)[0].publicKeyJwk;
 };
-export async function generateDid({ signingPublicJwk, encryptionPublicJwk, recoveryPublicJwk, updatePublicJwk, domains = [] as string[]}) {
+export async function generateDid({ signingPublicJwk, encryptionPublicJwk, recoveryPublicJwk, updatePublicJwk, domains = [] as string[], customSuffix = ""}) {
     const hashAlgorithmName = multihashes.codes[18];
     
     const hash = (b: string|Buffer) => multihashes.encode(crypto.createHash('sha256').update(b).digest(), hashAlgorithmName);
@@ -48,22 +48,35 @@ export async function generateDid({ signingPublicJwk, encryptionPublicJwk, recov
         return [revealValueEncodedString, commitmentHashHashEncodedString];
     };
 
+    const publicKeyEntry = (id: string, jwk: any, additionalPurposes: string[] = []) => {
+        return {
+            id,
+            purposes: ["assertionMethod", ...additionalPurposes],
+            type: "JsonWebKey2020",
+            publicKeyJwk: JSON.parse(JSON.stringify({ ...jwk, kid: undefined }))
+        }
+    };
+
     const [recoveryValue, recoveryCommitment] = revealCommitPair(recoveryPublicJwk);
     const [updateValue, updateCommitment] = revealCommitPair(updatePublicJwk);
-    let patches: {action: string, publicKeys?: any, services?: any}[] = [{
-            action: 'add-public-keys',
-            publicKeys: [{
-                id: 'signing-key-1',
-                purposes: ['authentication', 'assertionMethod'],
-                type: 'JsonWebKey2020',
-                publicKeyJwk: JSON.parse(JSON.stringify({...signingPublicJwk, kid: undefined}))
-            }, {
-                id: 'encryption-key-1',
-                purposes: ['keyAgreement', 'assertionMethod'],
-                type: 'JsonWebKey2020',
-                publicKeyJwk: JSON.parse(JSON.stringify({...encryptionPublicJwk, kid: undefined}))
-            }]
-        }]
+    const publicKeys = [];
+
+    if (typeof signingPublicJwk === "object") {
+        publicKeys.push(publicKeyEntry("signing-key-1", signingPublicJwk, ["authentication"]));
+    }
+    if (typeof encryptionPublicJwk === "object") {
+        publicKeys.push(publicKeyEntry("encryption-key-1", encryptionPublicJwk, ["keyAgreement"]));
+    }
+
+    let patches: { action: string, publicKeys?: any, services?: any }[] = [];
+
+    if (publicKeys.length > 0) {
+        patches.push({
+            action: "add-public-keys",
+            publicKeys
+        });
+    }
+
     if (domains.length > 0) {
         patches.push({
             "action": "add-services",
@@ -88,7 +101,7 @@ export async function generateDid({ signingPublicJwk, encryptionPublicJwk, recov
     };
 
     const suffixDataCanonical = canonicalize(suffixData);
-    const suffix = base64url.encode(hash(Buffer.from(suffixDataCanonical)));
+    const suffix = (customSuffix === "") ? base64url.encode(hash(Buffer.from(suffixDataCanonical))) : customSuffix;
     const didShort = `did:ion:${suffix}`;
 
     const longFormPayload = { suffixData, delta };
