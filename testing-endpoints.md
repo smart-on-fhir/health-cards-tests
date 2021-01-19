@@ -18,6 +18,45 @@ curl -X GET http://localhost:8080/api/test/did-debug
 ```
 
 
+#### `api/test/generate-did`
+
+Returns a Long-Form did made from input public keys in jwk format
+
+The body is a JSON object (note, this API requires a content-type header) with the following fields:
+1. `recoveryPublicJwk` - **required** `ES256` public signing key jwk for did recovery operations
+2. `updatePublicJwk` - **required** `ES256` public signing key jwk for did update operations
+3. `signingPublicJwk` - **optional** `ES256` public signing key jwk for verifying assertions 
+4. `encryptionPublicJwk` - **optional** public encryption key jwk using the `"alg": "ECDH-ES"` and `"enc": "A256GCM"` encryption algorithm
+5. `domains` - **optional** array of string URI hostnames. Will be added to the did's `LinkedDomains` by an `add-services` action. 
+
+**Note**: The `signingPublicJwk` and `encryptionPublicJwk` fields are optional since 
+not all entities represented by DIDs may need to sign or encrypt documents.
+
+For exmample, a `verifier` or `issuer` entity that does not request SIOP Responses to be encrypted MAY only need to have a signing key (for signing SIOP requests), and not an encryption key.
+
+Example key props for signing keys:
+```
+{
+    "kty": "EC",
+    "crv": "P-256",
+    "alg": 'ES256',
+}
+``` 
+
+Example key props for encryption keys:
+```
+{
+    "kty": "EC",
+    "crv": "P-256",
+    "alg": 'ECDH-ES',
+}
+``` 
+
+```
+curl -X POST http://localhost:8080/api/test/generate-did -H "Content-type: application/json" --data  '{"encryptionPublicJwk":{"kty":"EC","kid":"z49flT6UFYmMfXWw8lb04VaS9HCTfBXaL4iNXmSEfiA","alg":"ECDH-ES","crv":"P-256","x":"vpYxivWTfCc_7RFRoWlowE9Bhj1QJ1KMJZZRnjA8v2A","y":"TOpF9Z353L1ofFPfHN9yvwnwwqvt5r6MTo5U0hRQ2IA"},"recoveryPublicJwk":{"kty":"EC","kid":"nSsL1bSAv4ITBLSIVPbhpUaZ2XmSbCE7bGTtHa7P7qU","alg":"ES256","crv":"P-256","x":"OmY_lScH2hfKDs1Ui6sSXLI02t3nUeofxrwDbPprphg","y":"nS1e53B6W9jptHLWO23WB6QweV0uJab-00CwrXR4LX8"},"signingPublicJwk":{"kty":"EC","kid":"JFzMDjYivrfgPsT1b0puK3B_91G2e7QbAhVOUN7x_oM","alg":"ES256","crv":"P-256","x":"rAkPWQoZai50iSgCkBQ-eHR9O4L7edymIAUB1m9O6c8","y":"H-ulzimHfP-LyJYpPeIUoNguNs7jFfqaCncE6ZKkLUc"},"updatePublicJwk":{"kty":"EC","kid":"aKxtePqG-9Wgzr4fHuewge0x0Ud8zBpkQkeF5b42LBg","alg":"ES256","crv":"P-256","x":"OBgVHJdlOLdXxKiJLZCqnVGcAayUjJ5kl3pObdkjlaM","y":"fvZEpBy3U3eKCh8Z7m_jLigYStgkHEK3h1Rojse7qk0"},"customSuffix":"test"}'
+```
+
+
 #### `api/test/encrypt-for-did`
 
 The body is a JSON object (note, this API requires a content-type header) with a `did` (to encrypt for) and a `payload` (content to encrypt)
