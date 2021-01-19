@@ -18,10 +18,10 @@ export async function verifyJws(jws: string, {
 }
 
 // TODO remove 'JwsVerificationKey2020' when prototypes have updated
-const ENCRYPTION_KEY_TYPES = ['JsonWebKey2020', 'JwsVerificationKey2020']; 
+const ENCRYPTION_KEY_TYPES = ['JsonWebKey2020', 'JwsVerificationKey2020'];
 
 export async function encryptFor(jws: string, did: string, { generateEncryptionKey }: KeyGenerators, keyIdIn?: string) {
-    const didDoc = (await axios.get(resolveUrl +did)).data;
+    const didDoc = (await axios.get(resolveUrl + did)).data;
     const keyId = keyIdIn ? keyIdIn : '#' + didDoc.keyAgreement[0].split("#")[1];
     const encryptionKey = didDoc.verificationMethod.filter(k => k.id == keyId)[0];
 
@@ -33,13 +33,13 @@ export async function encryptFor(jws: string, did: string, { generateEncryptionK
 }
 const resolveKeyId = async (kid: string): Promise<JsonWebKey> => {
     const fragment = '#' + kid.split('#')[1];
-    const didDoc = (await axios.get(resolveUrl +kid)).data;
+    const didDoc = (await axios.get(resolveUrl + kid)).data;
     return didDoc.verificationMethod.filter(k => k.id === fragment)[0].publicKeyJwk;
 };
-export async function generateDid({ signingPublicJwk, encryptionPublicJwk, recoveryPublicJwk, updatePublicJwk, domains = [] as string[], customSuffix = ""}) {
+export async function generateDid({ signingPublicJwk, encryptionPublicJwk, recoveryPublicJwk, updatePublicJwk, domains = [] as string[], customSuffix = "" }) {
     const hashAlgorithmName = multihashes.codes[18];
-    
-    const hash = (b: string|Buffer) => multihashes.encode(crypto.createHash('sha256').update(b).digest(), hashAlgorithmName);
+
+    const hash = (b: string | Buffer) => multihashes.encode(crypto.createHash('sha256').update(b).digest(), hashAlgorithmName);
 
     const revealCommitPair = (publicKey: SigningKey) => {
         const revealValueEncodedString = canonicalize(publicKey);
@@ -80,13 +80,15 @@ export async function generateDid({ signingPublicJwk, encryptionPublicJwk, recov
     if (domains.length > 0) {
         patches.push({
             "action": "add-services",
-            "services": [{
-                "id": "linked-domain",
-                "type": "LinkedDomains",
-                "serviceEndpoint": domains[0]
-                }]
-            });
-    } 
+            "services": domains.map((domain, index) => {
+                return {
+                    "id": `linked-domain-${index + 1}`,
+                    "type": "LinkedDomains",
+                    "serviceEndpoint": domain
+                }
+            })
+        });
+    }
 
     console.log("Patches", JSON.stringify(patches, null, 2));
     const delta: Record<string, any> = {
