@@ -23,7 +23,7 @@ const ENCRYPTION_KEY_TYPES = ['JsonWebKey2020', 'JwsVerificationKey2020'];
 export async function encryptFor(jws: string, did: string, { generateEncryptionKey }: KeyGenerators, keyIdIn?: string) {
     const didDoc = (await axios.get(resolveUrl + did)).data;
     const keyId = keyIdIn ? keyIdIn : '#' + didDoc.keyAgreement[0].split("#")[1];
-    const encryptionKey = didDoc.verificationMethod.filter(k => k.id == keyId)[0];
+    const encryptionKey = didDoc.verificationMethod.filter(k => k.id === keyId)[0];
 
     const ek = await generateEncryptionKey({
         ...encryptionKey.publicKeyJwk,
@@ -68,7 +68,7 @@ export async function generateDid({ signingPublicJwk, encryptionPublicJwk, recov
         publicKeys.push(publicKeyEntry("encryption-key-1", encryptionPublicJwk, ["keyAgreement"]));
     }
 
-    let patches: { action: string, publicKeys?: any, services?: any }[] = [];
+    const patches: { action: string, publicKeys?: any, services?: any }[] = [];
 
     if (publicKeys.length > 0) {
         patches.push({
@@ -99,7 +99,7 @@ export async function generateDid({ signingPublicJwk, encryptionPublicJwk, recov
     const deltaCanonical = canonicalize(delta);
     const suffixData = {
         deltaHash: base64url.encode(hash(Buffer.from(deltaCanonical))),
-        recoveryCommitment: recoveryCommitment
+        recoveryCommitment
     };
 
     const suffixDataCanonical = canonicalize(suffixData);
@@ -111,7 +111,7 @@ export async function generateDid({ signingPublicJwk, encryptionPublicJwk, recov
     const longFormFinalSegment = base64url.encode(longFormPayloadCanonical);
     const didLong = `${didShort}:${longFormFinalSegment}`;
 
-    let ret = {
+    const ret = {
         did: didLong,
         recoveryValue,
         recoveryCommitment,
