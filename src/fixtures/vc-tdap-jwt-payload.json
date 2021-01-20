@@ -1,5 +1,5 @@
 {
-  "iss": "<<did:ion identifier for lab>>",
+  "iss": "<<did:ion identifier for issuer>>",
   "nbf": 1597957752,
   "iat": 1597957752,
   "sub": "<<did:ion identifier for subject>>",
