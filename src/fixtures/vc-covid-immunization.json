@@ -1,0 +1,106 @@
+{
+  "iss": "<<did:ion identifier for lab>>",
+  "nbf": 1611160486,
+  "iat": 1611160486,
+  "sub": "<<did:ion identifier for subject>>",
+  "nonce": "FD790F250D50-BCF95D9ECB7E",
+  "vc": {
+    "@context": [
+      "https://www.w3.org/2018/credentials/v1"
+    ],
+    "type": [
+      "VerifiableCredential",
+      "https://healthwallet.cards#health-card",
+      "https://healthwallet.cards#immunization",
+      "https://healthwallet.cards#covid19"
+    ],
+    "credentialSubject": {
+      "fhirVersion": "1.0.2",
+      "fhirBundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "fullUrl": "urn:uuid:5372596F-4D2F-48D1-A2BC-19A3D8F583A8",
+            "resource": {
+              "resourceType": "Patient",
+              "extension": [
+                {
+                  "url": "https://github.com/TransparentHealth/800-63-3-trustmark#P",
+                  "valueCode": "P1"
+                }
+              ],
+              "name": [
+                {
+                  "family": [
+                    "Everywoman"
+                  ],
+                  "given": [
+                    "Evelyn"
+                  ]
+                }
+              ],
+              "telecom": [
+                {
+                  "system": "phone",
+                  "value": "617-000-0000",
+                  "use": "mobile"
+                }
+              ]
+            }
+          }, {
+            "fullUrl": "urn:uuid:c2e26781-f66b-4dea-90cc-9ec6e392b1e3",
+            "resource": {
+              "resourceType": "Immunization",
+              "status": "completed",
+              "date": "2020-12-18",
+              "vaccineCode": {
+                "coding": [
+                  {
+                    "system": "http://hl7.org/fhir/sid/cvx",
+                    "code": "207",
+                    "display": "COVID-19, mRNA, LNP-S, PF, 100 mcg/ 0.5 mL dose"
+                  }
+                ]
+              },
+              "location": {
+                "display": "ACME Pharmacy, 101 Main Street, Springfield ST"
+              },
+              "lotNumber": "ASX-3528",
+              "patient": {
+                "reference": "urn:uuid:5372596F-4D2F-48D1-A2BC-19A3D8F583A8"
+              },
+              "reported": false,
+              "wasNotGiven": false
+            }
+          }, {
+            "fullUrl": "urn:uuid:7284310c-1853-4de0-bb3d-17a69ad4ca18",
+            "resource": {
+              "resourceType": "Immunization",
+              "status": "completed",
+              "date": "2021-01-14",
+              "vaccineCode": {
+                "coding": [
+                  {
+                    "system": "http://hl7.org/fhir/sid/cvx",
+                    "code": "207",
+                    "display": "COVID-19, mRNA, LNP-S, PF, 100 mcg/ 0.5 mL dose"
+                  }
+                ]
+              },
+              "location": {
+                "display": "ACME Pharmacy, 101 Main Street, Springfield ST"
+              },
+              "lotNumber": "ASX-8122",
+              "patient": {
+                "reference": "urn:uuid:5372596F-4D2F-48D1-A2BC-19A3D8F583A8"
+              },
+              "reported": false,
+              "wasNotGiven": false
+            }
+          }
+        ]
+      }
+    }
+  }
+}
