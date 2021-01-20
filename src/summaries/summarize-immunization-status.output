@@ -1,0 +1,54 @@
+FHIR Bundle size 1353 
+
+Summary JSON {
+  alg: '#c19-immunization-status',
+  ver: '0.0.1',
+  ptName: 'Evelyn Everywoman',
+  ptPhone: '617-000-0000',
+  ial: 1,
+  result: [ { effective: '2021-01-14', status: 2 } ]
+} 
+
+Summary JSON size 159
+Summary CBOR <Buffer a6 63 61 6c 67 78 18 23 63 31 39 2d 69 6d 6d 75 6e 69 7a 61 74 69 6f 6e 2d 73 74 61 74 75 73 63 76 65 72 65 30 2e 30 2e 31 66 70 74 4e 61 6d 65 71 45 ... 80 more bytes>
+Summary CBOR size 130
+Patches [
+  {
+    "action": "add-public-keys",
+    "public_keys": [
+      {
+        "id": "signing-key-1",
+        "purpose": [
+          "general",
+          "auth"
+        ],
+        "type": "JsonWebKey2020",
+        "jwk": {
+          "kty": "EC",
+          "kid": "1Iki03yRbT0wthoEQas6oyNtFN8hLTkXxBrK6JIhoHk",
+          "alg": "ES256",
+          "crv": "P-256",
+          "x": "gBv0zZxOIcLVmYuC1nsr3wWgM6dxEpaULQau5kv0rAE",
+          "y": "Vw3KvBHuUllVlk9BptfllbYya1so-2uct18lSKPguJ4"
+        }
+      },
+      {
+        "id": "encryption-key-1",
+        "purpose": [
+          "general",
+          "auth"
+        ],
+        "type": "JsonWebKey2020",
+        "jwk": {
+          "kty": "EC",
+          "kid": "YEmblhKcaeKxFNz0ktWSLM9MgdrRPjO7fHVV7SL973Y",
+          "alg": "ECDH-ES",
+          "crv": "P-256",
+          "x": "PHD8Q0o7VolXKFkkfAalLM8xaqQSVrObifv_FtD8ICM",
+          "y": "rUdmWUiznIVgoKRhpR9cnrHaxZT3NKVigunOQaO5Pjc"
+        }
+      }
+    ]
+  }
+]
+Signed 497 eyJraWQiOiIjc2lnbmluZy1rZXktMSIsImFsZyI6IkVTMjU2In0.eyJpc3MiOiJkaWQ6aW9uOkVpQmVYdlZFQ2p1SnJwWF8xUUJRbWZsVkRjSTR4VDAtcHF5TmQwMGhIS1NCOHciLCJpYXQiOjE2MTExNjUwNjMsInZjIjp7ImNyZWRlbnRpYWxTdWJqZWN0Ijp7ImFsZyI6IiNjMTktaW1tdW5pemF0aW9uLXN0YXR1cyIsInZlciI6IjAuMC4xIiwicHROYW1lIjoiRXZlbHluIEV2ZXJ5d29tYW4iLCJwdFBob25lIjoiNjE3LTAwMC0wMDAwIiwiaWFsIjoxLCJyZXN1bHQiOlt7ImVmZmVjdGl2ZSI6IjIwMjEtMDEtMTQiLCJzdGF0dXMiOjJ9XX19fQ.mey461UDUMHNzrmPHlJ-pu9j0NtN1KYvIjVIIXbbSPDg517O50GknZLMFYI9tZr458c5TVKhVixuP9UugEP6aw
