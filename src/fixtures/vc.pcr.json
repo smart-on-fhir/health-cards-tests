@@ -11,7 +11,7 @@
   "display": "COVID-19 Card for Eve Everywoman",
   "credentialSubject": {
     "id": "<<did:identifier for subject if known>>",
-    "fhirVersion": "1.0.2",
+    "fhirVersion": "4.0.1",
     "fhirBundle":{
       "resourceType": "Bundle",
       "type": "collection",
@@ -24,7 +24,7 @@
             "valueCode": "P2"
           }],
           "name": [{
-            "family": ["Everywoman"],
+            "family": "Everywoman",
             "given": ["Eve"]
           }],
           "telecom": [{

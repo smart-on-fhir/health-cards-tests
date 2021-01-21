@@ -15,7 +15,7 @@
       "https://healthwallet.cards#presentation-context-online"
     ],
     "credentialSubject": {
-      "fhirVersion": "1.0.2",
+      "fhirVersion": "4.0.1",
       "fhirBundle": {
         "resourceType": "Bundle",
         "type": "collection",
@@ -32,9 +32,7 @@
               ],
               "name": [
                 {
-                  "family": [
-                    "Everywoman"
-                  ],
+                  "family": "Everywoman",
                   "given": [
                     "Eve"
                   ]
