@@ -53,7 +53,7 @@ const output = {
     ptName: patient.name.map(n => 
             [n.prefix || ""]
             .concat(n.given)
-            .concat(n.family)
+            .concat([n.family])
             .concat([n.suffix || ""])
             .filter(n => n).join(" "))
             [0],
