@@ -47,7 +47,7 @@ async function resolveDid(did: string) {
     const processor = new OperationProcessor();
 
     const newDidState = await processor.apply(operationWithMockedAnchorTime, undefined);
-    const document = DocumentComposer.transformToExternalDocument(newDidState, did, false);
+    const document = DocumentComposer.transformToExternalDocument(newDidState, parsedDid, false);
     return document;
 }
 
