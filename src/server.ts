@@ -549,6 +549,19 @@ app.post('/api/test/encrypt-for-did', async (req, res, err) => {
 
 app.post('/api/test/generate-did', async (req, res, err) => {
     try {
+        // Required inputs
+        const required = [];
+        ['signingPublicJwk','recoveryPublicJwk','updatePublicJwk']
+        .forEach(keyType => {
+            if (!req.body[keyType] || typeof req.body[keyType] !== 'object') {
+                required.push(keyType)
+            }
+        });
+
+        if (required.length > 0) {
+            throw new Error('The following input objects are required: ' + required.join(', '))
+        }
+        
         const did = await generateDid(req.body);
         res.json(did.didLong);
     } catch (e) {
