@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  ui:
+    build: 
+      context: .
+      dockerfile: Dockerfile.dev-ui
+    volumes:
+      - ./src:/usr/src/app/src
+      - dist:/usr/src/app/dist
+    environment: 
+      - SERVER_BASE
+      
+  server:
+    build: 
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./src:/usr/src/app/src
+      - dist:/usr/src/app/dist
+    environment: 
+      - SERVER_BASE
+
+volumes:
+  dist:
