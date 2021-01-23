@@ -10,4 +10,5 @@ COPY src/ ./src
 COPY dist ./dist
 COPY tslint.json tsconfig.json ./
 
-ENTRYPOINT [ "npm", "run" ]
+# Pack ui files with parcel watcher
+CMD [ "npm", "run", "dev-ui" ]
