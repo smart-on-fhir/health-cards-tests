@@ -51,7 +51,7 @@
             "resource": {
               "resourceType": "Immunization",
               "status": "completed",
-              "date": "2020-12-18",
+              "occurrenceDateTime": "2020-12-18",
               "vaccineCode": {
                 "coding": [
                   {
@@ -76,7 +76,7 @@
             "resource": {
               "resourceType": "Immunization",
               "status": "completed",
-              "date": "2021-01-14",
+              "occurrenceDateTime": "2021-01-14",
               "vaccineCode": {
                 "coding": [
                   {
