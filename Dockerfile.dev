@@ -10,6 +10,4 @@ COPY src/ ./src
 COPY dist ./dist
 COPY tslint.json tsconfig.json ./
 
-# Start dev server with nodemon watcher
-CMD [ "npm", "run", "dev" ]
-EXPOSE 8080
+ENTRYPOINT [ "npm", "run" ]
