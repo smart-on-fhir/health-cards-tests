@@ -20,7 +20,7 @@
 
 
 
-## Run locally in dev, with node and web pack watchers
+## Run locally in dev, with node and parcel watchers
 
 This demo should work wiht Node.js 15 (current LTS) as well as Node.js 13. See `Dockerfile` for details if you want to build/develop locally using docker; otherwise, you can get started with:
 
@@ -46,6 +46,15 @@ This demo should work wiht Node.js 15 (current LTS) as well as Node.js 13. See `
 ## Run locally in Docker
     docker build -t health-wallet-demo .
     docker run --rm -it --env SERVER_BASE=http://localhost:8080/api -p 8080:8080 health-wallet-demo
+
+## Run dev-only containers with watchers in Docker-Compose
+
+You can use the docker-compose.yaml file to spin up two dev containers with watchers, one for the UI and one for the server.
+    sudo docker-compose --env-file ./compose.env up
+
+Note the following:
+1. Both containers have their `src` directories bind-mounted to the local directory's `src` folder. Any changes made in either container (or the host) will propagate to all 3 and be registered by the watchers. This is helpful since you can, for instance, launch VS Code inside one of the containers and utilize dev dependencies without needing to ever install them locally.
+2. Both containers have their `dist` folders mounted to a named volume. This means they can easily share dist files as they're edited by the respective watchers.
 
 ## Testing endpoins
 See [testing-endpoints.md](./testing-endpoints.md) for details.
