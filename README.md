@@ -53,7 +53,7 @@ You can use the docker-compose.yaml file to spin up two dev containers with watc
     sudo docker-compose --env-file ./compose.env up
 
 Note the following:
-1. Both containers have their `src` directories bind-mounted to the local directory's `src` folder. Any changes made in either container (or the host) will propagate to all 3 and be registered by the watchers. This is helpful since you can, for instance, launch VS Code inside one of the containers and utilize dev dependencies without needing to ever install them locally.
+1. Both containers have their `src` directories bind-mounted to the local directory's `src` folder. Any changes made in either container (or the host) will propagate to all 3 and be registered by the watchers. This is helpful since you can, for instance, launch programs inside either of the containers and utilize dev dependencies without needing to ever install them locally.
 2. Both containers have their `dist` folders mounted to a named volume. This means they can easily share dist files as they're edited by the respective watchers.
 
 ## Testing endpoins
