@@ -29,8 +29,8 @@ The body is a JSON object (note, this API requires a content-type header) with t
 4. `encryptionPublicJwk` - **optional** public encryption key jwk using the `"alg": "ECDH-ES"` and `"enc": "A256GCM"` encryption algorithm
 5. `domains` - **optional** array of string URI hostnames. Will be added to the did's `LinkedDomains` by an `add-services` action. 
 
-**Note**: The `signingPublicJwk` and `encryptionPublicJwk` fields are optional since 
-not all entities represented by DIDs may need to sign or encrypt documents.
+**Note**: The `encryptionPublicJwk` field is optional since 
+not all entities represented by DIDs may need to encrypt documents.
 
 For example, a `verifier` or `issuer` entity that does not request SIOP Responses to be encrypted MAY only need to have a signing key (for signing SIOP requests), and not an encryption key.
 
