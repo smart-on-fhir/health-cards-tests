@@ -22,6 +22,8 @@ services:
       - dist:/usr/src/app/dist
     environment: 
       - SERVER_BASE
+    ports: 
+      - 8080:8080
 
 volumes:
   dist:
