@@ -48,13 +48,13 @@ This demo should work wiht Node.js 15 (current LTS) as well as Node.js 13. See `
     docker run --rm -it --env SERVER_BASE=http://localhost:8080/api -p 8080:8080 health-wallet-demo
 
 ## Run dev-only containers with watchers in Docker-Compose
-
-You can use the docker-compose.yaml file to spin up two dev containers with watchers, one for the UI and one for the server.
     export USER=$(id -u) 
     docker-compose --env-file ./compose.env up
+   
+You can use the docker-compose.yaml file to spin up two dev containers with watchers, one for the UI and one for the server.
 
-Note the following:
-1. Both containers have their `src` directories bind-mounted to the local directory's `src` folder. Any changes made in either container (or the host) will propagate to all 3 and be registered by the watchers. This is helpful since you can, for instance, launch programs inside the `dev` container and utilize dev dependencies without needing to ever install them locally.
+### Note the following:
+1. Both containers have their `src` directories bind-mounted to the local directory's `src` folder. Any changes made in the `dev` container (or the host) will propagate to both containers + host and be registered by the watchers. This is helpful since you can, for instance, launch programs inside the `dev` container and utilize dev dependencies without needing to ever install them locally.
 2. Both containers have their `dist` folders mounted to a named volume. This means the parcel watcher in the `dev-ui` container can write changes that are accessible by the `dev` container. Note the `dev-ui` container needs `root` priviliges for this. See this [issue](https://github.com/moby/moby/issues/2259) for details. 
 3. The `dev-ui` container has `root` priviliges. DO NOT make any `src` file changes from inside that container, or those files will be locked on the host for non-root users (such as most text editors). When the above issue is solved, giving the `dev-ui` container non-root priviliges will resolve this. 
 
