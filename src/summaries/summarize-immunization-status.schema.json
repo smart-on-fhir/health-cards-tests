@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://healthwallet.cards/algorithms/2-c19-immunization-status.schema.json",
+    "$id": "https://smarthealth.cards/algorithms/2-c19-immunization-status.schema.json",
     "type": "object",
     "title": "Summarize Covid-19 Immunization Status",
     "description": "Represents a summary of FHIR data to determine COVID-19 immunization status at a specifie point in time.",

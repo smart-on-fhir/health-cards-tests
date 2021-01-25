@@ -196,8 +196,8 @@ app.get('/api/fhir/Patient/:patientID/[\$]HealthWallet.connect', async (req, res
 });
 
 async function getVcsForPatient(patientId, details: CredentialGenerationDetals = {
-    type: 'https://healthwallet.cards#covid19',
-    presentationContext: 'https://healthwallet.cards#presentation-context-online',
+    type: 'https://smarthealth.cards#covid19',
+    presentationContext: 'https://smarthealth.cards#presentation-context-online',
     identityClaims: null,
     encryptVc: false
 }) {
@@ -235,12 +235,12 @@ app.get('/api/fhir/DiagnosticReport', async (req, res, err) => {
             resource: {
                 meta: {
                     tag: [{
-                        system: "https://healthwallet.cards",
+                        system: "https://smarthealth.cards",
                         code: "covid19"
                     }]
                 },
                 extension: vc ? [{
-                    "url": "https://healthwallet.cards#vc-attachment",
+                    "url": "https://smarthealth.cards#vc-attachment",
                     "valueAttachment": {
                         "title": "COVID-19 Card for online presentation",
                         "data": base64.encode(vc)
@@ -564,7 +564,7 @@ app.use(function(err, req, res, next) {
       "diagnostics": err + "\n" + err.message + "\n" + err.stack,
       "details": {
           coding: err.code ? [{
-              "system": "https://healthwallet.cards",
+              "system": "https://smarthealth.cards",
               "code": err.code,
               "display": err.display
           }] : undefined

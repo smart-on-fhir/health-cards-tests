@@ -4,8 +4,8 @@
   ],
   "type": [
     "VerifiableCredential",
-    "https://healthwallet.cards#covid19",
-    "https://healthwallet.cards#presentation-context-online"],
+    "https://smarthealth.cards#covid19",
+    "https://smarthealth.cards#presentation-context-online"],
   "issuer": "<<did:ion identifier for issuer>>",
   "issuanceDate": "2020-05-01T11:59:00-07:00",
   "display": "COVID-19 Card for Eve Everywoman",

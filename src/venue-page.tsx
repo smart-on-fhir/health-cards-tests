@@ -130,7 +130,7 @@ const App: React.FC<{
 export default async function main() {
     const state = await initializeVerifier({
         role: 'venue',
-        claimsRequired: ['https://healthwallet.cards#covid19'],
+        claimsRequired: ['https://smarthealth.cards#covid19'],
         responseMode: 'form_post',
         postRequest: async (url, r) => (await axios.post(url, r)).data,
         serverBase,
