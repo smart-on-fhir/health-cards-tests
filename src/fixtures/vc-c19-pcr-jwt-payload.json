@@ -10,9 +10,9 @@
     ],
     "type": [
       "VerifiableCredential",
-      "https://healthwallet.cards#health-card",
-      "https://healthwallet.cards#covid19",
-      "https://healthwallet.cards#presentation-context-online"
+      "https://smarthealth.cards#health-card",
+      "https://smarthealth.cards#covid19",
+      "https://smarthealth.cards#presentation-context-online"
     ],
     "credentialSubject": {
       "fhirVersion": "4.0.1",

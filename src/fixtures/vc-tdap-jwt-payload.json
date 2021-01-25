@@ -10,10 +10,10 @@
     ],
     "type": [
       "VerifiableCredential",
-      "https://healthwallet.cards#health-card",
-      "https://healthwallet.cards#immunization",
-      "https://healthwallet.cards#tdap",
-      "https://healthwallet.cards#presentation-context-online"
+      "https://smarthealth.cards#health-card",
+      "https://smarthealth.cards#immunization",
+      "https://smarthealth.cards#tdap",
+      "https://smarthealth.cards#presentation-context-online"
     ],
     "credentialSubject": {
       "fhirVersion": "4.0.1",
