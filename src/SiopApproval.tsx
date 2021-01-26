@@ -102,10 +102,10 @@ export const SiopApprovalModal: React.FC<SiopApprovalProps | null> = (props) => 
             <ModalBody>The following details will be shared:
         <ul>
                     <li><b>Your ID Card:</b> allows secure communications</li>
-                    {props.share.includes('https://healthwallet.cards#covid19') && <li>
+                    {props.share.includes('https://smarthealth.cards#covid19') && <li>
                         <b>Your COVID Card:</b> labs and vaccines for COVID-19
             </li>}
-                    {props.share.includes('https://healthwallet.cards#immunization') && <li>
+                    {props.share.includes('https://smarthealth.cards#immunization') && <li>
                         <b>Your Immunizations Card:</b> full vaccine history
             </li>}
                 </ul>

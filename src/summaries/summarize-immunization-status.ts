@@ -21,7 +21,7 @@ const modernaImmunizations: [any] = fhirBundle.entry
     .map(e => e.resource)
     .filter(r => r.resourceType === 'Immunization')
     .filter(r => r.vaccineCode.coding.filter(c => c.system === CVX && c.code === MODERNA).length > 0)
-    .sort((i1, i2) => new Date(i2.date).getTime() - new Date(i1.date).getTime());
+    .sort((i1, i2) => new Date(i2.occurrenceDateTime).getTime() - new Date(i1.occurrenceDateTime).getTime());
 
 enum ImmunizationStatus {
     Never = 0,
@@ -42,7 +42,7 @@ const output = {
     ptName: patient.name.map(n =>
         [n.prefix || ""]
             .concat(n.given)
-            .concat(n.family)
+            .concat([n.family])
             .concat([n.suffix || ""])
             .filter(n => n).join(" "))
     [0],
@@ -62,7 +62,7 @@ const output = {
         })
     [0],
     result: [{
-        effective: modernaImmunizations[0].date,
+        effective: modernaImmunizations[0].occurrenceDateTime,
         status: modernaImmunizations.length
     }]
 }

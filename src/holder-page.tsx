@@ -191,7 +191,7 @@ const App: React.FC<AppProps> = (props) => {
                             ID Card
                         </CardTitle>
                         <CardSubtitle className="text-muted">This identifier is all yours, with keys stored safely on your device.</CardSubtitle>
-                        <CardText style={{ fontFamily: "monospace" }}> {holderState.did.split('?')[0]}</CardText>
+                        <CardText style={{ fontFamily: "monospace" }}> {holderState.did.split(':').slice(0,3).join(':')+':...'}</CardText>
                     </Card>
                     <CovidCard
                         holderState={holderState}

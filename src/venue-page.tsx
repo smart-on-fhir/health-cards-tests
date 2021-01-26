@@ -72,7 +72,7 @@ const App: React.FC<{
     if (displayResponse) {
         did = displayResponse.idTokenPayload.did.replace(/\?.*/, "");
         const fhirName = displayResponse?.idTokenVcs[0].vc.credentialSubject.fhirBundle.entry[0].resource.name[0]
-        name = fhirName?.given[0]  + " " + fhirName?.family[0]
+        name = fhirName?.given[0]  + " " + fhirName?.family
         conclusion = displayResponse?.idTokenVcs.map(jwtPayload => jwtPayload.vc.credentialSubject.fhirBundle.entry[1].resource.conclusion)
     }
 
@@ -130,7 +130,7 @@ const App: React.FC<{
 export default async function main() {
     const state = await initializeVerifier({
         role: 'venue',
-        claimsRequired: ['https://healthwallet.cards#covid19'],
+        claimsRequired: ['https://smarthealth.cards#covid19'],
         responseMode: 'form_post',
         postRequest: async (url, r) => (await axios.post(url, r)).data,
         serverBase,

@@ -11,7 +11,7 @@ LOINC PCR Tests in DB [
 FHIR Bundle size 1225 
 
 Summary JSON {
-  alg: 'https://healthwallet.cards#c19-status',
+  alg: 'https://smarthealth.cards#c19-status',
   ver: '0.0.1',
   ptName: 'Eve Everywoman',
   ptPhone: '000-000-0000',

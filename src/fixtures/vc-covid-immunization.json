@@ -10,12 +10,12 @@
     ],
     "type": [
       "VerifiableCredential",
-      "https://healthwallet.cards#health-card",
-      "https://healthwallet.cards#immunization",
-      "https://healthwallet.cards#covid19"
+      "https://smarthealth.cards#health-card",
+      "https://smarthealth.cards#immunization",
+      "https://smarthealth.cards#covid19"
     ],
     "credentialSubject": {
-      "fhirVersion": "1.0.2",
+      "fhirVersion": "4.0.1",
       "fhirBundle": {
         "resourceType": "Bundle",
         "type": "collection",
@@ -32,9 +32,7 @@
               ],
               "name": [
                 {
-                  "family": [
-                    "Everywoman"
-                  ],
+                  "family": "Everywoman",
                   "given": [
                     "Evelyn"
                   ]
@@ -53,7 +51,7 @@
             "resource": {
               "resourceType": "Immunization",
               "status": "completed",
-              "date": "2020-12-18",
+              "occurrenceDateTime": "2020-12-18",
               "vaccineCode": {
                 "coding": [
                   {
@@ -78,7 +76,7 @@
             "resource": {
               "resourceType": "Immunization",
               "status": "completed",
-              "date": "2021-01-14",
+              "occurrenceDateTime": "2021-01-14",
               "vaccineCode": {
                 "coding": [
                   {
