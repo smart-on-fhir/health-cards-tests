@@ -3,9 +3,7 @@
     "id": "sample-123",
     "name": [
         {
-            "family": [
-                "Everywoman"
-            ],
+            "family": "Everywoman",
             "given": [
                 "Eve"
             ]

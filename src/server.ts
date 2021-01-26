@@ -15,7 +15,7 @@ import { generateEncryptionKey, generateSigningKey, keyGenerators } from './keys
 
 import exampleDr from './fixtures/diagnostic-report.json'
 import examplePt from './fixtures/patient.json'
-import exampleConformance from './fixtures/conformance.json'
+import exampleCapabilityStatement from './fixtures/capability-statement.json'
 
 import { VerifierState } from './VerifierState';
 import { generateDid, verifyJws, encryptFor } from './dids';
@@ -224,7 +224,7 @@ app.get('/api/fhir/metadata', async (req, res, err) => {
         const urlFor = relativePath => fullUrl + '/fhir/' + relativePath;
 
         const implementation = {
-            description: exampleConformance.implementation.description,
+            description: exampleCapabilityStatement.implementation.description,
             url: fullUrl + '/fhir'
         }
 
@@ -244,7 +244,7 @@ app.get('/api/fhir/metadata', async (req, res, err) => {
             }
         ]
 
-        const exampleRest = exampleConformance.rest[0]
+        const exampleRest = exampleCapabilityStatement.rest[0]
 
         const security = {
             ...exampleRest.security,
@@ -259,7 +259,7 @@ app.get('/api/fhir/metadata', async (req, res, err) => {
         ]
 
         res.json({
-            ...exampleConformance,
+            ...exampleCapabilityStatement,
             implementation,
             rest
         })

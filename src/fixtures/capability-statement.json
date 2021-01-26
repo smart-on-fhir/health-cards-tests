@@ -1,5 +1,6 @@
 {
-    "resourceType": "Conformance",
+    "resourceType": "CapabilityStatement",
+    "status": "active",
     "publisher": "Not provided",
     "date": "2020-11-19T18:28:05-05:00",
     "kind": "instance",
@@ -7,11 +8,9 @@
         "description": "FHIR REST Server",
         "url": ""
     },
-    "fhirVersion": "1.0.2",
-    "acceptUnknown": "extensions",
+    "fhirVersion": "4.0.1",
     "format": [
-        "application/xml+fhir",
-        "application/json+fhir"
+        "application/fhir+json"
     ],
     "rest": [
         {
@@ -46,7 +45,7 @@
                     }
                 ]
             },
-            "resource" : [
+            "resource": [
                 {
                     "type": "DiagnosticReport",
                     "profile": {
