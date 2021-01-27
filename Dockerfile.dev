@@ -2,6 +2,7 @@ FROM node:13
 
 ENV SERVER_BASE=relative
 WORKDIR /usr/src/app
+RUN chmod -R o+rwx /usr/src/app
 
 COPY package.json package-lock.json ./
 RUN npm ci
