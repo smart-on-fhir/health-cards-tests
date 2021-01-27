@@ -14,6 +14,8 @@ import OperationProcessor from '@decentralized-identity/sidetree/dist/lib/core/v
 import { generateEncryptionKey, generateSigningKey, keyGenerators } from './keys';
 
 import exampleDr from './fixtures/diagnostic-report.json'
+import examplePt from './fixtures/patient.json'
+import exampleCapabilityStatement from './fixtures/capability-statement.json'
 
 import { VerifierState } from './VerifierState';
 import { generateDid, verifyJws, encryptFor } from './dids';
@@ -215,6 +217,57 @@ async function getVcsForPatient(patientId, details: CredentialGenerationDetals =
     return vcs;
 }
 
+app.get('/api/fhir/metadata', async (req, res, err) => {
+    try {
+
+        const fullUrl = issuerState.config.serverBase;
+        const urlFor = relativePath => fullUrl + '/fhir/' + relativePath;
+
+        const implementation = {
+            description: exampleCapabilityStatement.implementation.description,
+            url: fullUrl + '/fhir'
+        }
+
+        const oauthExtension = [
+            {
+                "url": "http://fhir-registry.smarthealthit.org/StructureDefinition/oauth-uris",
+                "extension": [
+                    {
+                        "url": "authorize",
+                        "valueUri": urlFor('$authorize')
+                    },
+                    {
+                        "url": "token",
+                        "valueUri": urlFor('$token')
+                    }
+                ]
+            }
+        ]
+
+        const exampleRest = exampleCapabilityStatement.rest[0]
+
+        const security = {
+            ...exampleRest.security,
+            extension: oauthExtension
+        }
+
+        const rest = [
+            {
+                ...exampleRest,
+                security: security
+            }
+        ]
+
+        res.json({
+            ...exampleCapabilityStatement,
+            implementation,
+            rest
+        })
+    
+    } catch (e) {
+        err(e);
+    }
+});
 
 app.get('/api/fhir/DiagnosticReport', async (req, res, err) => {
     try {
@@ -249,6 +302,43 @@ app.get('/api/fhir/DiagnosticReport', async (req, res, err) => {
                 ...exampleDr,
             }
         }]
+    })
+    
+    } catch (e) {
+        err(e);
+    }
+});
+
+app.get('/api/fhir/Patient', async (req, res, err) => {
+    try {
+
+        const fullUrl = issuerState.config.serverBase;
+        const patientID = req.query._id || examplePt.id
+
+        res.json({
+            resourceType: 'Bundle',
+            entry: [{
+                fullUrl: `${fullUrl}/fhir/Patient/${patientID}`,
+                search: {
+                    mode: "match"
+                },
+                resource: {
+                    ...examplePt,
+                    id: patientID
+                }
+            }]
+        })
+    
+    } catch (e) {
+        err(e);
+    }
+});
+
+app.get('/api/fhir/Patient/:patientID', async (req, res, err) => {
+    try {
+    res.json({
+        ...examplePt,
+        id: req.params.patientID
     })
     
     } catch (e) {
