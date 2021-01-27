@@ -18,7 +18,7 @@ const clinicalResource = {
 describe('CredentialManager', () => {
 
     test('Does not alter inputs', () => {
-        const asVc = CredentialManager.createVc(issuer, subject, idResource, [clinicalResource])
+        const asVc = CredentialManager.createVc("", [], issuer, subject, idResource, [clinicalResource])
 
         expect(asVc.issuer).toEqual(issuer)
         expect(asVc.credentialSubject.id).toEqual(subject)
@@ -32,7 +32,8 @@ describe('CredentialManager', () => {
     })
          
     test('creates a VC from FHIR payloads', () => {
-        const asVc = CredentialManager.createVc(issuer, subject, idResource, [clinicalResource])
+        const asVc = CredentialManager.createVc("", [], issuer, subject, idResource, [clinicalResource])
+
 
         expect(asVc.issuer).toEqual(issuer)
         expect(asVc.credentialSubject.id).toEqual(subject)
@@ -44,7 +45,7 @@ describe('CredentialManager', () => {
     })
 
     test('creates a JWT payload from a VC', () => {
-        const asVc = CredentialManager.createVc(issuer, subject, idResource, [clinicalResource])
+        const asVc = CredentialManager.createVc("sample-context-type", ["sample-type-1", "sample-type-2"], issuer, subject, idResource, [clinicalResource])
         const asJwtPayload = CredentialManager.vcToJwtPayload(asVc) as any;
 
         expect(asJwtPayload.id).toBeUndefined()
@@ -69,7 +70,7 @@ describe('CredentialManager', () => {
     })
 
     test('recovers a VC from JWT payload', () => {
-        const asVc = CredentialManager.createVc(issuer, subject, idResource, [clinicalResource])
+        const asVc = CredentialManager.createVc("", [], issuer, subject, idResource, [clinicalResource])
         const asVcCloned = deepcopy(asVc)
 
         const asJwtPayload = CredentialManager.vcToJwtPayload(asVc) as any;

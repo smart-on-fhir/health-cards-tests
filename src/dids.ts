@@ -21,11 +21,9 @@ export async function verifyJws(jws: string, {
 const ENCRYPTION_KEY_TYPES = ['JsonWebKey2020', 'JwsVerificationKey2020']; 
 
 export async function encryptFor(jws: string, did: string, { generateEncryptionKey }: KeyGenerators, keyIdIn?: string) {
-    const didDoc = (await axios.get(resolveUrl + encodeURIComponent(did))).data;
-    const encryptionKeys = didDoc.publicKey.filter(k => k.publicKeyJwk.alg === 'ECDH-ES');
-    
-    const keyId = keyIdIn ? keyIdIn : encryptionKeys[0].id;
-    const encryptionKey = encryptionKeys.filter(k => k.id === keyId)[0]
+    const didDoc = (await axios.get(resolveUrl +did)).data;
+    const keyId = keyIdIn ? keyIdIn : '#' + didDoc.keyAgreement[0].split("#")[1];
+    const encryptionKey = didDoc.verificationMethod.filter(k => k.id == keyId)[0];
 
     const ek = await generateEncryptionKey({
         ...encryptionKey.publicKeyJwk,
@@ -35,63 +33,70 @@ export async function encryptFor(jws: string, did: string, { generateEncryptionK
 }
 const resolveKeyId = async (kid: string): Promise<JsonWebKey> => {
     const fragment = '#' + kid.split('#')[1];
-    const didDoc = (await axios.get(resolveUrl + encodeURIComponent(kid))).data;
-    return didDoc.publicKey.filter(k => k.id === fragment)[0].publicKeyJwk;
+    const didDoc = (await axios.get(resolveUrl +kid)).data;
+    return didDoc.verificationMethod.filter(k => k.id === fragment)[0].publicKeyJwk;
 };
 export async function generateDid({ signingPublicJwk, encryptionPublicJwk, recoveryPublicJwk, updatePublicJwk, domains = [] as string[]}) {
     const hashAlgorithmName = multihashes.codes[18];
+    
     const hash = (b: string|Buffer) => multihashes.encode(crypto.createHash('sha256').update(b).digest(), hashAlgorithmName);
 
     const revealCommitPair = (publicKey: SigningKey) => {
-        const revealValueEncodedString = canonicalize(publicKey)
-        const commitmentHash = hash(revealValueEncodedString);
-        const commitmentHashEncodedString = base64url.encode(commitmentHash);
-        return [revealValueEncodedString, commitmentHashEncodedString];
+        const revealValueEncodedString = canonicalize(publicKey);
+        const commitmentHashHash = hash(hash(revealValueEncodedString));
+        const commitmentHashHashEncodedString = base64url.encode(commitmentHashHash);
+        return [revealValueEncodedString, commitmentHashHashEncodedString];
     };
+
     const [recoveryValue, recoveryCommitment] = revealCommitPair(recoveryPublicJwk);
     const [updateValue, updateCommitment] = revealCommitPair(updatePublicJwk);
-    let patches: {action: string, public_keys?: any, service_endpoints?: any}[] = [{
+    let patches: {action: string, publicKeys?: any, services?: any}[] = [{
             action: 'add-public-keys',
-            public_keys: [{
+            publicKeys: [{
                 id: 'signing-key-1',
-                purpose: ['general', 'auth'],
+                purposes: ['authentication', 'assertionMethod'],
                 type: 'JsonWebKey2020',
-                jwk: signingPublicJwk
+                publicKeyJwk: JSON.parse(JSON.stringify({...signingPublicJwk, kid: undefined}))
             }, {
                 id: 'encryption-key-1',
-                purpose: ['general', 'auth'],
+                purposes: ['keyAgreement', 'assertionMethod'],
                 type: 'JsonWebKey2020',
-                jwk: encryptionPublicJwk
+                publicKeyJwk: JSON.parse(JSON.stringify({...encryptionPublicJwk, kid: undefined}))
             }]
         }]
     if (domains.length > 0) {
         patches.push({
-            "action": "add-service-endpoints",
-            "service_endpoints": [{
+            "action": "add-services",
+            "services": [{
                 "id": "linked-domain",
                 "type": "LinkedDomains",
-                "endpoint": domains[0]
+                "serviceEndpoint": domains[0]
                 }]
             });
     } 
+
     console.log("Patches", JSON.stringify(patches, null, 2));
     const delta: Record<string, any> = {
-        'update_commitment': updateCommitment,
+        updateCommitment,
         patches
     };
-    const deltaCanonical = JSON.stringify(delta);
-    const deltaEncoded = base64url.encode(deltaCanonical);
-    const suffixData = {
-        delta_hash: base64url.encode(hash(Buffer.from(deltaCanonical))),
-        recovery_commitment: recoveryCommitment
-    };
-    const suffixDataCanonical = JSON.stringify(suffixData);
-    const suffix = base64url.encode(hash(Buffer.from(suffixDataCanonical)));
 
+    const deltaCanonical = canonicalize(delta);
+    const suffixData = {
+        deltaHash: base64url.encode(hash(Buffer.from(deltaCanonical))),
+        recoveryCommitment: recoveryCommitment
+    };
+
+    const suffixDataCanonical = canonicalize(suffixData);
+    const suffix = base64url.encode(hash(Buffer.from(suffixDataCanonical)));
     const didShort = `did:ion:${suffix}`;
-    const suffixDataEncoded = base64url.encode(suffixDataCanonical);
-    const didLong = `did:ion:${suffix}?-ion-initial-state=${suffixDataEncoded}.${deltaEncoded}`;
-    return {
+
+    const longFormPayload = { suffixData, delta };
+    const longFormPayloadCanonical = canonicalize(longFormPayload);
+    const longFormFinalSegment = base64url.encode(longFormPayloadCanonical);
+    const didLong = `${didShort}:${longFormFinalSegment}`;
+
+    let ret = {
         did: didLong,
         recoveryValue,
         recoveryCommitment,
@@ -99,12 +104,13 @@ export async function generateDid({ signingPublicJwk, encryptionPublicJwk, recov
         updateCommitment,
         delta,
         deltaCanonical,
-        deltaEncoded,
         suffixData,
         suffixDataCanonical,
-        suffixDataEncoded,
         didShort,
         didLong
-    }
+    };
+
+    console.log("Key deets", ret);
+    return ret;
 }
 const jwtHeader = (jwt) => JSON.parse(base64url.decode(jwt.split('.')[0]));

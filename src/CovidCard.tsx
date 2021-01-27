@@ -53,10 +53,10 @@ const CovidCard: React.FC<{
         if (smartState?.access_token && issuerInteraction?.siopResponse && holderState.vcStore.length === 0) {
 
             /*
-            const credentials = axios.get(uiState.fhirClient.server + `/DiagnosticReport?patient=${smartState.patient}&_tag=https://healthwallet.cards|covid19`)
+            const credentials = axios.get(uiState.fhirClient.server + `/DiagnosticReport?patient=${smartState.patient}&_tag=https://smarthealth.cards|covid19`)
             credentials.then(response => {
                 const vcs = response.data.entry[0].resource.extension
-                    .filter(e => e.url === 'https://healthwallet.cards#vc-attachment')
+                    .filter(e => e.url === 'https://smarthealth.cards#vc-attachment')
                     .map(e => base64.decode(e.valueAttachment.data))
 
                 dispatchToHolder(retrieveVcs(vcs, holderState))
@@ -67,10 +67,10 @@ const CovidCard: React.FC<{
                 "resourceType": "Parameters",
                 "parameter": [{
                     "name": "credentialType",
-                    "valueUri": "https://healthwallet.cards#health-card"
+                    "valueUri": "https://smarthealth.cards#health-card"
                 },{
                     "name": "presentationContext",
-                    "valueUri": "https://healthwallet.cards#presentation-context-online"
+                    "valueUri": "https://smarthealth.cards#presentation-context-online"
                 }, {
                     "name": "encryptForKeyId",
                     "valueString": "#encryption-key-1"
@@ -84,7 +84,7 @@ const CovidCard: React.FC<{
     }, [smartState, holderState.interactions])
 
 
-    const covidVcs = holderState.vcStore.filter(vc => vc.type.includes("https://healthwallet.cards#covid19"));
+    const covidVcs = holderState.vcStore.filter(vc => vc.type.includes("https://smarthealth.cards#covid19"));
     const conclusions = covidVcs.flatMap(vc =>
         vc.vcPayload.vc.credentialSubject.fhirBundle.entry
             .filter(e => e.resource.resourceType === 'DiagnosticReport')

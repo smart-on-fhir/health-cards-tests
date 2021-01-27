@@ -14,14 +14,14 @@ import OperationProcessor from '@decentralized-identity/sidetree/dist/lib/core/v
 import { generateEncryptionKey, generateSigningKey, keyGenerators } from './keys';
 
 import exampleDr from './fixtures/diagnostic-report.json'
+import examplePt from './fixtures/patient.json'
+import exampleCapabilityStatement from './fixtures/capability-statement.json'
 
 import { VerifierState } from './VerifierState';
 import { generateDid, verifyJws, encryptFor } from './dids';
 import { issuerReducer, prepareSiopRequest, issueVcsToHolder, parseSiopResponse, CredentialGenerationDetals } from './VerifierLogic';
 
 import * as s1 from '@decentralized-identity/sidetree/dist/lib/core/versions/latest/protocol-parameters.json';
-import * as s2 from '@decentralized-identity/sidetree/dist/lib/bitcoin/protocol-parameters.json';
-
 
 const app = express();
 app.use(express.raw({ type: 'application/x-www-form-urlencoded', limit: '5000kb' }));
@@ -34,7 +34,9 @@ const port = 8080; // default port to listen
 const fhirBase = 'https://hapi.fhir.org/baseR4';
 
 async function resolveDid(did: string) {
+    console.log("preparsed", did);
     const parsedDid = await Did.create(did, 'ion');
+    console.log("Parsed", parsedDid);
     const operationWithMockedAnchorTime: AnchoredOperationModel = {
         didUniqueSuffix: parsedDid.uniqueSuffix,
         type: OperationType.Create,
@@ -47,7 +49,7 @@ async function resolveDid(did: string) {
     const processor = new OperationProcessor();
 
     const newDidState = await processor.apply(operationWithMockedAnchorTime, undefined);
-    const document = DocumentComposer.transformToExternalDocument(newDidState, did);
+    const document = DocumentComposer.transformToExternalDocument(newDidState, parsedDid, false);
     return document;
 }
 
@@ -196,8 +198,8 @@ app.get('/api/fhir/Patient/:patientID/[\$]HealthWallet.connect', async (req, res
 });
 
 async function getVcsForPatient(patientId, details: CredentialGenerationDetals = {
-    type: 'https://healthwallet.cards#covid19',
-    presentationContext: 'https://healthwallet.cards#presentation-context-online',
+    type: 'https://smarthealth.cards#covid19',
+    presentationContext: 'https://smarthealth.cards#presentation-context-online',
     identityClaims: null,
     encryptVc: false
 }) {
@@ -215,6 +217,57 @@ async function getVcsForPatient(patientId, details: CredentialGenerationDetals =
     return vcs;
 }
 
+app.get('/api/fhir/metadata', async (req, res, err) => {
+    try {
+
+        const fullUrl = issuerState.config.serverBase;
+        const urlFor = relativePath => fullUrl + '/fhir/' + relativePath;
+
+        const implementation = {
+            description: exampleCapabilityStatement.implementation.description,
+            url: fullUrl + '/fhir'
+        }
+
+        const oauthExtension = [
+            {
+                "url": "http://fhir-registry.smarthealthit.org/StructureDefinition/oauth-uris",
+                "extension": [
+                    {
+                        "url": "authorize",
+                        "valueUri": urlFor('$authorize')
+                    },
+                    {
+                        "url": "token",
+                        "valueUri": urlFor('$token')
+                    }
+                ]
+            }
+        ]
+
+        const exampleRest = exampleCapabilityStatement.rest[0]
+
+        const security = {
+            ...exampleRest.security,
+            extension: oauthExtension
+        }
+
+        const rest = [
+            {
+                ...exampleRest,
+                security: security
+            }
+        ]
+
+        res.json({
+            ...exampleCapabilityStatement,
+            implementation,
+            rest
+        })
+    
+    } catch (e) {
+        err(e);
+    }
+});
 
 app.get('/api/fhir/DiagnosticReport', async (req, res, err) => {
     try {
@@ -235,12 +288,12 @@ app.get('/api/fhir/DiagnosticReport', async (req, res, err) => {
             resource: {
                 meta: {
                     tag: [{
-                        system: "https://healthwallet.cards",
+                        system: "https://smarthealth.cards",
                         code: "covid19"
                     }]
                 },
                 extension: vc ? [{
-                    "url": "https://healthwallet.cards#vc-attachment",
+                    "url": "https://smarthealth.cards#vc-attachment",
                     "valueAttachment": {
                         "title": "COVID-19 Card for online presentation",
                         "data": base64.encode(vc)
@@ -249,6 +302,43 @@ app.get('/api/fhir/DiagnosticReport', async (req, res, err) => {
                 ...exampleDr,
             }
         }]
+    })
+    
+    } catch (e) {
+        err(e);
+    }
+});
+
+app.get('/api/fhir/Patient', async (req, res, err) => {
+    try {
+
+        const fullUrl = issuerState.config.serverBase;
+        const patientID = req.query._id || examplePt.id
+
+        res.json({
+            resourceType: 'Bundle',
+            entry: [{
+                fullUrl: `${fullUrl}/fhir/Patient/${patientID}`,
+                search: {
+                    mode: "match"
+                },
+                resource: {
+                    ...examplePt,
+                    id: patientID
+                }
+            }]
+        })
+    
+    } catch (e) {
+        err(e);
+    }
+});
+
+app.get('/api/fhir/Patient/:patientID', async (req, res, err) => {
+    try {
+    res.json({
+        ...examplePt,
+        id: req.params.patientID
     })
     
     } catch (e) {
@@ -564,7 +654,7 @@ app.use(function(err, req, res, next) {
       "diagnostics": err + "\n" + err.message + "\n" + err.stack,
       "details": {
           coding: err.code ? [{
-              "system": "https://healthwallet.cards",
+              "system": "https://smarthealth.cards",
               "code": err.code,
               "display": err.display
           }] : undefined

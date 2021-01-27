@@ -11,7 +11,7 @@ export const keyGenerators: KeyGenerators = {
     generateSigningKey
 };
 
-const encryptionKeyPros = {
+const encryptionKeyProps = {
     "kty": "EC",
     "crv": "P-256",
     "alg": 'ECDH-ES',
@@ -33,7 +33,7 @@ export async function generateEncryptionKey(inputPublic?: JsonWebKey, inputPriva
             privateKey = await jose.JWK.asKey(inputPrivate)
         }
     } else {
-        publicKey = privateKey = await keystore.generate("EC", "P-256", encryptionKeyPros);
+        publicKey = privateKey = await keystore.generate("EC", "P-256", encryptionKeyProps);
     }
 
     const publicJwk = publicKey.toJSON(false);

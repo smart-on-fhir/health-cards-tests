@@ -1,7 +1,7 @@
 {
   "iss": "<<did:ion identifier for issuer>>",
-  "nbf": 1597957752,
-  "iat": 1597957752,
+  "nbf": 1611160486,
+  "iat": 1611160486,
   "sub": "<<did:ion identifier for subject>>",
   "nonce": "FD790F250D50-BCF95D9ECB7E",
   "vc": {
@@ -12,8 +12,7 @@
       "VerifiableCredential",
       "https://smarthealth.cards#health-card",
       "https://smarthealth.cards#immunization",
-      "https://smarthealth.cards#tdap",
-      "https://smarthealth.cards#presentation-context-online"
+      "https://smarthealth.cards#covid19"
     ],
     "credentialSubject": {
       "fhirVersion": "4.0.1",
@@ -47,31 +46,52 @@
                 }
               ]
             }
-          },
-          {
-            "fullUrl": "urn:uuid:DCA0BCF9-0814-430D-904A-4B834900B915",
+          }, {
+            "fullUrl": "urn:uuid:c2e26781-f66b-4dea-90cc-9ec6e392b1e3",
             "resource": {
               "resourceType": "Immunization",
               "status": "completed",
-              "occurrenceDateTime": "2020-04-28",
+              "occurrenceDateTime": "2020-12-18",
               "vaccineCode": {
                 "coding": [
                   {
                     "system": "http://hl7.org/fhir/sid/cvx",
-                    "code": "115",
-                    "display": "tetanus toxoid, reduced diphtheria toxoid, and acellular pertussis vaccine, adsorbed"
+                    "code": "207",
+                    "display": "COVID-19, mRNA, LNP-S, PF, 100 mcg/ 0.5 mL dose"
                   }
                 ]
               },
               "location": {
-                "display": "ACME Labs, 101 Main Street, Springfield ST"
+                "display": "ACME Pharmacy, 101 Main Street, Springfield ST"
               },
               "lotNumber": "ASX-3528",
               "patient": {
                 "reference": "urn:uuid:5372596F-4D2F-48D1-A2BC-19A3D8F583A8"
               },
-              "performer": {
-                "display": "Maria S, RN"
+              "reported": false,
+              "wasNotGiven": false
+            }
+          }, {
+            "fullUrl": "urn:uuid:7284310c-1853-4de0-bb3d-17a69ad4ca18",
+            "resource": {
+              "resourceType": "Immunization",
+              "status": "completed",
+              "occurrenceDateTime": "2021-01-14",
+              "vaccineCode": {
+                "coding": [
+                  {
+                    "system": "http://hl7.org/fhir/sid/cvx",
+                    "code": "207",
+                    "display": "COVID-19, mRNA, LNP-S, PF, 100 mcg/ 0.5 mL dose"
+                  }
+                ]
+              },
+              "location": {
+                "display": "ACME Pharmacy, 101 Main Street, Springfield ST"
+              },
+              "lotNumber": "ASX-8122",
+              "patient": {
+                "reference": "urn:uuid:5372596F-4D2F-48D1-A2BC-19A3D8F583A8"
               },
               "reported": false,
               "wasNotGiven": false
