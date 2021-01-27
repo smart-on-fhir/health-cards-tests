@@ -8,6 +8,6 @@ RUN npm ci
 
 COPY src/ ./src
 COPY dist ./dist
-COPY tslint.json tsconfig.json ./
+COPY tslint.json tsconfig.json tsconfig.ui.json ./
 
 ENTRYPOINT [ "npm", "run" ]
