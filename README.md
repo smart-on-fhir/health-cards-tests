@@ -56,7 +56,7 @@ You can use the docker-compose.yaml file to spin up two dev containers with watc
 ### Note the following:
 1. Both containers have their `src` directories bind-mounted to the local directory's `src` folder. Any changes made in the `dev` container (or the host) will propagate to both containers + host and be registered by the watchers. This is helpful since you can, for instance, launch programs inside the `dev` container and utilize dev dependencies without needing to ever install them locally.
 2. Both containers have their `dist` folders mounted to a named volume. This means the parcel watcher in the `dev-ui` container can write changes that are accessible by the `dev` container. Note the `dev-ui` container needs `root` priviliges for this. See this [issue](https://github.com/moby/moby/issues/2259) for details. 
-3. The `dev-ui` container has `root` priviliges. DO NOT make any `src` file changes from inside that container, or those files will be locked on the host for non-root users (such as most text editors). When the above issue is solved, giving the `dev-ui` container non-root priviliges will resolve this. 
+3. The `dev-ui` container has `root` priviliges, but it has been given read-only access to the `src` folder. Any changes to `src` made from within this container will not be seen by the host or `dev` container.  
 
 ## Testing endpoins
 See [testing-endpoints.md](./testing-endpoints.md) for details.
