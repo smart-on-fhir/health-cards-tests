@@ -7,10 +7,9 @@ services:
       dockerfile: Dockerfile.dev
     volumes:
       - ./src:/usr/src/app/src
-      - ./dist:/usr/src/app/dist
+      - dist:/usr/src/app/dist
     environment: 
       - SERVER_BASE
-    user: $USER
     # Pack ui files with parcel watcher
     command: [ "dev-ui" ]
       
@@ -20,13 +19,19 @@ services:
       dockerfile: Dockerfile.dev
     volumes:
       - ./src:/usr/src/app/src
-      - ./dist:/usr/src/app/dist
+      - dist:/usr/src/app/dist
     environment: 
       - SERVER_BASE
     ports: 
       - "${HOST_PORT}:8080"
+    # IMPORTANT - You should only make file changes from within the dev container (NOT dev-ui) or on the host
+    # This container has your permissions, and won't lock files like sudo/root would
+    # This variable is configured using the USER=$(id -u) env variable
     user: $USER
     # Start dev server with nodemon watcher
     command: [ "dev" ]
     expose: 
       - "${HOST_PORT}"
+
+volumes:
+  dist:
