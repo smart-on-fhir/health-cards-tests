@@ -36,7 +36,7 @@ const resolveKeyId = async (kid: string): Promise<JsonWebKey> => {
     const didDoc = (await axios.get(resolveUrl + kid)).data;
     return didDoc.verificationMethod.filter(k => k.id === fragment)[0].publicKeyJwk;
 };
-export async function generateDid({ signingPublicJwk, encryptionPublicJwk, recoveryPublicJwk, updatePublicJwk, domains = [] as string[], customSuffix = "" }) {
+export async function generateDid({ signingPublicJwk, encryptionPublicJwk, recoveryPublicJwk, updatePublicJwk, domains = [] as string[]}) {
     const hashAlgorithmName = multihashes.codes[18];
 
     const hash = (b: string | Buffer) => multihashes.encode(crypto.createHash('sha256').update(b).digest(), hashAlgorithmName);
@@ -103,7 +103,7 @@ export async function generateDid({ signingPublicJwk, encryptionPublicJwk, recov
     };
 
     const suffixDataCanonical = canonicalize(suffixData);
-    const suffix = (customSuffix === "") ? base64url.encode(hash(Buffer.from(suffixDataCanonical))) : customSuffix;
+    const suffix = base64url.encode(hash(Buffer.from(suffixDataCanonical)));
     const didShort = `did:ion:${suffix}`;
 
     const longFormPayload = { suffixData, delta };
