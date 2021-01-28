@@ -9,7 +9,7 @@ services:
       - type: bind
         source: ./src
         target: /usr/src/app/src
-        read_only: "true"
+        read_only: true
       - dist:/usr/src/app/dist
     environment: 
       - SERVER_BASE
