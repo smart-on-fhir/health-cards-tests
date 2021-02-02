@@ -21,8 +21,6 @@ import { VerifierState } from './VerifierState';
 import { generateDid, verifyJws, encryptFor } from './dids';
 import { issuerReducer, prepareSiopRequest, issueVcsToHolder, parseSiopResponse, CredentialGenerationDetals } from './VerifierLogic';
 
-import * as s1 from '@decentralized-identity/sidetree/dist/lib/core/versions/latest/protocol-parameters.json';
-
 const app = express();
 app.use(express.raw({ type: 'application/x-www-form-urlencoded', limit: '5000kb' }));
 app.use(express.json({ type: 'application/json', limit: '5000kb'}));
@@ -91,39 +89,71 @@ setInterval(() => {
 */
 
 const didConfig = '.well-known/did-configuration.json';
+
+type TimeSinceEpoch = number
+type DateTimeString = string
+type LongFormDID = string
+
+type DomainLinkageCredentialJWTPayload = {
+   exp: TimeSinceEpoch,
+   iss: LongFormDID 
+   nbf: TimeSinceEpoch,
+   sub: LongFormDID,
+   vc: {
+       "@context": [
+           "https://www.w3.org/2018/credentials/v1",
+           "https://identity.foundation/.well-known/did-configuration/v1"
+        ],
+        credentialSubject: {
+            id: LongFormDID,
+            origin: string
+        },
+        expirationDate: DateTimeString,
+        issuanceDate: DateTimeString,
+        issuer: LongFormDID,
+        type: ["VerifiableCredential", "DomainLinkageCredential"]
+   }
+}
+
+type WellKnownDidConfigurationResponse = {
+    "@context": "https://identity.foundation/.well-known/did-configuration/v1",
+    linked_dids: [string]
+}
 app.get('/'  + didConfig, async (req, res, err) => {
     try {
-        const issued = Math.round(new Date().getTime() / 1000 - 10 * 60); // ten minutes ago
-        const expires = Math.round(new Date().getTime() / 1000 + 10 * 60); // ten minutes from now
-        const response = {
-            "@context": "https://identity.foundation/.well-known/contexts/did-configuration-v0.0.jsonld",
-            "entries": [
-            await issuerState.sk.sign({
-                kid: issuerState.did + '#signing-key-1',
-                }, {
-                    sub: issuerState.did,
-                    iss: issuerState.did,
-                    nbf: issued,
-                    exp: expires,
-                    vc: {
-                        "@context": [
-                            "https://www.w3.org/2018/credentials/v1",
-                            "https://identity.foundation/.well-known/contexts/did-configuration-v0.0.jsonld"],
-                        issuer: issuerState.did,
-                        issuanceDate: new Date(issued * 1000).toISOString(),
-                        expirationDate: new Date(expires * 1000).toISOString(),
-                        type: [
-                            "VerifiableCredential",
-                            "DomainLinkageCredential"
-                        ],
-                        credentialSubject: {
-                            id: issuerState.did,
-                            origin: new URL(issuerState.config.serverBase).origin,
-                        }
-                    }
-                })
+        const issued_seconds_since_epoch = Math.round(new Date().getTime() / 1000 - 10 * 60) // ten minutes ago
+        const expires_seconds_since_epoch = Math.round(new Date().getTime() / 1000 + 10 * 60) // ten minutes from now
+        const issued_string_formatted = new Date(issued_seconds_since_epoch * 1000).toISOString() 
+        const expired_string_formatted = new Date(expires_seconds_since_epoch * 1000).toISOString() 
 
-        ]};
+        const linked_did: DomainLinkageCredentialJWTPayload = {
+            exp: expires_seconds_since_epoch,
+            iss: issuerState.did,
+            nbf: issued_seconds_since_epoch,
+            sub: issuerState.did,
+            vc: {
+                "@context": [
+                    "https://www.w3.org/2018/credentials/v1",
+                    "https://identity.foundation/.well-known/did-configuration/v1"
+                ],
+                credentialSubject: {
+                    id: issuerState.did,
+                    origin: new URL(issuerState.config.serverBase).origin,
+                },
+                expirationDate: expired_string_formatted,
+                issuanceDate: issued_string_formatted,
+                issuer: issuerState.did,
+                type: ["VerifiableCredential", "DomainLinkageCredential"]
+            }
+        }
+
+        const linked_did_jws = await issuerState.sk.sign(
+            { kid: issuerState.did + "#signing-key-1"},
+            linked_did
+        )
+        const response: WellKnownDidConfigurationResponse = {
+            "@context": "https://identity.foundation/.well-known/did-configuration/v1",
+            "linked_dids": [linked_did_jws]}
 
         res.json(response)
 
