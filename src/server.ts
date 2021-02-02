@@ -88,16 +88,19 @@ setInterval(() => {
 }, 1000 * 60);
 */
 
-const didConfig = '.well-known/did-configuration.json';
+const enum SecondsSinceEpochBrand {}
+type SecondsSinceEpoch = number & SecondsSinceEpochBrand
 
-type TimeSinceEpoch = number
-type DateTimeString = string
-type LongFormDID = string
+const enum DateTimeStringBrand { _ = "" }
+type DateTimeString = string & DateTimeStringBrand
+
+const enum LongFormDIDBrand { _ = "" }
+type LongFormDID = string & LongFormDIDBrand
 
 type DomainLinkageCredentialJWTPayload = {
-   exp: TimeSinceEpoch,
-   iss: LongFormDID 
-   nbf: TimeSinceEpoch,
+   exp: SecondsSinceEpoch,
+   iss: LongFormDID
+   nbf: SecondsSinceEpoch,
    sub: LongFormDID,
    vc: {
        "@context": [
@@ -115,45 +118,64 @@ type DomainLinkageCredentialJWTPayload = {
    }
 }
 
+type JWSSignedPayload<T> = {
+    unsignedPayload: T
+    signedPayload: string
+}
+
+type SignedDomainLinkageCredentialJWTPayload = JWSSignedPayload<DomainLinkageCredentialJWTPayload>
+
 type WellKnownDidConfigurationResponse = {
     "@context": "https://identity.foundation/.well-known/did-configuration/v1",
-    linked_dids: [string]
+    linked_dids: [SignedDomainLinkageCredentialJWTPayload["signedPayload"]]
 }
-app.get('/'  + didConfig, async (req, res, err) => {
+
+const didConfig = '.well-known/did-configuration.json';
+
+app.get('/' + didConfig, async (req, res, err) => {
     try {
-        const issued_seconds_since_epoch = Math.round(new Date().getTime() / 1000 - 10 * 60) // ten minutes ago
-        const expires_seconds_since_epoch = Math.round(new Date().getTime() / 1000 + 10 * 60) // ten minutes from now
-        const issued_string_formatted = new Date(issued_seconds_since_epoch * 1000).toISOString() 
-        const expired_string_formatted = new Date(expires_seconds_since_epoch * 1000).toISOString() 
+        const tenMinsAgo = new Date().getTime() / 1000 - 10 * 60 as SecondsSinceEpoch
+        const tenMinsFromNow = new Date().getTime() / 1000 + 10 * 60 as SecondsSinceEpoch
+        const issuedSecondsSinceEpoch = Math.round(tenMinsAgo)
+        const expiresSecondsSinceEpoch = Math.round(tenMinsFromNow)
+        const issuedISOString = new Date(issuedSecondsSinceEpoch * 1000).toISOString() as DateTimeString
+        const expiredISOString = new Date(expiresSecondsSinceEpoch * 1000).toISOString() as DateTimeString
+
+        const issuerDID = issuerState.did as LongFormDID
 
         const linked_did: DomainLinkageCredentialJWTPayload = {
-            exp: expires_seconds_since_epoch,
-            iss: issuerState.did,
-            nbf: issued_seconds_since_epoch,
-            sub: issuerState.did,
+            exp: expiresSecondsSinceEpoch,
+            iss: issuerDID,
+            nbf: issuedSecondsSinceEpoch,
+            sub: issuerDID,
             vc: {
                 "@context": [
                     "https://www.w3.org/2018/credentials/v1",
                     "https://identity.foundation/.well-known/did-configuration/v1"
                 ],
                 credentialSubject: {
-                    id: issuerState.did,
+                    id: issuerDID,
                     origin: new URL(issuerState.config.serverBase).origin,
                 },
-                expirationDate: expired_string_formatted,
-                issuanceDate: issued_string_formatted,
-                issuer: issuerState.did,
+                expirationDate: expiredISOString,
+                issuanceDate: issuedISOString,
+                issuer: issuerDID,
                 type: ["VerifiableCredential", "DomainLinkageCredential"]
             }
         }
 
-        const linked_did_jws = await issuerState.sk.sign(
-            { kid: issuerState.did + "#signing-key-1"},
-            linked_did
-        )
+        const linked_did_jws: SignedDomainLinkageCredentialJWTPayload = {
+            unsignedPayload: linked_did,
+            signedPayload: await issuerState.sk.sign(
+                { kid: issuerState.did + "#signing-key-1"},
+                linked_did
+            )
+        }
+
         const response: WellKnownDidConfigurationResponse = {
             "@context": "https://identity.foundation/.well-known/did-configuration/v1",
-            "linked_dids": [linked_did_jws]}
+            "linked_dids": [linked_did_jws.signedPayload]
+        }
 
         res.json(response)
 
@@ -234,10 +256,10 @@ async function getVcsForPatient(patientId, details: CredentialGenerationDetals =
     encryptVc: false
 }) {
     const state = patientToSiopResponse[patientId];
-    if (!state || siopCache[state].responseDeferred.pending){ 
+    if (!state || siopCache[state].responseDeferred.pending){
         throw new OperationOutcomeError("no-did-bound", `No SIOP request has been completed for patient ${patientId}`)
     }
-    
+
     const siopResponse = await siopCache[state].siopStateAfterResponse;
     const id_token = siopResponse.idTokenRaw;
     const withResponse = await issuerReducer(issuerState, await parseSiopResponse(id_token, issuerState));
@@ -293,7 +315,7 @@ app.get('/api/fhir/metadata', async (req, res, err) => {
             implementation,
             rest
         })
-    
+
     } catch (e) {
         err(e);
     }
@@ -333,7 +355,7 @@ app.get('/api/fhir/DiagnosticReport', async (req, res, err) => {
             }
         }]
     })
-    
+
     } catch (e) {
         err(e);
     }
@@ -358,7 +380,7 @@ app.get('/api/fhir/Patient', async (req, res, err) => {
                 }
             }]
         })
-    
+
     } catch (e) {
         err(e);
     }
@@ -370,7 +392,7 @@ app.get('/api/fhir/Patient/:patientID', async (req, res, err) => {
         ...examplePt,
         id: req.params.patientID
     })
-    
+
     } catch (e) {
         err(e);
     }
@@ -410,7 +432,7 @@ app.post('/api/fhir/Patient/:patientID/[\$]HealthWallet.issueVc', async (req, re
     if (!requestedPresentationContext){
         throw "No presentationContext found in the Parameters"
     }
- 
+
     const requestedCredentialIdentityClaims = (requestBody.parameter || [])
         .filter(p => p.name === 'includeIdentityClaim')
         .map(p => p.valueString)
@@ -448,9 +470,9 @@ app.post('/api/fhir/Patient/:patientID/[\$]HealthWallet.issueVc', async (req, re
             'valueAttachment': {
                 "data": base64.encode(vc)
             }
-        })) 
+        }))
     });
-        
+
     } catch (e) {
         err(e);
     }
@@ -535,7 +557,7 @@ const siopBegin = async (req, res, err?) => {
         responsePollingUrl: `/siop/${id}/response`,
         ...siopCache[id]
     });
-    } catch (e){ 
+    } catch (e){
         err && err(e);
     }
 };
@@ -548,7 +570,7 @@ app.get('/api/siop/:id/response', async (req, res, err) => {
         state: req.params.id,
         id_token: r.idTokenRaw
     });
-        
+
     } catch(e) {
         err(e);
     }
@@ -591,8 +613,8 @@ app.get('/api/did/:did', async (req, res, err) => {
 
 app.post('/api/lab/vcs/:did', async (req, res, err) => {
     try {
-    
-        
+
+
     const did = decodeURIComponent(req.params.did);
     const vcs = req.body.vcs;
     const entry = {
@@ -601,7 +623,7 @@ app.post('/api/lab/vcs/:did', async (req, res, err) => {
     };
     vcCache[did] = entry;
     res.send('Received VC for DID');
-        
+
     } catch (e) {
         err(e);
     }
@@ -622,7 +644,7 @@ app.get('/api/test/did-doc', async (req, res, err) => {
     const did = issuerState.did;
     const didDoc = await resolveDid(did);
     res.json(didDoc.didDocument);
-        
+
     } catch (e) {
         err(e);
     }
