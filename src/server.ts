@@ -95,25 +95,25 @@ const enum DateTimeStringBrand { _ = "" }
 type DateTimeString = string & DateTimeStringBrand
 
 const enum LongFormDIDBrand { _ = "" }
-type LongFormDID = string & LongFormDIDBrand
+type LongFormDid = string & LongFormDIDBrand
 
 type DomainLinkageCredentialJWTPayload = {
    exp: SecondsSinceEpoch,
-   iss: LongFormDID
+   iss: LongFormDid
    nbf: SecondsSinceEpoch,
-   sub: LongFormDID,
+   sub: LongFormDid,
    vc: {
        "@context": [
            "https://www.w3.org/2018/credentials/v1",
            "https://identity.foundation/.well-known/did-configuration/v1"
         ],
         credentialSubject: {
-            id: LongFormDID,
+            id: LongFormDid,
             origin: string
         },
         expirationDate: DateTimeString,
         issuanceDate: DateTimeString,
-        issuer: LongFormDID,
+        issuer: LongFormDid,
         type: ["VerifiableCredential", "DomainLinkageCredential"]
    }
 }
@@ -141,40 +141,40 @@ app.get('/' + didConfig, async (req, res, err) => {
         const issuedISOString = new Date(issuedSecondsSinceEpoch * 1000).toISOString() as DateTimeString
         const expiredISOString = new Date(expiresSecondsSinceEpoch * 1000).toISOString() as DateTimeString
 
-        const issuerDID = issuerState.did as LongFormDID
+        const issuerDid = issuerState.did as LongFormDid
 
-        const linked_did: DomainLinkageCredentialJWTPayload = {
+        const linkedDID: DomainLinkageCredentialJWTPayload = {
             exp: expiresSecondsSinceEpoch,
-            iss: issuerDID,
+            iss: issuerDid,
             nbf: issuedSecondsSinceEpoch,
-            sub: issuerDID,
+            sub: issuerDid,
             vc: {
                 "@context": [
                     "https://www.w3.org/2018/credentials/v1",
                     "https://identity.foundation/.well-known/did-configuration/v1"
                 ],
                 credentialSubject: {
-                    id: issuerDID,
+                    id: issuerDid,
                     origin: new URL(issuerState.config.serverBase).origin,
                 },
                 expirationDate: expiredISOString,
                 issuanceDate: issuedISOString,
-                issuer: issuerDID,
+                issuer: issuerDid,
                 type: ["VerifiableCredential", "DomainLinkageCredential"]
             }
         }
 
-        const linked_did_jws: SignedDomainLinkageCredentialJWTPayload = {
-            unsignedPayload: linked_did,
+        const linkedDidJws: SignedDomainLinkageCredentialJWTPayload = {
+            unsignedPayload: linkedDID,
             signedPayload: await issuerState.sk.sign(
                 { kid: issuerState.did + "#signing-key-1"},
-                linked_did
+                linkedDID
             )
         }
 
         const response: WellKnownDidConfigurationResponse = {
             "@context": "https://identity.foundation/.well-known/did-configuration/v1",
-            "linked_dids": [linked_did_jws.signedPayload]
+            "linked_dids": [linkedDidJws.signedPayload]
         }
 
         res.json(response)
