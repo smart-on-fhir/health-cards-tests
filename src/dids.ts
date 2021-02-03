@@ -21,9 +21,9 @@ export async function verifyJws(jws: string, {
 const ENCRYPTION_KEY_TYPES = ['JsonWebKey2020', 'JwsVerificationKey2020'];
 
 export async function encryptFor(jws: string, did: string, { generateEncryptionKey }: KeyGenerators, keyIdIn?: string) {
-    const didDoc = (await axios.get(resolveUrl + did)).data;
+    const didDoc = (await axios.get(resolveUrl +did)).data;
     const keyId = keyIdIn ? keyIdIn : '#' + didDoc.keyAgreement[0].split("#")[1];
-    const encryptionKey = didDoc.verificationMethod.filter(k => k.id === keyId)[0];
+    const encryptionKey = didDoc.verificationMethod.filter(k => k.id == keyId)[0];
 
     const ek = await generateEncryptionKey({
         ...encryptionKey.publicKeyJwk,
@@ -33,13 +33,13 @@ export async function encryptFor(jws: string, did: string, { generateEncryptionK
 }
 const resolveKeyId = async (kid: string): Promise<JsonWebKey> => {
     const fragment = '#' + kid.split('#')[1];
-    const didDoc = (await axios.get(resolveUrl + kid)).data;
+    const didDoc = (await axios.get(resolveUrl +kid)).data;
     return didDoc.verificationMethod.filter(k => k.id === fragment)[0].publicKeyJwk;
 };
 export async function generateDid({ signingPublicJwk, encryptionPublicJwk, recoveryPublicJwk, updatePublicJwk, domains = [] as string[]}) {
     const hashAlgorithmName = multihashes.codes[18];
-
-    const hash = (b: string | Buffer) => multihashes.encode(crypto.createHash('sha256').update(b).digest(), hashAlgorithmName);
+    
+    const hash = (b: string|Buffer) => multihashes.encode(crypto.createHash('sha256').update(b).digest(), hashAlgorithmName);
 
     const revealCommitPair = (publicKey: SigningKey) => {
         const revealValueEncodedString = canonicalize(publicKey);
@@ -111,7 +111,7 @@ export async function generateDid({ signingPublicJwk, encryptionPublicJwk, recov
     const longFormFinalSegment = base64url.encode(longFormPayloadCanonical);
     const didLong = `${didShort}:${longFormFinalSegment}`;
 
-    const ret = {
+    let ret = {
         did: didLong,
         recoveryValue,
         recoveryCommitment,

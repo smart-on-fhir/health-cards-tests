@@ -1,43 +1,40 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://smarthealth.cards/c19-status.schema.json",
+    "$id": "https://smarthealth.cards/algorithms/2-c19-immunization-status.schema.json",
     "type": "object",
-    "title": "Summarize Covid Status",
-    "description": "Represents a summary of FHIR data to determine COVID-19 infection status as at specific points in time.",
+    "title": "Summarize Covid-19 Immunization Status",
+    "description": "Represents a summary of FHIR data to determine COVID-19 immunization status at a specifie point in time.",
     "examples": [{
-        "alg": "https://smarthealth.cards#c19-status",
+        "alg": "#c19-immunization-status",
         "ver": "0.0.1",
         "ial": 2,
         "ptName": "Eve Everywoman",
         "ptPhone": "000-000-0000",
         "result": [{
-            "effective": "2020-05-01",
-            "infectionStatus": 1
+          "effective": "2020-01-20",
+          "status": 2
         }]
     }],
     "required": [
         "alg",
-        "ver",
         "ial",
         "result"
     ],
-    "additionalProperties": true,
+    "additionalProperties": false,
     "properties": {
         "alg": {
             "$id": "#/properties/alg",
             "type": "string",
             "title": "Algorithm",
             "description": "Algorithm used to produce this summary",
-            "const": "https://smarthealth.cards#c19-status"
+            "const": "#c19-immunization-status"
         },
         "ver": {
             "$id": "#/properties/ver",
             "type": "string",
-            "title": "Version",
-            "description": "Version of the algorithm applied to produce this summary",
-            "examples": [
-                "0.0.1"
-            ]
+            "title": "Algorithm",
+            "description": "Version of algorithm used to produce this summary",
+            "const": "0.0.1"
         },
         "ptName": {
             "$id": "#/properties/ptName",
@@ -70,12 +67,7 @@
             "type": "array",
             "title": "Results array",
             "description": "Array of COVID-19 status results",
-            "examples": [
-                [{
-                    "effective": "2020-05-01",
-                    "infectionStatus": 1
-                }]
-            ],
+            "examples": [ 1611160486, 2],
             "additionalItems": true,
             "items": {
                 "$id": "#/properties/result/items/properties",
@@ -83,12 +75,12 @@
                 "title": "COVID 19 Status",
                 "description": "Summary of COVID-19 infection status at a specific point in time",
                 "examples": [{
-                    "effective": "2020-05-01",
-                    "infectionStatus": 1
+                    "effective": "2020-01-20",
+                    "status": 2
                 }],
                 "required": [
                     "effective",
-                    "infectionStatus"
+                    "status"
                 ],
                 "additionalProperties": true,
                 "properties": {
@@ -107,17 +99,17 @@
                         "title": "Infection status",
                         "description": "Summary of current C19 infection status",
                         "oneOf": [{
-                            "title": "Evidence of no current infection",
+                            "title": "No history of immunization",
                             "const": 0
                         }, {
-                            "title": "Evidence of current infection",
+                            "title": "Received immunization but not a full course",
                             "const": 1
                         }, {
-                            "title": "No conclusive evidence",
+                            "title": "Full course of immunization received",
                             "const": 2
                         }],
                         "examples": [
-                            1
+                            2
                         ]
                     }
                 }

@@ -1,5 +1,5 @@
 {
-  "iss": "<<did:ion identifier for lab>>",
+  "iss": "<<did:ion identifier for issuer>>",
   "nbf": 1591037940,
   "iat": 1591037940,
   "sub": "<<did:identifier for subject if known>>",
@@ -10,12 +10,12 @@
     ],
     "type": [
       "VerifiableCredential",
-      "https://healthwallet.cards#health-card",
-      "https://healthwallet.cards#covid19",
-      "https://healthwallet.cards#presentation-context-online"
+      "https://smarthealth.cards#health-card",
+      "https://smarthealth.cards#covid19",
+      "https://smarthealth.cards#presentation-context-online"
     ],
     "credentialSubject": {
-      "fhirVersion": "1.0.2",
+      "fhirVersion": "4.0.1",
       "fhirBundle": {
         "resourceType": "Bundle",
         "type": "collection",
@@ -32,9 +32,7 @@
               ],
               "name": [
                 {
-                  "family": [
-                    "Everywoman"
-                  ],
+                  "family": "Everywoman",
                   "given": [
                     "Eve"
                   ]

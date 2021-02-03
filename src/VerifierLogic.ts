@@ -82,19 +82,19 @@ export interface CredentialGenerationDetals {
 }
 
 export const defaultIdentityClaims = {
-    "https://healthwallet.cards#presentation-context-online": [
+    "https://smarthealth.cards#presentation-context-online": [
         "Patient.telecom",
         "Patient.name",
     ],
-    "https://healthwallet.cards#presentation-context-in-person": [
+    "https://smarthealth.cards#presentation-context-in-person": [
         "Patient.name",
         "Patient.photo"
     ]
 }
 
 export const issueVcsToHolder = async (state: VerifierState, details: CredentialGenerationDetals = {
-    type: 'https://healthwallet.cards#covid19',
-    presentationContext: 'https://healthwallet.cards#presentation-context-online',
+    type: 'https://smarthealth.cards#covid19',
+    presentationContext: 'https://smarthealth.cards#presentation-context-online',
     identityClaims: null,
     encryptVc: true,
 }): Promise<{
