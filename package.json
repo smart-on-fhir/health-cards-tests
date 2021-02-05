@@ -44,6 +44,7 @@
     "jsonschema": "^1.4.0",
     "multihashes": "^0.4.21",
     "node-jose": "^2.0.0",
+    "pako": "^2.0.3",
     "qr-scanner": "^1.2.0",
     "qrcode": "^1.4.4",
     "querystring": "^0.2.0",

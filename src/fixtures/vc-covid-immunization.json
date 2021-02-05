@@ -2,7 +2,6 @@
   "iss": "<<did:ion identifier for issuer>>",
   "nbf": 1611160486,
   "iat": 1611160486,
-  "sub": "<<did:ion identifier for subject>>",
   "nonce": "FD790F250D50-BCF95D9ECB7E",
   "vc": {
     "@context": [
@@ -14,6 +13,7 @@
       "https://smarthealth.cards#immunization",
       "https://smarthealth.cards#covid19"
     ],
+    "holder": "<<did:ion identifier for holder>>",
     "credentialSubject": {
       "fhirVersion": "4.0.1",
       "fhirBundle": {
@@ -21,80 +21,100 @@
         "type": "collection",
         "entry": [
           {
-            "fullUrl": "urn:uuid:5372596F-4D2F-48D1-A2BC-19A3D8F583A8",
+            "fullUrl": "http://example.org/fhir/Patient/Scenario1Patient",
             "resource": {
               "resourceType": "Patient",
-              "extension": [
-                {
-                  "url": "https://github.com/TransparentHealth/800-63-3-trustmark#P",
-                  "valueCode": "P1"
-                }
-              ],
+              "id": "Scenario1Patient",
               "name": [
                 {
-                  "family": "Everywoman",
+                  "family": "Anyperson",
                   "given": [
-                    "Evelyn"
+                    "John",
+                    "B."
                   ]
                 }
               ],
               "telecom": [
                 {
                   "system": "phone",
-                  "value": "617-000-0000",
-                  "use": "mobile"
+                  "value": "555-555-5555",
+                  "use": "home"
+                },
+                {
+                  "system": "email",
+                  "value": "john.anyperson@example.com"
+                }
+              ],
+              "gender": "male",
+              "birthDate": "1951-01-20",
+              "address": [
+                {
+                  "line": [
+                    "123 Main St"
+                  ],
+                  "city": "Anytown",
+                  "postalCode": "12345",
+                  "country": "US"
                 }
               ]
             }
-          }, {
-            "fullUrl": "urn:uuid:c2e26781-f66b-4dea-90cc-9ec6e392b1e3",
+          },
+          {
+            "fullUrl": "http://example.org/fhir/Immunization/Scenario1Immunization1",
             "resource": {
               "resourceType": "Immunization",
+              "id": "Scenario1Immunization1",
               "status": "completed",
-              "occurrenceDateTime": "2020-12-18",
               "vaccineCode": {
                 "coding": [
                   {
                     "system": "http://hl7.org/fhir/sid/cvx",
-                    "code": "207",
-                    "display": "COVID-19, mRNA, LNP-S, PF, 100 mcg/ 0.5 mL dose"
+                    "code": "207"
                   }
                 ]
               },
-              "location": {
-                "display": "ACME Pharmacy, 101 Main Street, Springfield ST"
-              },
-              "lotNumber": "ASX-3528",
               "patient": {
-                "reference": "urn:uuid:5372596F-4D2F-48D1-A2BC-19A3D8F583A8"
+                "reference": "Patient/Scenario1Patient"
               },
-              "reported": false,
-              "wasNotGiven": false
+              "occurrenceDateTime": "2021-01-01T11:45:33+11:00",
+              "primarySource": true,
+              "location": {
+                "reference": "Location/Scenario1Location"
+              },
+              "lotNumber": "Lot #0000001"
             }
-          }, {
-            "fullUrl": "urn:uuid:7284310c-1853-4de0-bb3d-17a69ad4ca18",
+          },
+          {
+            "fullUrl": "http://example.org/fhir/Immunization/Scenario1Immunization2",
             "resource": {
               "resourceType": "Immunization",
+              "id": "Scenario1Immunization2",
               "status": "completed",
-              "occurrenceDateTime": "2021-01-14",
               "vaccineCode": {
                 "coding": [
                   {
                     "system": "http://hl7.org/fhir/sid/cvx",
-                    "code": "207",
-                    "display": "COVID-19, mRNA, LNP-S, PF, 100 mcg/ 0.5 mL dose"
+                    "code": "207"
                   }
                 ]
               },
-              "location": {
-                "display": "ACME Pharmacy, 101 Main Street, Springfield ST"
-              },
-              "lotNumber": "ASX-8122",
               "patient": {
-                "reference": "urn:uuid:5372596F-4D2F-48D1-A2BC-19A3D8F583A8"
+                "reference": "Patient/Scenario1Patient"
               },
-              "reported": false,
-              "wasNotGiven": false
+              "occurrenceDateTime": "2021-01-29T11:45:33+11:00",
+              "primarySource": true,
+              "location": {
+                "reference": "Location/Scenario1Location"
+              },
+              "lotNumber": "Lot #0000007"
+            }
+          },
+          {
+            "fullUrl": "http://example.org/fhir/Immunization/Scenario1Location",
+            "resource": {
+              "resourceType": "Location",
+              "id": "Scenario1Location",
+              "name": "ABC Pharmacy"
             }
           }
         ]

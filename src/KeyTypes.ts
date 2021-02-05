@@ -1,4 +1,4 @@
-export type Header = Record<string, string>;
+export type Header = Record<string, string|number>;
 export type Payload = Record<string, any>;
 export type EncryptionResult = string;
 export type SignatureResult = string;

@@ -13,13 +13,12 @@ import DocumentComposer from '@decentralized-identity/sidetree/dist/lib/core/ver
 import OperationProcessor from '@decentralized-identity/sidetree/dist/lib/core/versions/latest/OperationProcessor';
 import { generateEncryptionKey, generateSigningKey, keyGenerators } from './keys';
 
-import exampleDr from './fixtures/diagnostic-report.json'
 import examplePt from './fixtures/patient.json'
 import exampleCapabilityStatement from './fixtures/capability-statement.json'
 
 import { VerifierState } from './VerifierState';
 import { generateDid, verifyJws, encryptFor } from './dids';
-import { issuerReducer, prepareSiopRequest, issueVcsToHolder, parseSiopResponse, CredentialGenerationDetals } from './VerifierLogic';
+import { issuerReducer, prepareSiopRequest, issueHealthCardsToHolder, parseSiopResponse, CredentialGenerationDetals, createHealthCards as createHealthCards } from './VerifierLogic';
 
 const app = express();
 app.use(express.raw({ type: 'application/x-www-form-urlencoded', limit: '5000kb' }));
@@ -249,21 +248,25 @@ app.get('/api/fhir/Patient/:patientID/[\$]HealthWallet.connect', async (req, res
     }
 });
 
-async function getVcsForPatient(patientId, details: CredentialGenerationDetals = {
+async function getHealthCardsForPatient(patientId, details: CredentialGenerationDetals = {
     type: 'https://smarthealth.cards#covid19',
     presentationContext: 'https://smarthealth.cards#presentation-context-online',
     identityClaims: null,
     encryptVc: false
 }) {
+    if (!details.holderDid) {
+        return (await createHealthCards(issuerState, details)).vcs;
+    }
+
     const state = patientToSiopResponse[patientId];
     if (!state || siopCache[state].responseDeferred.pending){
-        throw new OperationOutcomeError("no-did-bound", `No SIOP request has been completed for patient ${patientId}`)
+        throw new OperationOutcomeError("did-not-bound", `No SIOP request has been completed for patient ${patientId}`)
     }
 
     const siopResponse = await siopCache[state].siopStateAfterResponse;
     const id_token = siopResponse.idTokenRaw;
     const withResponse = await issuerReducer(issuerState, await parseSiopResponse(id_token, issuerState));
-    const afterIssued = await issuerReducer(withResponse, await issueVcsToHolder(withResponse, details));
+    const afterIssued = await issuerReducer(withResponse, await issueHealthCardsToHolder(withResponse, details));
     const vcs = afterIssued.issuedCredentials
 
     return vcs;
@@ -321,46 +324,6 @@ app.get('/api/fhir/metadata', async (req, res, err) => {
     }
 });
 
-app.get('/api/fhir/DiagnosticReport', async (req, res, err) => {
-    try {
-
-
-    // TODO if we need to handle >1 result, remove [0].
-    // But might just phase this out in favor of $HealthWallet.issueVc
-    const vc = await getVcsForPatient(req.query.patient)[0];
-    const fullUrl = issuerState.config.serverBase;
-
-    res.json({
-        resourceType: 'Bundle',
-        entry: [{
-            fullUrl: `${fullUrl}/fhir/DiagnosticReport/${exampleDr.id}`,
-            search: {
-                mode: "match"
-            },
-            resource: {
-                meta: {
-                    tag: [{
-                        system: "https://smarthealth.cards",
-                        code: "covid19"
-                    }]
-                },
-                extension: vc ? [{
-                    "url": "https://smarthealth.cards#vc-attachment",
-                    "valueAttachment": {
-                        "title": "COVID-19 Card for online presentation",
-                        "data": base64.encode(vc)
-                    }
-                }] : undefined,
-                ...exampleDr,
-            }
-        }]
-    })
-
-    } catch (e) {
-        err(e);
-    }
-});
-
 app.get('/api/fhir/Patient', async (req, res, err) => {
     try {
 
@@ -408,6 +371,37 @@ class OperationOutcomeError extends Error {
   }
 }
 
+app.get('/api/fhir/Patient/:patientID/[\$]HealthWallet.covidCardQr', async (req, res, err) => {
+    try {
+        const requestedCredentialType = ["https://smarthealth.cards#immunization"];
+        const requestedPresentationContext = "https://smarthealth.cards#qr";
+
+    let vcs = [];
+    for (const vcType of requestedCredentialType) {
+        const newVcs = await getHealthCardsForPatient(req.params.patientID, {
+            type: vcType,
+            presentationContext: requestedPresentationContext,
+            identityClaims: null,
+            holderDid: null
+        });
+        vcs = [...vcs, ...newVcs]
+    }
+
+    res.json({
+        'resourceType': 'Parameters',
+        'parameter': vcs.map(vc => ({
+            'name': 'qr',
+            'valueString': vc,
+            'debug': vc.length
+        }))
+    });
+
+    } catch (e) {
+        err(e);
+    }
+});
+
+
 app.post('/api/fhir/Patient/:patientID/[\$]HealthWallet.issueVc', async (req, res, err) => {
     try {
 
@@ -441,6 +435,11 @@ app.post('/api/fhir/Patient/:patientID/[\$]HealthWallet.issueVc', async (req, re
         .filter(p => p.name === 'encryptForKeyId')
         .map(p => p.valueString)
 
+    const holderDid = (requestBody.parameter || [])
+        .filter(p => p.name === 'holderDid')
+        .map(p => p.valueString)
+
+
     if (requestedEncryptionKeyId.length > 0 && requestedEncryptionKeyId[0][0] !== "#") {
         throw "Requested encryption key ID must start with '#', e.g., '#encryption-key-1'.";
     }
@@ -449,11 +448,12 @@ app.post('/api/fhir/Patient/:patientID/[\$]HealthWallet.issueVc', async (req, re
 
     let vcs = [];
     for (const vcType of requestedCredentialType) {
-        const newVcs = await getVcsForPatient(req.params.patientID, {
+        const newVcs = await getHealthCardsForPatient(req.params.patientID, {
             type: vcType,
             presentationContext: requestedPresentationContext,
             identityClaims: requestedCredentialIdentityClaims.length > 0 ? requestedCredentialIdentityClaims : null,
             encryptVc,
+            holderDid: holderDid.length ? holderDid[0] : null,
             encryptVcForKeyId: encryptVc ? requestedEncryptionKeyId[0] : undefined
         });
 

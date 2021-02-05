@@ -7,7 +7,6 @@ import { randomBytes } from 'crypto';
 import base64url from 'base64url';
 import { relative } from 'path';
 
-const generateUri = () => `urn:uuid:${uuid.v4()}`
 
 interface Entry {
     fullUrl: string;
@@ -20,30 +19,42 @@ const unique = (values: string[]): string[]  => {
     ret.sort();
     return ret;
 }
-export const createVc = (presentationContext: string, types: string[], issuer: string, subject: string, fhirIdentityResource: any, fhirClniicalResources: any[]) => {
+export const createHealthCard = (presentationContext: string, types: string[], issuer: string, issuerOrigin: string, holder: string | null, fhirIdentityResource: any, fhirClniicalResources: any[]) => {
     const vc: VC = deepcopy(emptyVc);
+
+    const subjectFieldName = {
+        'Immunization': 'patient',
+        'DiagnosticReport': 'subject',
+        'Observation': 'subject',
+    }
+
 
     vc.issuanceDate = new Date(vc.issuanceDate).toISOString()
 
     const identityEntry: Entry = {
-        fullUrl: generateUri(),
+        fullUrl: "resource:0",
         resource: fhirIdentityResource
     }
 
-    const clinicalEntries = fhirClniicalResources.map(r => ({
-        fullUrl: generateUri(),
+    const clinicalEntries = fhirClniicalResources.map((r, i) => ({
+        fullUrl: `resource:${i+1}`,
         resource: {
             ...r,
-            subject: {
+            [subjectFieldName[r.resourceType]]: {
                 reference: identityEntry.fullUrl
             }
         }
     }))
 
     vc.issuer = issuer;
+    vc.issuerOrigin = issuerOrigin;
 
-    vc.type = unique([presentationContext, ...types])
-    vc.credentialSubject.id = subject;
+    if (holder) {
+      vc.holder = holder;
+    } else {
+        vc.holder = undefined;
+    }
+
     vc.credentialSubject.fhirBundle.entry = [identityEntry, ...clinicalEntries]
     return vc
 }
@@ -53,10 +64,12 @@ interface VC {
     type: string[],
     id?: string;
     issuer?: string;
+    issuerOrigin?: string;
+    holder?: string;
     issuanceDate?: string;
     expirationDate?: string;
     credentialSubject: {
-        id: string,
+        id?: string,
         fhirBundle: any
     }
 }
@@ -68,7 +81,7 @@ interface VcJWTPayload {
     iat: number;
     exp?: number;
     nbf?: number;
-    nonce: string;
+    nonce?: string;
     vc: any;
 }
 
@@ -85,7 +98,6 @@ export const vcToJwtPayload = (vcIn: VC): VcJWTPayload => {
         exp: vc.expirationDate ?  isoToNumericDate(vc.expirationDate) : undefined,
         jti: vc.id,
         sub: vc.credentialSubject.id,
-        nonce: base64url.encode(crypto.randomBytes(16)),
         vc: {
             ...vc,
             issuer: undefined,

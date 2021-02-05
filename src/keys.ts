@@ -1,5 +1,6 @@
 import base64url from 'base64url';
 import jose from 'node-jose';
+import pako from 'pako';
 
 import { EncryptionKey, SigningKey, KeyGenerators, SignatureResult } from './KeyTypes';
 import sha256 from './sha256';
@@ -89,12 +90,16 @@ export async function generateSigningKey(inputPublic?: JsonWebKey, inputPrivate?
 
     return {
         sign: async (header, payload) => {
+            let body = JSON.stringify(payload);
+            if (header.zip === 'DEF') {
+                body = pako.deflate(body);
+            }
             const jws = await jose.JWS
             .createSign({
                 format: 'compact',
                 fields: header,
                 }, privateKey)
-            .update(JSON.stringify(payload))
+            .update(body)
             .final();
 
             return jws as unknown as SignatureResult;

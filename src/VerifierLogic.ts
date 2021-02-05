@@ -8,6 +8,7 @@ import { encryptFor, verifyJws } from './dids';
 import sampleVcCovidAb from './fixtures/vc-jwt-payload.json';
 import sampleVcTdap from './fixtures/vc-tdap-jwt-payload.json'
 import sampleVcCovidPcr from './fixtures/vc-c19-pcr-jwt-payload.json';
+import sampleVcCovidImmunization from './fixtures/vc-covid-immunization.json';
 import { VerifierState } from './VerifierState';
 import { VerificationResult } from './KeyTypes';
 
@@ -76,13 +77,19 @@ export async function prepareSiopRequest(state: VerifierState) {
 export interface CredentialGenerationDetals {
     type: string,
     presentationContext: string,
-    identityClaims: string[],
+    compressForQr?: boolean,
+    identityClaims?: string[],
     encryptVc?: boolean,
-    encryptVcForKeyId?: string // just the id portion, i.e., `#` and everything after
+    encryptVcForKeyId?: string, // just the id portion, i.e., `#` and everything after
+    holderDid?: string
 }
 
 export const defaultIdentityClaims = {
-    "https://smarthealth.cards#presentation-context-online": [
+    "https://smarthealth.cards#qr": [
+        "Patient.telecom",
+        "Patient.name",
+    ],
+     "https://smarthealth.cards#presentation-context-online": [
         "Patient.telecom",
         "Patient.name",
     ],
@@ -92,7 +99,8 @@ export const defaultIdentityClaims = {
     ]
 }
 
-export const issueVcsToHolder = async (state: VerifierState, details: CredentialGenerationDetals = {
+
+export const createHealthCards = async (state: VerifierState, details: CredentialGenerationDetals = {
     type: 'https://smarthealth.cards#covid19',
     presentationContext: 'https://smarthealth.cards#presentation-context-online',
     identityClaims: null,
@@ -102,13 +110,13 @@ export const issueVcsToHolder = async (state: VerifierState, details: Credential
     vcs: string[]
 }> => {
 
-    const subjectDid = state.siopResponse.idTokenPayload.did;
+
     let examplePatient, exampleClinicalResults;
 
     const vcsAvailableToIssue = [
         sampleVcCovidAb,
+        sampleVcCovidImmunization,
         sampleVcCovidPcr,
-        sampleVcTdap,
     ]
 
     const vcs: string[] = [];
@@ -127,24 +135,21 @@ export const issueVcsToHolder = async (state: VerifierState, details: Credential
                     extension: examplePatient.extension
                 })
 
-                const vc = CredentialManager.createVc(details.presentationContext, vcAvailable.vc.type, state.did, subjectDid, examplePatientRestricted, exampleClinicalResults)
-                const vcPayload = CredentialManager.vcToJwtPayload(vc)
+                const holderDid: string | null = state.siopResponse ? state.siopResponse.idTokenPayload.did : null
+                const shortFormHolderDid = holderDid ? holderDid.split(":").slice(0,3).join(":") : null;
+                const shortFormIssuerDid = state.did.split(":").slice(0, 3).join(":");
 
-                const vcSigned = await state.sk.sign({ kid: state.did + '#signing-key-1' }, vcPayload);
+                let issuerOrigin = new URL(state.config.serverBase).origin;
+                const vc = CredentialManager.createHealthCard(details.presentationContext, vcAvailable.vc.type, shortFormIssuerDid, issuerOrigin, shortFormHolderDid, examplePatientRestricted, exampleClinicalResults)
+                const vcPayload = CredentialManager.vcToJwtPayload(vc)
+                const vcSigned = await state.sk.sign({ kid: shortFormIssuerDid + '#signing-key-1', shc: 1, zip: 'DEF'}, vcPayload);
 
                 const vcEncrypted = details.encryptVc ? 
-                    await encryptFor(vcSigned, subjectDid, state.config.keyGenerators, details.encryptVcForKeyId):
+                    await encryptFor(vcSigned, holderDid, state.config.keyGenerators, details.encryptVcForKeyId):
                     vcSigned;
 
                 vcs.push(vcEncrypted)
         }
-    }
-
-
-    if (!state.config.skipVcPostToServer) {
-        const vcCreated = await axios.post(`${serverBase}/lab/vcs/${encodeURIComponent(subjectDid)}`, {
-            vcs
-        });
     }
 
     return ({
@@ -152,6 +157,28 @@ export const issueVcsToHolder = async (state: VerifierState, details: Credential
         vcs
     });
 
+
+}
+export const issueHealthCardsToHolder = async (state: VerifierState, details: CredentialGenerationDetals = {
+    type: 'https://smarthealth.cards#covid19',
+    presentationContext: 'https://smarthealth.cards#presentation-context-online',
+    identityClaims: null,
+    encryptVc: true,
+}): Promise<{
+    type: 'credential-ready',
+    vcs: string[]
+}> => {
+
+    const vcs = await createHealthCards(state, details);
+
+    if (!state.config.skipVcPostToServer) {
+        const subjectDid: string | null = state.siopResponse ? state.siopResponse.idTokenPayload.did : null;
+        const vcCreated = await axios.post(`${serverBase}/lab/vcs/${encodeURIComponent(subjectDid)}`, {
+            vcs
+        });
+    }
+
+    return vcs;
 };
 
 

@@ -15,7 +15,7 @@ services:
       - SERVER_BASE
     # Pack ui files with parcel watcher
     command: [ "dev-ui" ]
-      
+
   dev:
     build: 
       context: .

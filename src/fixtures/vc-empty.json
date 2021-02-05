@@ -6,7 +6,6 @@
   "issuer": "<<did:ion identifier for issuer>>",
   "issuanceDate": "2020-06-01T11:59:00-07:00",
   "credentialSubject": {
-    "id": "<<did:identifier for subject if known>>",
     "fhirVersion": "4.0.1",
     "fhirBundle":{
       "resourceType": "Bundle",
