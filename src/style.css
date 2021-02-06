@@ -4,5 +4,10 @@
 
 .json {
     font-family: monospace;
-    font-size: x-small;
+    font-size: x-smallj;
+}
+
+.modal-body canvas {
+    max-width: 100% !important;
+    max-height: 100% !important;
 }
