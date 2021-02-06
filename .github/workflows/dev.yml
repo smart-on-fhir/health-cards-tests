@@ -3,7 +3,7 @@ name: Deploy Health Wallet Demo master branch to ci
 on:
   push:
     branches:
-    - sansdid
+    - dev
 
 jobs:
   build:
@@ -27,6 +27,6 @@ jobs:
       run: |
         docker build . \
           -t ${{ secrets.CONTAINER_REGISTRY }}/siop:$GITHUB_SHA \
-          -t ${{ secrets.CONTAINER_REGISTRY }}/siop:sansdid
+          -t ${{ secrets.CONTAINER_REGISTRY }}/siop:dev
         docker push ${{ secrets.CONTAINER_REGISTRY }}/siop
-        kubectl -n siop rollout restart deployment/siop-sansdid
+        kubectl -n siop rollout restart deployment/siop-dev

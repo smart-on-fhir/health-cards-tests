@@ -92,6 +92,7 @@ export const defaultIdentityClaims = {
         "Patient.gender",
         "Patient.birthDate",
         "Patient.telecom",
+        "Patient.address",
     ],
     "https://smarthealth.cards#presentation-context-in-person": [
         "Patient.name",
