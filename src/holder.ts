@@ -1,9 +1,9 @@
 import axios from 'axios';
+import base64 from 'base-64';
+import { JWKECKey } from 'jose';
 import qs from 'querystring';
-import { publicJwks, serverBase } from './config';
-import { encryptFor, generateDid, siopManager, SiopManager } from './dids';
-import { keyGenerators } from './keys';
-import { EncryptionKey, SigningKey } from './KeyTypes';
+import { privateJwks, publicJwks, serverBase } from './config';
+import { SiopManager } from './siop';
 import { simulatedOccurrence } from './verifier';
 import { ClaimType } from './VerifierState';
 
@@ -21,10 +21,15 @@ export async function holderWorld() {
 
     console.log('Holder initial state', state);
 
-    //TODO update to issueVe
-    const vcs = (await axios.get(`${serverBase}/fhir/Patient/123/$HealthWallet.covidCardQr`)).data.parameter.map(p => p.valueString)
+    const vcs = (await axios.post(`${serverBase}/fhir/Patient/123/$HealthWallet.issueVc`, {
+                "resourceType": "Parameters",
+                "parameter": [{
+                    "name": "credentialType",
+                    "valueUri": "https://smarthealth.cards#covid19"
+                }]
+            })).data.parameter.map(p => base64.decode(p.valueAttachment.data));
     
-    await dispatch(retrieveVcs(vcs, state))
+    await dispatch(receiveVcs(vcs, state))
 
 
     await dispatch({ 'type': 'begin-interaction', who: 'verifier' })
@@ -60,7 +65,7 @@ export interface SiopResponse {
   "nonce": string,
   "exp": number,
   "iat": number,
-  "sub_jwk": any, //TODO use JSON Web Key type from node-jose
+  "sub_jwk": JWKECKey,
   "vp": {
     "@context": string[],
     "type": string[],
@@ -92,10 +97,7 @@ export interface SiopInteraction {
 }
 
 export interface HolderState {
-    ek: EncryptionKey;
-    sk: SigningKey;
     siopRequestManager: SiopManager;
-    did: string;
     qrCodeUrl?: string;
     interactions: SiopInteraction[];
     vcStore: {
@@ -109,23 +111,10 @@ export const currentInteraction = (state: HolderState): SiopInteraction =>
     state.interactions.filter(i => !i.siopResponse)[0]
 
 export const initializeHolder = async (): Promise<HolderState> => {
-    const ek = await keyGenerators.generateEncryptionKey();
-    const sk = await keyGenerators.generateSigningKey();
-    const uk = await keyGenerators.generateSigningKey();
-    const rk = await keyGenerators.generateSigningKey();
-    const did = await generateDid({
-        encryptionPublicJwk: ek.publicJwk,
-        signingPublicJwk: sk.publicJwk,
-        recoveryPublicJwk: rk.publicJwk,
-        updatePublicJwk: uk.publicJwk
-    });
     return {
-        ek,
-        sk,
-        did: did.did,
         interactions: [],
         vcStore: [],
-        siopRequestManager: siopManager
+        siopRequestManager: new SiopManager({signingKey: privateJwks.holder.keys[0] as JWKECKey})
     };
 };
 export async function holderReducer(state: HolderState, event: any): Promise<HolderState> {
@@ -260,7 +249,8 @@ export async function prepareSiopResponse(state: HolderState) {
         'sub_jwk': publicJwks.holder.keys[0],
         ...presentationForEssentialClaims(state.vcStore, currentInteraction(state).siopRequest.claims)
     };
-    const idTokenSigned = await state.siopRequestManager.signSiopResponse(idTokenPayload);
+    const idTokenSigned = await state.siopRequestManager.signJws(idTokenPayload);
+
     let idTokenEncrypted
     if (interaction?.siopRequest?.registration?.id_token_encrypted_response_alg) {
         idTokenEncrypted = await state.siopRequestManager.encryptJwsToIssuer(idTokenSigned, interaction.siopRequest.iss);
@@ -288,8 +278,7 @@ export async function prepareSiopResponse(state: HolderState) {
     });
 }
 
-//TODO rename to receiveVcs
-export async function retrieveVcs(vcs: string[], state: HolderState) {
+export async function receiveVcs(vcs: string[], state: HolderState) {
     const vcsExpanded = await Promise.all(vcs.map(async (vcSigned) => {
         const vcVerified = await state.siopRequestManager.verifyHealthCardJws(vcSigned);
         return {
@@ -298,7 +287,6 @@ export async function retrieveVcs(vcs: string[], state: HolderState) {
             vcPayload: vcVerified
         }
     }))
-    console.log({ 'type': 'vc-retrieved', vcs: vcsExpanded })
 
     return ({ 'type': 'vc-retrieved', vcs: vcsExpanded })
 }

@@ -19,7 +19,7 @@ const unique = (values: string[]): string[]  => {
     ret.sort();
     return ret;
 }
-export const createHealthCard = (presentationContext: string, types: string[], issuer: string, issuerOrigin: string, holder: string | null, fhirIdentityResource: any, fhirClniicalResources: any[]) => {
+export const createHealthCard = (presentationContext: string, types: string[], issuer: string, fhirIdentityResource: any, fhirClniicalResources: any[]) => {
     const vc: VC = deepcopy(emptyVc);
 
     const subjectFieldName = {
@@ -46,14 +46,9 @@ export const createHealthCard = (presentationContext: string, types: string[], i
         }
     }))
 
+    vc.type = unique([...types, ...(vc.type)])
     vc.issuer = issuer;
-    vc.issuerOrigin = issuerOrigin;
 
-    if (holder) {
-      vc.holder = holder;
-    } else {
-        vc.holder = undefined;
-    }
 
     vc.credentialSubject.fhirBundle.entry = [identityEntry, ...clinicalEntries]
     return vc

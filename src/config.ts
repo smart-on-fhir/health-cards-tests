@@ -1,3 +1,5 @@
+// For demo app, include all the keys in server and in browser
+// ... makes it easy for developers to review/reproduce 
 import holderJwks  from './config/holder.jwks.private.json';
 import issuerJwks  from './config/issuer.jwks.private.json';
 import verifierJwks from './config/verifier.jwks.private.json';
@@ -21,14 +23,9 @@ export const publicJwks = {
     verifier: toPublic(privateJwks.verifier)
 };
 
-
 export let serverBase = process.env.SERVER_BASE || 'relative';
-if (serverBase === 'relative' && window?.location?.origin) {
+if (serverBase === 'relative' && typeof window !== 'undefined' && window.location.origin) {
     serverBase = window.location.origin + '/api';
 }
-
-export const resolveUrl = `${serverBase}/did/`;
-export const ALLOW_INVALID_SIGNATURES=false;
-
 
 console.log('SERVER base', process.env, process.env.SERVER_BASE, serverBase);

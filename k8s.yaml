@@ -16,6 +16,13 @@ metadata:
   namespace: siop
 spec:
   rules:
+  - host: sansdid.c19.cards
+    http:
+      paths:
+      - backend:
+          serviceName: siop-sansdid
+          servicePort: 80
+        path: /(.*)
   - host: dev.c19.cards
     http:
       paths:
@@ -34,6 +41,7 @@ spec:
   - hosts:
     - c19.cards
     - dev.c19.cards
+    - sansdid.c19.cards
     secretName: tls-secret
 status:
   loadBalancer:
@@ -120,3 +128,44 @@ spec:
         env:
         - name: SERVER_BASE
           value: "https://dev.c19.cards/api"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: siop
+  name: siop-sansdid
+spec:
+  selector:
+    app: siop-sansdid
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: siop
+  name: siop-sansdid
+  labels:
+    app: siop-sansdid
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: siop-sansdid
+  template:
+    metadata:
+      labels:
+        app: siop-sansdid
+    spec:
+      volumes:
+      containers:
+      - name: ui-sansdid
+        image: argonautcontainerregistry.azurecr.io/siop:sansdid
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        env:
+        - name: SERVER_BASE
+          value: "https://sansdid.c19.cards/api"

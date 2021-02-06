@@ -9,7 +9,6 @@ import { UiState, SmartState } from './holder-page';
 
 export interface FhirConnection {
     newSmartState: SmartState,
-    siopUrl: string
 }
 
 export default async (uiState: UiState, holderState: HolderState): Promise<FhirConnection> => {
@@ -51,11 +50,8 @@ export default async (uiState: UiState, holderState: HolderState): Promise<FhirC
     }), { headers })).data;
 
     const newSmartState: SmartState = { ...accessTokenResponse };
-    const siopParameters = (await axios.get(uiState.fhirClient.server + `/Patient/${accessTokenResponse.patient}/$HealthWallet.connect`)).data;
-    const siopUrl = siopParameters.parameter.filter(p => p.name === 'openidUrl').map(p => p.valueUri)[0];
     return {
         newSmartState,
-        siopUrl
     };
 }
 

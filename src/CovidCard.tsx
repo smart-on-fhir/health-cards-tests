@@ -4,7 +4,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import React, { useEffect } from 'react';
 import * as RS from 'reactstrap';
 import { Button, Card, CardSubtitle, CardText, CardTitle, DropdownItem, DropdownMenu, DropdownToggle } from 'reactstrap';
-import { HolderState, retrieveVcs } from './holder';
+import { HolderState, receiveVcs } from './holder';
 import { SmartState, UiState } from './holder-page';
 import './style.css';
 
@@ -43,26 +43,14 @@ const CovidCard: React.FC<{
         const onMessage = async ({ data, source }) => {
             const { verifiableCredential } = data
             window.removeEventListener("message", onMessage)
-            await dispatchToHolder(retrieveVcs(verifiableCredential, holderState))
+            await dispatchToHolder(receiveVcs(verifiableCredential, holderState))
         }
         window.addEventListener("message", onMessage)
         window.open(uiState.issuer.issuerDownloadUrl)
     }
 
     useEffect(() => {
-        if (smartState?.access_token && issuerInteraction?.siopResponse && holderState.vcStore.length === 0) {
-
-            /*
-            const credentials = axios.get(uiState.fhirClient.server + `/DiagnosticReport?patient=${smartState.patient}&_tag=https://smarthealth.cards|covid19`)
-            credentials.then(response => {
-                const vcs = response.data.entry[0].resource.extension
-                    .filter(e => e.url === 'https://smarthealth.cards#vc-attachment')
-                    .map(e => base64.decode(e.valueAttachment.data))
-
-                dispatchToHolder(retrieveVcs(vcs, holderState))
-            })
-            */
-
+        if (smartState?.access_token && holderState.vcStore.length === 0) {
             const credentials = axios.post(uiState.fhirClient.server + `/Patient/${smartState.patient}/$HealthWallet.issueVc`, {
                 "resourceType": "Parameters",
                 "parameter": [{
@@ -78,10 +66,10 @@ const CovidCard: React.FC<{
             })
             credentials.then(response => {
                 const vcs = response.data.parameter.filter(p => p.name === 'verifiableCredential').map(p => base64.decode(p.valueAttachment.data))
-                dispatchToHolder(retrieveVcs(vcs, holderState))
+                dispatchToHolder(receiveVcs(vcs, holderState))
             })
         }
-    }, [smartState, holderState.interactions])
+    }, [smartState])
 
 
     const covidVcs = holderState.vcStore.filter(vc => vc.type.includes("https://smarthealth.cards#covid19"));
@@ -119,12 +107,12 @@ const CovidCard: React.FC<{
             <RS.UncontrolledButtonDropdown className="mb-1" >
                 <DropdownToggle caret color={currentStep === CardStep.CONNECT_TO_ISSUER ? 'success' : 'info'} >
                     {currentStep > CardStep.CONNECT_TO_ISSUER && '✓ '}
-                                    2. Connect to Lab and get tested
+                                    2. Get your Vaccination Credential
                                 </DropdownToggle>
                 <DropdownMenu style={{ width: "100%" }}>
                     <DropdownItem onClick={connectToFhir} >Connect with SMART on FHIR </DropdownItem>
-                    <DropdownItem onClick={connectToIssuer} >Open Lab Portal</DropdownItem>
-                    <DropdownItem onClick={openScannerUi} >Scan / Paste Request</DropdownItem>
+                    <DropdownItem >Load from file (todo)</DropdownItem>
+                    <DropdownItem onClick={openScannerUi} >Scan from QR (todo)</DropdownItem>
                 </DropdownMenu>
             </RS.UncontrolledButtonDropdown>
             <Button

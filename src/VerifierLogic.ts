@@ -2,17 +2,13 @@ import axios from 'axios';
 import base64url from 'base64url';
 import * as crypto from 'crypto';
 import qs from 'querystring';
-import { ALLOW_INVALID_SIGNATURES, privateJwks, publicJwks, serverBase } from './config';
+import { privateJwks, publicJwks, serverBase } from './config';
 import * as CredentialManager from './CredentialManager';
-import { encryptFor } from './dids';
-import sampleVcCovidAb from './fixtures/vc-jwt-payload.json';
-import sampleVcTdap from './fixtures/vc-tdap-jwt-payload.json'
 import sampleVcCovidPcr from './fixtures/vc-c19-pcr-jwt-payload.json';
 import sampleVcCovidImmunization from './fixtures/vc-covid-immunization.json';
+import sampleVcCovidAb from './fixtures/vc-jwt-payload.json';
+import { SiopRequest, SiopResponse } from './holder';
 import { VerifierState } from './VerifierState';
-import { VerificationResult } from './KeyTypes';
-import { SiopRequest } from './holder';
-import { generateSigningKey, keyGenerators } from './keys';
 
 
 export async function verifierReducer(state: VerifierState, event: any): Promise<VerifierState> {
@@ -28,9 +24,6 @@ export async function verifierReducer(state: VerifierState, event: any): Promise
 }
 export async function prepareSiopRequest(state: VerifierState) {
     const siopState = base64url.encode(crypto.randomBytes(16));
-    const siopRequestHeader = {
-        kid: publicJwks.verifier.keys[0].kid
-    };
     // TODO read window.location from state rather than browser global
     const responseUrl = state.config.responseMode === 'form_post' ? `${state.config.serverBase}/siop` : window.location.href.split('?')[0];
     const siopRequestPayload: VerifierState["siopRequest"]["siopRequestPayload"] = {
@@ -44,7 +37,7 @@ export async function prepareSiopRequest(state: VerifierState) {
                 [next]: { 'essential': true }
             }), {})
         },
-        'scope': 'did_authn', //TODO healthwallet_authn
+        'scope': 'healthwallet_authn',
         'response_mode': state.config.responseMode,
         'response_context': state.config.responseMode === 'form_post' ? 'wallet' : 'rp',
         'nonce': base64url.encode(crypto.randomBytes(16)),
@@ -58,15 +51,13 @@ export async function prepareSiopRequest(state: VerifierState) {
 
     const verifierKey = privateJwks.verifier.keys[0]
 
-    //TODO extract signing
-    const sk = await generateSigningKey(verifierKey, verifierKey);
-    const siopRequestPayloadSigned = await sk.sign(siopRequestHeader, siopRequestPayload);
+    const siopRequestPayloadSigned = await state.siopManager.signJws(siopRequestPayload);
     const siopRequestCreated = await state.config.postRequest(`${serverBase}/siop/begin`, {
         siopRequest: siopRequestPayloadSigned
     });
     const siopRequestQrCodeUrl = 'openid://?' + qs.encode({
         response_type: 'id_token',
-        scope: 'did_authn',
+        scope: 'healthwallet_authn',
         request_uri: serverBase + '/siop/' + siopRequestPayload.state,
         client_id: siopRequestPayload.client_id
     });
@@ -87,8 +78,6 @@ export interface CredentialGenerationDetals {
     presentationContext: string,
     compressForQr?: boolean,
     identityClaims?: string[],
-    encryptVc?: boolean,
-    encryptVcForKeyId?: string, // just the id portion, i.e., `#` and everything after
     holderDid?: string
 }
 
@@ -111,7 +100,6 @@ export const createHealthCards = async (state: VerifierState, details: Credentia
     type: 'https://smarthealth.cards#covid19',
     presentationContext: 'https://smarthealth.cards#presentation-context-online',
     identityClaims: null,
-    encryptVc: true,
 }): Promise<{
     type: 'credential-ready',
     vcs: string[]
@@ -146,20 +134,13 @@ export const createHealthCards = async (state: VerifierState, details: Credentia
 
 
             let issuerOrigin = new URL(state.config.serverBase).origin;
-            //TODO fix hardcoding
-            const vc = CredentialManager.createHealthCard(details.presentationContext, vcAvailable.vc.type, 'http://localhost:8080/issuer', issuerOrigin, "", examplePatientRestricted, exampleClinicalResults)
+
+        
+            const vc = CredentialManager.createHealthCard(details.presentationContext, vcAvailable.vc.type, state.config.issuerUrl, examplePatientRestricted, exampleClinicalResults)
             const vcPayload = CredentialManager.vcToJwtPayload(vc)
+            const vcSigned = await state.siopManager.signJws(vcPayload, true);
 
-            //TODO extract signing
-            const issuerKey = privateJwks.issuer.keys[0]
-            const sk = await generateSigningKey(issuerKey, issuerKey);
-            const vcSigned = await sk.sign({ kid: issuerKey.kid, shc: 1, zip: 'DEF' }, vcPayload);
-
-            const vcEncrypted = details.encryptVc ?
-                await encryptFor(vcSigned, holderDid, state.config.keyGenerators, details.encryptVcForKeyId) :
-                vcSigned;
-
-            vcs.push(vcEncrypted)
+            vcs.push(vcSigned)
         }
     }
 
@@ -174,7 +155,6 @@ export const issueHealthCardsToHolder = async (state: VerifierState, details: Cr
     type: 'https://smarthealth.cards#covid19',
     presentationContext: 'https://smarthealth.cards#presentation-context-online',
     identityClaims: null,
-    encryptVc: true,
 }): Promise<{
     type: 'credential-ready',
     vcs: string[]
@@ -196,10 +176,8 @@ export const issueHealthCardsToHolder = async (state: VerifierState, details: Cr
 
 export async function parseSiopResponse(idTokenRetrieved: string, state: VerifierState) {
 
-    // TODO import the SiopRequest type 
-    const idTokenSigned = await state.siopManager.decryptSiopResponse(idTokenRetrieved);
-    console.log("id token received at verifier", idTokenSigned);
-    const idTokenPayload = await state.siopManager.validateSiopResponse(idTokenSigned, state.siopRequest!.siopRequestPayload as SiopRequest);
+    const idTokenSigned = await state.siopManager.decryptJws(idTokenRetrieved);
+    const idTokenPayload: SiopResponse = await state.siopManager.validateSiopResponse(idTokenSigned, state.siopRequest!.siopRequestPayload as SiopRequest);
     return ({
         type: 'siop-response-received',
         siopResponse: {

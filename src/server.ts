@@ -3,23 +3,17 @@ import cors from 'cors';
 import express from 'express';
 import base64url from 'base64url';
 import base64 from 'base-64';
-import { JWT } from 'jose';
+import { JWKECKey, JWT } from 'jose';
 import * as crypto from 'crypto';
 import qs from 'querystring';
-import OperationType from '@decentralized-identity/sidetree/dist/lib/core/enums/OperationType';
-import AnchoredOperationModel from '@decentralized-identity/sidetree/dist/lib/core/models/AnchoredOperationModel';
-import Did from '@decentralized-identity/sidetree/dist/lib/core/versions/latest/Did';
-import DocumentComposer from '@decentralized-identity/sidetree/dist/lib/core/versions/latest/DocumentComposer';
-import OperationProcessor from '@decentralized-identity/sidetree/dist/lib/core/versions/latest/OperationProcessor';
-import { generateEncryptionKey, generateSigningKey, keyGenerators } from './keys';
 
 import examplePt from './fixtures/patient.json'
 import exampleCapabilityStatement from './fixtures/capability-statement.json'
 
 import { VerifierState } from './VerifierState';
-import { generateDid, encryptFor, siopManager } from './dids';
+import { SiopManager } from './siop';
 import { issuerReducer, prepareSiopRequest, issueHealthCardsToHolder, parseSiopResponse, CredentialGenerationDetals, createHealthCards as createHealthCards } from './VerifierLogic';
-import { publicJwks } from './config';
+import { privateJwks, publicJwks } from './config';
 
 const app = express();
 app.set('json spaces', 2);
@@ -32,23 +26,6 @@ const port = 8080; // default port to listen
 
 const fhirBase = 'https://hapi.fhir.org/baseR4';
 
-async function resolveDid(did: string) {
-    const parsedDid = await Did.create(did, 'ion');
-    const operationWithMockedAnchorTime: AnchoredOperationModel = {
-        didUniqueSuffix: parsedDid.uniqueSuffix,
-        type: OperationType.Create,
-        transactionTime: 0,
-        transactionNumber: 0,
-        operationIndex: 0,
-        operationBuffer: parsedDid.createOperation.operationBuffer
-    };
-
-    const processor = new OperationProcessor();
-
-    const newDidState = await processor.apply(operationWithMockedAnchorTime, undefined);
-    const document = DocumentComposer.transformToExternalDocument(newDidState, parsedDid, false);
-    return document;
-}
 
 const client = {
     get: async (url: string) => (await axios.get(fhirBase + '/' + url)).data
@@ -137,63 +114,6 @@ type WellKnownDidConfigurationResponse = {
     });
 });
 
-
-const didConfig = '.well-known/did-configuration.json';
-
-app.get('/' + didConfig, async (req, res, err) => {
-    try {
-        const tenMinsAgo = new Date().getTime() / 1000 - 10 * 60 as SecondsSinceEpoch
-        const tenMinsFromNow = new Date().getTime() / 1000 + 10 * 60 as SecondsSinceEpoch
-        const issuedSecondsSinceEpoch = Math.round(tenMinsAgo)
-        const expiresSecondsSinceEpoch = Math.round(tenMinsFromNow)
-        const issuedISOString = new Date(issuedSecondsSinceEpoch * 1000).toISOString() as DateTimeString
-        const expiredISOString = new Date(expiresSecondsSinceEpoch * 1000).toISOString() as DateTimeString
-
-        const issuerDid = issuerState.did as LongFormDid
-
-        const linkedDID: DomainLinkageCredentialJWTPayload = {
-            exp: expiresSecondsSinceEpoch,
-            iss: issuerDid,
-            nbf: issuedSecondsSinceEpoch,
-            sub: issuerDid,
-            vc: {
-                "@context": [
-                    "https://www.w3.org/2018/credentials/v1",
-                    "https://identity.foundation/.well-known/did-configuration/v1"
-                ],
-                credentialSubject: {
-                    id: issuerDid,
-                    origin: new URL(issuerState.config.serverBase).origin,
-                },
-                expirationDate: expiredISOString,
-                issuanceDate: issuedISOString,
-                issuer: issuerDid,
-                type: ["VerifiableCredential", "DomainLinkageCredential"]
-            }
-        }
-
-        const linkedDidJws: SignedDomainLinkageCredentialJWTPayload = {
-            unsignedPayload: linkedDID,
-            signedPayload: await issuerState.sk.sign(
-                { kid: issuerState.did + "#signing-key-1"},
-                linkedDID
-            )
-        }
-
-        const response: WellKnownDidConfigurationResponse = {
-            "@context": "https://identity.foundation/.well-known/did-configuration/v1",
-            "linked_dids": [linkedDidJws.signedPayload]
-        }
-
-        res.json(response)
-
-    }
-    catch (e) {
-        err(e);
-    }
-});
-
-
 const smartConfig = '.well-known/smart-configuration';
 app.get('/api/fhir/' + smartConfig, (req, res) => {
 
@@ -261,25 +181,8 @@ async function getHealthCardsForPatient(patientId, details: CredentialGeneration
     type: 'https://smarthealth.cards#covid19',
     presentationContext: 'https://smarthealth.cards#presentation-context-online',
     identityClaims: null,
-    encryptVc: false
 }) {
-    if (!details.holderDid) {
-        return (await createHealthCards(issuerState, details)).vcs;
-    }
-
-    // TODO remove when holder binding is removed from spec
-    const state = patientToSiopResponse[patientId];
-    if (!state || siopCache[state].responseDeferred.pending){
-        throw new OperationOutcomeError("did-not-bound", `No SIOP request has been completed for patient ${patientId}`)
-    }
-
-    const siopResponse = await siopCache[state].siopStateAfterResponse;
-    const id_token = siopResponse.idTokenRaw;
-    const withResponse = await issuerReducer(issuerState, await parseSiopResponse(id_token, issuerState));
-    const afterIssued = await issuerReducer(withResponse, await issueHealthCardsToHolder(withResponse, details));
-    const vcs = afterIssued.issuedCredentials
-
-    return vcs;
+    return (await createHealthCards(issuerState, details)).vcs;
 }
 
 app.get('/api/fhir/metadata', async (req, res, err) => {
@@ -429,42 +332,16 @@ app.post('/api/fhir/Patient/:patientID/[\$]HealthWallet.issueVc', async (req, re
         throw "No credentialType found in the Parameters"
     }
 
-    const requestedPresentationContext = (requestBody.parameter || [])
-        .filter(p => p.name === 'presentationContext')
-        .map(p => p.valueUri)[0]
-
-    if (!requestedPresentationContext){
-        throw "No presentationContext found in the Parameters"
-    }
-
     const requestedCredentialIdentityClaims = (requestBody.parameter || [])
         .filter(p => p.name === 'includeIdentityClaim')
         .map(p => p.valueString)
-
-    const requestedEncryptionKeyId = (requestBody.parameter || [])
-        .filter(p => p.name === 'encryptForKeyId')
-        .map(p => p.valueString)
-
-    const holderDid = (requestBody.parameter || [])
-        .filter(p => p.name === 'holderDid')
-        .map(p => p.valueString)
-
-
-    if (requestedEncryptionKeyId.length > 0 && requestedEncryptionKeyId[0][0] !== "#") {
-        throw "Requested encryption key ID must start with '#', e.g., '#encryption-key-1'.";
-    }
-
-    const encryptVc =  requestedEncryptionKeyId.length === 1;
 
     let vcs = [];
     for (const vcType of requestedCredentialType) {
         const newVcs = await getHealthCardsForPatient(req.params.patientID, {
             type: vcType,
-            presentationContext: requestedPresentationContext,
+            presentationContext: 'https://smarthealth.cards#presentation-context-online',
             identityClaims: requestedCredentialIdentityClaims.length > 0 ? requestedCredentialIdentityClaims : null,
-            encryptVc,
-            holderDid: holderDid.length ? holderDid[0] : null,
-            encryptVcForKeyId: encryptVc ? requestedEncryptionKeyId[0] : undefined
         });
 
         if (!newVcs.length) {
@@ -489,22 +366,11 @@ app.post('/api/fhir/Patient/:patientID/[\$]HealthWallet.issueVc', async (req, re
 });
 
 const initializeIssuer = async (): Promise<VerifierState> => {
-    const ek = await generateEncryptionKey();
-    const sk = await generateSigningKey();
-    const uk = await generateSigningKey();
-    const rk = await generateSigningKey();
-
-    const did = await generateDid({
-        encryptionPublicJwk: ek.publicJwk,
-        signingPublicJwk: sk.publicJwk,
-        recoveryPublicJwk: rk.publicJwk,
-        updatePublicJwk: uk.publicJwk,
-        domains: [new URL(process.env.SERVER_BASE).origin]
-    });
     return {
-        siopManager: siopManager,
+        siopManager: new SiopManager({signingKey: privateJwks.issuer.keys[0] as JWKECKey}),
         config: {
             serverBase: process.env.SERVER_BASE,
+            issuerUrl: process.env.SERVER_BASE.slice(0, -3) + 'issuer',
             claimsRequired: [],
             role: 'issuer',
             responseMode: 'form_post',
@@ -514,12 +380,7 @@ const initializeIssuer = async (): Promise<VerifierState> => {
                     siopBegin({ body }, { json: resolve });
                 });
             },
-            keyGenerators
         },
-        ek,
-        sk,
-        did: did.did,
-        didDebugging: did
     };
 };
 
@@ -547,13 +408,13 @@ const siopBegin = async (req, res, err?) => {
             siopResponsePollingUrl: null
         },
         siopStateAfterResponse: new Promise((resolveFn, rejectFn) => {
-            responseResolve = (...args) => {
+            responseResolve = (a) => {
                 siopCache[id].responseDeferred.pending = false;
-                resolveFn(...args);
+                resolveFn(a);
             };
-            responseReject = (...args) => {
+            responseReject = (a) => {
                 siopCache[id].responseDeferred.pending = false;
-                rejectFn(...args);
+                rejectFn(a);
             };
         }),
         responseDeferred: {
@@ -612,65 +473,11 @@ app.post('/api/siop', async (req, res, err) => {
     }
 });
 
-app.get('/api/did/:did', async (req, res, err) => {
-    try  {
-    const didLong = decodeURIComponent(req.params.did);
-    const didDoc = await resolveDid(didLong);
-    res.json(didDoc.didDocument);
-    } catch (e) {
-        err(e)
-    }
-});
-
-app.post('/api/lab/vcs/:did', async (req, res, err) => {
-    try {
-
-
-    const did = decodeURIComponent(req.params.did);
-    const vcs = req.body.vcs;
-    const entry = {
-        vcs,
-        ttl: new Date().getTime() + ttlMs
-    };
-    vcCache[did] = entry;
-    res.send('Received VC for DID');
-
-    } catch (e) {
-        err(e);
-    }
-});
-
-app.get('/api/lab/vcs/:did', async (req, res, err) => {
-    try {
-    const did = decodeURIComponent(req.params.did);
-    res.json(vcCache[did]);
-    } catch (e) {
-        err(e);
-    }
-});
-
-
-app.get('/api/test/did-doc', async (req, res, err) => {
-    try {
-    const did = issuerState.did;
-    const didDoc = await resolveDid(did);
-    res.json(didDoc.didDocument);
-
-    } catch (e) {
-        err(e);
-    }
-});
-
-app.get('/api/test/did-debug', (req, res) => {
-    res.json(issuerState.didDebugging);
-});
-
-
 
 app.post('/api/test/validate-jws', async (req, res, err) => {
     try {
         const jws = req.body.toString()
-        const jwsVerified = await siopManager.verifyHealthCardJws(jws);
+        const jwsVerified = await issuerState.siopManager.verifyHealthCardJws(jws);
         res.json(jwsVerified)
     } catch (e) {
         err(e);
@@ -680,27 +487,12 @@ app.post('/api/test/validate-jws', async (req, res, err) => {
 app.post('/api/test/validate-jwe', async (req, res, err) => {
     try {
         const jwe = req.body.toString()
-        const jwsVerified = await issuerState.ek.decrypt(jwe);
+        const jwsVerified = await issuerState.siopManager.decryptJwe(jwe);
         res.json(jwsVerified)
     } catch (e) {
         err(e);
     }
 });
-
-app.post('/api/test/encrypt-for-did', async (req, res, err) => {
-    try {
-        const did = req.body.did;
-        const payload = req.body.payload;
-        const encrypted = await encryptFor(JSON.stringify(payload), did, keyGenerators, req.body.encryptForKeyId);
-        res.json(encrypted)
-    } catch (e) {
-        err(e);
-    }
-});
-
-
-
-
 
 app.use(express.static('dist/static', {
     extensions: ['html']

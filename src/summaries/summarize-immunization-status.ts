@@ -5,8 +5,9 @@ import fs from 'fs';
 import vcExample from '../fixtures/vc-covid-immunization.json';
 import jsonschema from 'jsonschema';
 import schema from './summarize-immunization-status.schema.json'
-import { generateEncryptionKey, generateSigningKey } from '../keys';
-import { generateDid } from '../dids';
+import { SiopManager } from '../siop';
+import { privateJwks } from '../config';
+import { JWKECKey } from 'jose';
 
 var Validator = jsonschema.Validator;
 var v = new Validator();
@@ -86,20 +87,8 @@ async function summarize() {
     console.log("Summary CBOR", e)
     console.log("Summary CBOR size", e.length)
 
-    const ek = await generateEncryptionKey();
-    const sk = await generateSigningKey();
-    const uk = await generateSigningKey();
-    const rk = await generateSigningKey();
-    const did = await generateDid({
-        encryptionPublicJwk: ek.publicJwk,
-        signingPublicJwk: sk.publicJwk,
-        recoveryPublicJwk: rk.publicJwk,
-        updatePublicJwk: uk.publicJwk
-    });
- 
-    let k = await generateSigningKey();
     let vcContents = {
-        "iss": did.didShort,
+        "iss": "https://issuer.example.org",
         "iat": Math.floor(new Date().getTime()/1000),
         "vc": {
             "credentialSubject": {
@@ -108,7 +97,8 @@ async function summarize() {
         }
     }
 
-    let signed = await k.sign({kid: "#signing-key-1"}, vcContents);
+    let siopManager = new SiopManager({signingKey: privateJwks.issuer.keys[0] as JWKECKey})
+    let signed = await siopManager.signJws(vcContents, true)
     console.log("Signed", signed.length, signed);
 }
 

@@ -25,6 +25,12 @@
             "resource": {
               "resourceType": "Patient",
               "id": "Scenario1Patient",
+              "extension": [
+                {
+                  "url": "https://github.com/TransparentHealth/800-63-3-trustmark#P",
+                  "valueCode": "P1"
+                }
+              ],
               "name": [
                 {
                   "family": "Anyperson",

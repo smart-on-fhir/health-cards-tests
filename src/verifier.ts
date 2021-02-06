@@ -2,22 +2,22 @@ import axios from 'axios';
 import QRCode from 'qrcode';
 import qs from 'querystring';
 import { privateJwks, serverBase } from './config';
-import { generateDid, siopManager } from './dids';
-import { generateEncryptionKey, generateSigningKey, keyGenerators } from './keys';
+import { SiopManager } from './siop';
 import { VerifierState, SiopResponseMode } from './VerifierState';
 import { verifierReducer, prepareSiopRequest, parseSiopResponse } from './VerifierLogic';
+import { JWKECKey } from 'jose';
 
 
 export async function verifierWorld (role = 'verifier', responseMode: SiopResponseMode = 'form_post', reset = false) {
     let state = await initializeVerifier({
         role,
+        issuerUrl: serverBase.slice(0, -3) + role,
         claimsRequired: ['https://smarthealth.cards#covid19'],
         responseMode: responseMode,
         reset,
         displayQr: false,
         postRequest: async (url, r) => (await axios.post(url, r)).data,
         serverBase,
-        keyGenerators,
         skipEncryptedResponse: false
     });
 
@@ -104,44 +104,12 @@ export const simulatedOccurrence = async ({ who, type }, rateMs = 200) => {
 
 
 export const initializeVerifier = async (config: VerifierState['config']): Promise<VerifierState> => {
-    const stateKey = `${config.role}_state`;
-    const existingState = window.localStorage[stateKey];
-
-    if (existingState && config.reset !== true) {
-        const existingStateParsed = JSON.parse(existingState);
-        const fragmentParts = qs.decode(window.location.hash.slice(1));
-        return {
-            ...existingStateParsed,
-            config,
-            ek: await generateEncryptionKey(existingStateParsed.ek.publicJwk, existingStateParsed.ek.privateJwk),
-            sk: await generateSigningKey(existingStateParsed.sk.publicJwk, existingStateParsed.sk.privateJwk),
-            did: existingStateParsed.did,
-            fragment: {
-                id_token: fragmentParts.id_token as string,
-                state: fragmentParts.state as string
-            }
-        };
-    }
-
-    const ek = await generateEncryptionKey();
-
-    // TODO remove these and load from config
-    const sk = await generateSigningKey(privateJwks.issuer.keys[0]);
-    const uk = await generateSigningKey();
-    const rk = await generateSigningKey();
-    const did = await generateDid({
-        encryptionPublicJwk: ek.publicJwk,
-        signingPublicJwk: sk.publicJwk,
-        recoveryPublicJwk: rk.publicJwk,
-        updatePublicJwk: uk.publicJwk
-    });
-
     return {
+        siopManager: new SiopManager({
+            signingKey: privateJwks[config.role].keys[0] as JWKECKey,
+            encryptionKey: privateJwks[config.role].keys[1] as JWKECKey,
+        }),
         config,
-        ek,
-        sk,
-        did: did.did,
-        siopManager: siopManager
     };
 };
 

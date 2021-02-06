@@ -133,8 +133,8 @@ const App: React.FC<AppProps> = (props) => {
 
     const connectToFhir = async () => {
         const connected = await makeFhirConnector(uiState, holderState)
+        console.log("Connected", connected);
         setSmartState(connected.newSmartState)
-        dispatchToHolder(receiveSiopRequest(connected.siopUrl, holderState))
     }
 
     const [isOpen, setIsOpen] = useState(false);
@@ -186,13 +186,6 @@ const App: React.FC<AppProps> = (props) => {
         <RS.Container >
             <RS.Row>
                 <RS.Col xs="12">
-                    <Card style={{ border: "1px solid grey", padding: ".5em", marginBottom: "1em" }}>
-                        <CardTitle style={{ fontWeight: "bolder" }}>
-                            ID Card
-                        </CardTitle>
-                        <CardSubtitle className="text-muted">This identifier is all yours, with keys stored safely on your device.</CardSubtitle>
-                        <CardText style={{ fontFamily: "monospace" }}> {holderState.did.split(':').slice(0,3).join(':')+':...'}</CardText>
-                    </Card>
                     <CovidCard
                         holderState={holderState}
                         smartState={smartState}
