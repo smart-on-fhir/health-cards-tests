@@ -23,7 +23,7 @@ const jwsParts = <T>(token: string): {
     return { header, body, signature };
 }
 
-interface HealthCard {
+export interface HealthCard {
     iss: string;
     iat: number;
     exp: number;

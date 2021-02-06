@@ -19,11 +19,12 @@ const CovidCard: React.FC<{
     holderState: HolderState,
     smartState: SmartState,
     uiState: UiState,
+    displayQr: (vc) => Promise<void>,
     openScannerUi: () => Promise<void>,
     connectToIssuer: () => Promise<void>,
     connectToFhir: () => Promise<void>,
     dispatchToHolder: (e: Promise<any>) => Promise<void>
-}> = ({ holderState, smartState, uiState, openScannerUi, connectToFhir, connectToIssuer, dispatchToHolder }) => {
+}> = ({ holderState, smartState, uiState, displayQr, openScannerUi, connectToFhir, connectToIssuer, dispatchToHolder }) => {
     const issuerInteractions = holderState.interactions.filter(i => i.siopPartnerRole === 'issuer').slice(-1)
     const issuerInteraction = issuerInteractions.length ? issuerInteractions[0] : null
 
@@ -55,7 +56,7 @@ const CovidCard: React.FC<{
                 "resourceType": "Parameters",
                 "parameter": [{
                     "name": "credentialType",
-                    "valueUri": "https://smarthealth.cards#health-card"
+                    "valueUri": "https://smarthealth.cards#immunization"
                 },{
                     "name": "presentationContext",
                     "valueUri": "https://smarthealth.cards#presentation-context-online"
@@ -73,28 +74,31 @@ const CovidCard: React.FC<{
 
 
     const covidVcs = holderState.vcStore.filter(vc => vc.type.includes("https://smarthealth.cards#covid19"));
-    const conclusions = covidVcs.flatMap(vc =>
-        vc.vcPayload.vc.credentialSubject.fhirBundle.entry
-            .filter(e => e.resource.resourceType === 'DiagnosticReport')
-            .flatMap(e => e.resource.conclusion))
 
     const resources = covidVcs.flatMap(vc =>
         vc.vcPayload.vc.credentialSubject.fhirBundle.entry
             .flatMap(e => e.resource))
 
+    const doses = resources.filter(r => r.resourceType === 'Immunization').length;
+    const patient = resources.filter(r => r.resourceType === 'Patient')[0];
+    console.log("P", patient);
+
 
     return <> {
         currentStep === CardStep.COMPLETE && <Card style={{ border: "1px solid grey", padding: ".5em", marginBottom: "1em" }}>
             <CardTitle style={{ fontWeight: "bolder" }}>
-                COVID Cards
+                COVID Cards ({covidVcs.length})
                 </CardTitle>
 
             <CardSubtitle className="text-muted">Your COVID results are ready to share, based on {" "}
                 {resources && <>{resources.length} FHIR Resource{resources.length > 1 ? "s" : ""} <br /> </>}
             </CardSubtitle>
-                    Conclusions: {conclusions && <ul>
-                        {conclusions.map(c => <li key={c}>{c}</li>)}
-                    </ul>}
+            <ul>
+                <li> Name: {patient.name[0].given[0]} {patient.name[0].family}</li>
+                <li> Birthdate: {patient.birthDate}</li>
+                <li> Immunization doses received: {doses}</li>
+            </ul>
+            <Button className="mb-1" color="info" onClick={() => displayQr(covidVcs[0])}>Display QR</Button>
         </Card>
     } {currentStep < CardStep.COMPLETE &&
         <Card style={{ border: ".25em dashed grey", padding: ".5em", marginBottom: "1em" }}>

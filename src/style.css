@@ -1,3 +1,8 @@
 .config-prepend {
     min-width: 10em;
 }
+
+.json {
+    font-family: monospace;
+    font-size: x-small;
+}

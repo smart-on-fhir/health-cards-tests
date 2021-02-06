@@ -11,7 +11,7 @@ import { initializeVerifier, receiveSiopResponse } from './verifier';
 import { prepareSiopRequest, verifierReducer } from './VerifierLogic';
 import { VerifierState } from './VerifierState';
 
-const QrDisplay: React.FC<{ url: string }> = (props) => {
+export const QrDisplay: React.FC<{ url: string, noLink?: boolean }> = (props) => {
     useEffect(() => {
         console.log("QR canvas", props.url)
     }, [props.url])
@@ -26,7 +26,7 @@ const QrDisplay: React.FC<{ url: string }> = (props) => {
     }, [props.url])
 
     return <div>
-        <a href={props.url}>
+        <a href={props.noLink? "#" :  props.url} >
             <canvas ref={canvasCallback} style={{ maxHeight: "50vmin", maxWidth: "50vmin", width: undefined, height: undefined }} />
         </a>
     </div>

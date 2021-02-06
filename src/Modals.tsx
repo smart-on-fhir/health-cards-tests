@@ -2,6 +2,9 @@ import React, { useCallback, useState } from 'react';
 import { Button, InputGroupAddon, ModalHeader, Modal, ModalBody, ModalFooter, InputGroup, InputGroupText, Input } from 'reactstrap';
 import { UiState } from './holder-page';
 import { SiopApprovalProps } from './SiopApproval';
+import {HealthCard} from './siop';
+import { HolderState } from './holder';
+import {QrDisplay} from './venue-page';
 
 const ConfigEditOption: React.FC<{
     title: string;
@@ -70,3 +73,25 @@ export const ConfigEditModal: React.FC<{
         </Modal>
     </>;
 };
+
+
+interface QrPresentationState {
+    healthCard: HolderState["vcStore"][number],
+    dispatch: any
+}
+export const QRPresentationModal: React.FC<QrPresentationState> = ({healthCard, dispatch}) => {
+    const done = () => {
+        dispatch({ type: 'end-qr-presentation' });
+    }
+
+    return <>
+        <Modal isOpen={true}>
+            <ModalHeader>Present Health Card</ModalHeader>
+            <ModalBody><QrDisplay url={healthCard.vcSigned} noLink={true}></QrDisplay></ModalBody>
+            <ModalFooter className="json"><pre>{JSON.stringify(healthCard.vcPayload, null, 2)}</pre></ModalFooter>
+            <ModalFooter>
+                <Button color="success" onClick={e => done()}>Done</Button>
+            </ModalFooter>
+        </Modal>
+    </>
+}

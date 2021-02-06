@@ -287,7 +287,7 @@ class OperationOutcomeError extends Error {
 app.get('/api/fhir/Patient/:patientID/[\$]HealthWallet.covidCardQr', async (req, res, err) => {
     try {
         const requestedCredentialType = ["https://smarthealth.cards#immunization"];
-        const requestedPresentationContext = "https://smarthealth.cards#qr";
+        const requestedPresentationContext = "https://smarthealth.cards#online";
 
     let vcs = [];
     for (const vcType of requestedCredentialType) {

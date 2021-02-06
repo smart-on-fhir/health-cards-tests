@@ -10,6 +10,7 @@ import makeFhirConnector from './FhirConnector';
 import { holderReducer, HolderState, initializeHolder, receiveSiopRequest } from './holder';
 import { issuerWorld } from './issuer';
 import { ConfigEditModal } from './Modals';
+import { QRPresentationModal } from './Modals';
 import { parseSiopApprovalProps, SiopApprovalModal, SiopRequestReceiver } from './SiopApproval';
 import './style.css';
 import { verifierWorld } from './verifier';
@@ -40,6 +41,10 @@ export interface UiState {
     verifier: VerifierProps,
     fhirClient: OAuthProps,
     editingConfig?: boolean
+    presentingQr?: {
+        active: boolean,
+        vcToPresent?: HolderState["vcStore"][number]
+    },
     scanningBarcode?: {
         active: boolean,
         label?: string
@@ -53,7 +58,7 @@ interface AppProps {
     defaultUiState: UiState;
 }
 
-type UiEvent = { type: 'save-ui-state', newState: UiState } | { type: 'toggle-editing-config' } | { type: 'open-scanner', label: string } |{type: 'close-scanner'} | { type: 'scan-barcode' }
+type UiEvent = { type: 'save-ui-state', newState: UiState } | { type: 'toggle-editing-config' } | {type: 'begin-qr-presentation', vc: HolderState["vcStore"][number]} |  {type: 'end-qr-presentation'} | { type: 'open-scanner', label: string } |{type: 'close-scanner'} | { type: 'scan-barcode' }
 
 const uiReducer = (prevState: UiState, action: UiEvent): UiState => {
     if (action.type === 'save-ui-state') {
@@ -62,6 +67,26 @@ const uiReducer = (prevState: UiState, action: UiEvent): UiState => {
             editingConfig: false
         }
     }
+
+    if (action.type === 'begin-qr-presentation') {
+        return {
+            ...prevState,
+            presentingQr:{
+                active: true,
+                vcToPresent: action.vc
+            }
+        }
+    }
+
+    if (action.type === 'end-qr-presentation') {
+        return {
+            ...prevState,
+            presentingQr: {
+                active: false,
+            }
+        }
+    }
+
 
     if (action.type === 'toggle-editing-config') {
         return {
@@ -133,7 +158,6 @@ const App: React.FC<AppProps> = (props) => {
 
     const connectToFhir = async () => {
         const connected = await makeFhirConnector(uiState, holderState)
-        console.log("Connected", connected);
         setSmartState(connected.newSmartState)
     }
 
@@ -180,6 +204,7 @@ const App: React.FC<AppProps> = (props) => {
             />}
 
         {uiState.editingConfig && <ConfigEditModal uiState={uiState} defaultUiState={props.defaultUiState} dispatch={dispatch} />}
+        {uiState.presentingQr?.active && <QRPresentationModal healthCard={uiState.presentingQr.vcToPresent} dispatch={dispatch} />}
 
         <SiopApprovalModal  {...parseSiopApprovalProps(holderState, dispatchToHolder)} />
 
@@ -190,6 +215,9 @@ const App: React.FC<AppProps> = (props) => {
                         holderState={holderState}
                         smartState={smartState}
                         uiState={uiState}
+                        displayQr={async (vc) => {
+                            dispatch({type: 'begin-qr-presentation', vc})
+                        }}
                         openScannerUi={async () => {
                             dispatch({ type: 'open-scanner', 'label': 'Lab' })
                         }}
