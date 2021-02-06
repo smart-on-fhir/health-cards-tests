@@ -14,20 +14,13 @@ interface Entry {
 }
 
 
-const unique = (values: string[]): string[]  => {
-    let ret = Object.keys(values.reduce((types, t) => {types[t]=true; return types}, {}));
+const unique = (values: string[]): string[] => {
+    let ret = Object.keys(values.reduce((types, t) => { types[t] = true; return types }, {}));
     ret.sort();
     return ret;
 }
 export const createHealthCard = (presentationContext: string, types: string[], issuer: string, fhirIdentityResource: any, fhirClniicalResources: any[]) => {
     const vc: VC = deepcopy(emptyVc);
-
-    const subjectFieldName = {
-        'Immunization': 'patient',
-        'DiagnosticReport': 'subject',
-        'Observation': 'subject',
-    }
-
 
     vc.issuanceDate = new Date(vc.issuanceDate).toISOString()
 
@@ -36,14 +29,20 @@ export const createHealthCard = (presentationContext: string, types: string[], i
         resource: fhirIdentityResource
     }
 
-    const clinicalEntries = fhirClniicalResources.map((r, i) => ({
-        fullUrl: `resource:${i+1}`,
-        resource: {
-            ...r,
-            [subjectFieldName[r.resourceType]]: {
+    const clinicalEntries = fhirClniicalResources.map(r => {
+        if (r.patient) {
+            r.patient = {
+                reference: identityEntry.fullUrl
+            }
+        } else if (r.subject) {
+            r.subject = {
                 reference: identityEntry.fullUrl
             }
         }
+        return r
+    }).map((r, i) => ({
+        fullUrl: `resource:${i + 1}`,
+        resource: r
     }))
 
     vc.type = unique([...types, ...(vc.type)])
@@ -81,16 +80,16 @@ interface VcJWTPayload {
 }
 
 export const isoToNumericDate = (isoDate: string): number => new Date(isoDate).getTime() / 1000
-export const numericToIsoDate = (numericDate: number): string => new Date(numericDate*1000).toISOString()
+export const numericToIsoDate = (numericDate: number): string => new Date(numericDate * 1000).toISOString()
 
 export const vcToJwtPayload = (vcIn: VC): VcJWTPayload => {
     const vc = deepcopy(vcIn) as VC
 
     const ret: VcJWTPayload = {
         iss: vc.issuer,
-        nbf: isoToNumericDate( vc.issuanceDate),
+        nbf: isoToNumericDate(vc.issuanceDate),
         iat: isoToNumericDate(vc.issuanceDate),
-        exp: vc.expirationDate ?  isoToNumericDate(vc.expirationDate) : undefined,
+        exp: vc.expirationDate ? isoToNumericDate(vc.expirationDate) : undefined,
         jti: vc.id,
         sub: vc.credentialSubject.id,
         vc: {
@@ -111,7 +110,7 @@ export const vcToJwtPayload = (vcIn: VC): VcJWTPayload => {
 export const jwtPayloadToVc = (pIn: VcJWTPayload): VC => {
     const p = deepcopy(pIn)
 
-    const ret ={
+    const ret = {
         ...(p.vc),
         vc: undefined,
         issuer: p.iss,
@@ -129,7 +128,7 @@ export const jwtPayloadToVc = (pIn: VcJWTPayload): VC => {
         expirationDate: p.exp ? numericToIsoDate(p.exp) : undefined,
         exp: undefined
     }
-    
+
     delete ret.nonce;
     return JSON.parse(JSON.stringify(ret))
 }

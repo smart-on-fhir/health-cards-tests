@@ -1,7 +1,7 @@
 import axios from 'axios';
 import base64 from 'base-64';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import * as RS from 'reactstrap';
 import { Button, Card, CardSubtitle, CardText, CardTitle, DropdownItem, DropdownMenu, DropdownToggle } from 'reactstrap';
 import { HolderState, receiveVcs } from './holder';
@@ -84,6 +84,20 @@ const CovidCard: React.FC<{
     console.log("P", patient);
 
 
+    useEffect(() => {
+        if (covidVcs.length === 0) {
+            return;
+        }
+        let file = new File([JSON.stringify({
+            "verifiableCredential": [
+                covidVcs.map(v => v.vcSigned)
+            ]
+        })], "c19.smart-health-card")
+        const url = window.URL.createObjectURL(file);
+        setDownloadFileUrl(url)
+    }, [covidVcs.length])
+    const [downloadFileUrl, setDownloadFileUrl] = useState("");
+
     return <> {
         currentStep === CardStep.COMPLETE && <Card style={{ border: "1px solid grey", padding: ".5em", marginBottom: "1em" }}>
             <CardTitle style={{ fontWeight: "bolder" }}>
@@ -99,6 +113,7 @@ const CovidCard: React.FC<{
                 <li> Immunization doses received: {doses}</li>
             </ul>
             <Button className="mb-1" color="info" onClick={() => displayQr(covidVcs[0])}>Display QR</Button>
+            <a href={downloadFileUrl} download="covid19.smart-health-card">Download file</a>
         </Card>
     } {currentStep < CardStep.COMPLETE &&
         <Card style={{ border: ".25em dashed grey", padding: ".5em", marginBottom: "1em" }}>
