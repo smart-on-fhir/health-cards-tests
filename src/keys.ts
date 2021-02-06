@@ -12,6 +12,8 @@ export const keyGenerators: KeyGenerators = {
     generateSigningKey
 };
 
+export const publicKeyStore = jose.JWK.createKeyStore();
+
 const encryptionKeyProps = {
     "kty": "EC",
     "crv": "P-256",

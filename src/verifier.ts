@@ -1,9 +1,8 @@
 import axios from 'axios';
-import * as crypto from 'crypto';
 import QRCode from 'qrcode';
 import qs from 'querystring';
-import { serverBase } from './config';
-import { generateDid, verifyJws } from './dids';
+import { privateJwks, serverBase } from './config';
+import { generateDid, siopManager } from './dids';
 import { generateEncryptionKey, generateSigningKey, keyGenerators } from './keys';
 import { VerifierState, SiopResponseMode } from './VerifierState';
 import { verifierReducer, prepareSiopRequest, parseSiopResponse } from './VerifierLogic';
@@ -125,7 +124,9 @@ export const initializeVerifier = async (config: VerifierState['config']): Promi
     }
 
     const ek = await generateEncryptionKey();
-    const sk = await generateSigningKey();
+
+    // TODO remove these and load from config
+    const sk = await generateSigningKey(privateJwks.issuer.keys[0]);
     const uk = await generateSigningKey();
     const rk = await generateSigningKey();
     const did = await generateDid({
@@ -134,11 +135,13 @@ export const initializeVerifier = async (config: VerifierState['config']): Promi
         recoveryPublicJwk: rk.publicJwk,
         updatePublicJwk: uk.publicJwk
     });
+
     return {
         config,
         ek,
         sk,
-        did: did.did
+        did: did.did,
+        siopManager: siopManager
     };
 };
 

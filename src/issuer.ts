@@ -2,10 +2,9 @@ import { initializeVerifier, simulatedOccurrence, simulate, displayRequest, rece
 import axios from 'axios';
 import { serverBase } from './config';
 
-import { encryptFor, generateDid, verifyJws } from './dids';
 import { VerifierState, SiopResponseMode } from './VerifierState';
 import { keyGenerators } from './keys';
-import { prepareSiopRequest, verifierReducer, issuerReducer, issueVcsToHolder } from './VerifierLogic';
+import { prepareSiopRequest, verifierReducer, issuerReducer, issueHealthCardsToHolder } from './VerifierLogic';
 
 export async function issuerWorld(requestMode: SiopResponseMode  = 'form_post', reset = false) {
     let state = await initializeVerifier({
@@ -33,7 +32,7 @@ export async function issuerWorld(requestMode: SiopResponseMode  = 'form_post', 
 
     if (!state.siopResponse) {
         await dispatch(receiveSiopResponse(state));
-        await dispatch(issueVcsToHolder(state));
+        await dispatch(issueHealthCardsToHolder(state));
     }
 
     if (state.fragment?.id_token) {

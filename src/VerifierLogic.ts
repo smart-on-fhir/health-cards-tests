@@ -2,15 +2,17 @@ import axios from 'axios';
 import base64url from 'base64url';
 import * as crypto from 'crypto';
 import qs from 'querystring';
-import { ALLOW_INVALID_SIGNATURES, serverBase } from './config';
+import { ALLOW_INVALID_SIGNATURES, privateJwks, publicJwks, serverBase } from './config';
 import * as CredentialManager from './CredentialManager';
-import { encryptFor, verifyJws } from './dids';
+import { encryptFor } from './dids';
 import sampleVcCovidAb from './fixtures/vc-jwt-payload.json';
 import sampleVcTdap from './fixtures/vc-tdap-jwt-payload.json'
 import sampleVcCovidPcr from './fixtures/vc-c19-pcr-jwt-payload.json';
 import sampleVcCovidImmunization from './fixtures/vc-covid-immunization.json';
 import { VerifierState } from './VerifierState';
 import { VerificationResult } from './KeyTypes';
+import { SiopRequest } from './holder';
+import { generateSigningKey, keyGenerators } from './keys';
 
 
 export async function verifierReducer(state: VerifierState, event: any): Promise<VerifierState> {
@@ -27,13 +29,13 @@ export async function verifierReducer(state: VerifierState, event: any): Promise
 export async function prepareSiopRequest(state: VerifierState) {
     const siopState = base64url.encode(crypto.randomBytes(16));
     const siopRequestHeader = {
-        kid: state.did + '#signing-key-1'
+        kid: publicJwks.verifier.keys[0].kid
     };
     // TODO read window.location from state rather than browser global
     const responseUrl = state.config.responseMode === 'form_post' ? `${state.config.serverBase}/siop` : window.location.href.split('?')[0];
     const siopRequestPayload: VerifierState["siopRequest"]["siopRequestPayload"] = {
         state: siopState,
-        'iss': state.did,
+        'iss': state.config.serverBase.slice(0, -4) + '/verifier',
         'response_type': 'id_token',
         'client_id': responseUrl,
         'claims': state.config.claimsRequired.length === 0 ? undefined : {
@@ -42,7 +44,7 @@ export async function prepareSiopRequest(state: VerifierState) {
                 [next]: { 'essential': true }
             }), {})
         },
-        'scope': 'did_authn',
+        'scope': 'did_authn', //TODO healthwallet_authn
         'response_mode': state.config.responseMode,
         'response_context': state.config.responseMode === 'form_post' ? 'wallet' : 'rp',
         'nonce': base64url.encode(crypto.randomBytes(16)),
@@ -53,7 +55,12 @@ export async function prepareSiopRequest(state: VerifierState) {
             'client_uri': serverBase
         }
     };
-    const siopRequestPayloadSigned = await state.sk.sign(siopRequestHeader, siopRequestPayload);
+
+    const verifierKey = privateJwks.verifier.keys[0]
+
+    //TODO extract signing
+    const sk = await generateSigningKey(verifierKey, verifierKey);
+    const siopRequestPayloadSigned = await sk.sign(siopRequestHeader, siopRequestPayload);
     const siopRequestCreated = await state.config.postRequest(`${serverBase}/siop/begin`, {
         siopRequest: siopRequestPayloadSigned
     });
@@ -74,6 +81,7 @@ export async function prepareSiopRequest(state: VerifierState) {
     });
 }
 
+// TODO: move to issuer logic file
 export interface CredentialGenerationDetals {
     type: string,
     presentationContext: string,
@@ -89,7 +97,7 @@ export const defaultIdentityClaims = {
         "Patient.telecom",
         "Patient.name",
     ],
-     "https://smarthealth.cards#presentation-context-online": [
+    "https://smarthealth.cards#presentation-context-online": [
         "Patient.telecom",
         "Patient.name",
     ],
@@ -98,7 +106,6 @@ export const defaultIdentityClaims = {
         "Patient.photo"
     ]
 }
-
 
 export const createHealthCards = async (state: VerifierState, details: CredentialGenerationDetals = {
     type: 'https://smarthealth.cards#covid19',
@@ -120,7 +127,7 @@ export const createHealthCards = async (state: VerifierState, details: Credentia
     ]
 
     const vcs: string[] = [];
-    for (const vcAvailable of vcsAvailableToIssue){
+    for (const vcAvailable of vcsAvailableToIssue) {
         if (vcAvailable.vc.type.find(t => t === details.type)) {
             examplePatient = vcAvailable.vc.credentialSubject.fhirBundle.entry[0].resource
             exampleClinicalResults = (vcAvailable as any).vc.credentialSubject.fhirBundle.entry.slice(1).map(r => r.resource)
@@ -135,20 +142,24 @@ export const createHealthCards = async (state: VerifierState, details: Credentia
                     extension: examplePatient.extension
                 })
 
-                const holderDid: string | null = state.siopResponse ? state.siopResponse.idTokenPayload.did : null
-                const shortFormHolderDid = holderDid ? holderDid.split(":").slice(0,3).join(":") : null;
-                const shortFormIssuerDid = state.did.split(":").slice(0, 3).join(":");
+            const holderDid: string | null = state.siopResponse ? state.siopResponse.idTokenPayload.did : null
 
-                let issuerOrigin = new URL(state.config.serverBase).origin;
-                const vc = CredentialManager.createHealthCard(details.presentationContext, vcAvailable.vc.type, shortFormIssuerDid, issuerOrigin, shortFormHolderDid, examplePatientRestricted, exampleClinicalResults)
-                const vcPayload = CredentialManager.vcToJwtPayload(vc)
-                const vcSigned = await state.sk.sign({ kid: shortFormIssuerDid + '#signing-key-1', shc: 1, zip: 'DEF'}, vcPayload);
 
-                const vcEncrypted = details.encryptVc ? 
-                    await encryptFor(vcSigned, holderDid, state.config.keyGenerators, details.encryptVcForKeyId):
-                    vcSigned;
+            let issuerOrigin = new URL(state.config.serverBase).origin;
+            //TODO fix hardcoding
+            const vc = CredentialManager.createHealthCard(details.presentationContext, vcAvailable.vc.type, 'http://localhost:8080/issuer', issuerOrigin, "", examplePatientRestricted, exampleClinicalResults)
+            const vcPayload = CredentialManager.vcToJwtPayload(vc)
 
-                vcs.push(vcEncrypted)
+            //TODO extract signing
+            const issuerKey = privateJwks.issuer.keys[0]
+            const sk = await generateSigningKey(issuerKey, issuerKey);
+            const vcSigned = await sk.sign({ kid: issuerKey.kid, shc: 1, zip: 'DEF' }, vcPayload);
+
+            const vcEncrypted = details.encryptVc ?
+                await encryptFor(vcSigned, holderDid, state.config.keyGenerators, details.encryptVcForKeyId) :
+                vcSigned;
+
+            vcs.push(vcEncrypted)
         }
     }
 
@@ -184,21 +195,19 @@ export const issueHealthCardsToHolder = async (state: VerifierState, details: Cr
 
 
 export async function parseSiopResponse(idTokenRetrieved: string, state: VerifierState) {
-    const idTokenRetrievedDecrypted = await state.ek.decrypt(idTokenRetrieved);
-    const idTokenVerified = await verifyJws(idTokenRetrievedDecrypted, state.config.keyGenerators);
-    if (idTokenVerified.valid) {
-        const idToken = idTokenVerified.payload;
-        return ({
-            type: 'siop-response-received',
-            siopResponse: {
-                idTokenEncrypted: idTokenRetrieved,
-                idTokenSigned: idTokenRetrievedDecrypted,
-                idTokenPayload: idTokenVerified.payload,
-                idTokenVcs: (await Promise.all((idTokenVerified.payload?.vp?.verifiableCredential || []).map(vc => verifyJws(vc, state.config.keyGenerators))))
-                    .map((jws: VerificationResult) => jws.valid && jws.payload)
-            }
-        });
-    }
+
+    // TODO import the SiopRequest type 
+    const idTokenSigned = await state.siopManager.decryptSiopResponse(idTokenRetrieved);
+    console.log("id token received at verifier", idTokenSigned);
+    const idTokenPayload = await state.siopManager.validateSiopResponse(idTokenSigned, state.siopRequest!.siopRequestPayload as SiopRequest);
+    return ({
+        type: 'siop-response-received',
+        siopResponse: {
+            idTokenSigned: idTokenRetrieved,
+            idTokenPayload,
+            idTokenVcs: (await Promise.all((idTokenPayload.vp?.verifiableCredential || []).map(vc => state.siopManager.verifyHealthCardJws(vc))))
+        }
+    });
 }
 
 export async function issuerReducer(state: VerifierState, event: any): Promise<VerifierState> {

@@ -1,13 +1,11 @@
 import axios from 'axios';
-import base64url from 'base64url';
-import * as crypto from 'crypto';
 import qs from 'querystring';
-import { serverBase } from './config';
-import { encryptFor, generateDid, verifyJws } from './dids';
+import { publicJwks, serverBase } from './config';
+import { encryptFor, generateDid, siopManager, SiopManager } from './dids';
 import { keyGenerators } from './keys';
 import { EncryptionKey, SigningKey } from './KeyTypes';
-import { ClaimType} from './VerifierState';
 import { simulatedOccurrence } from './verifier';
+import { ClaimType } from './VerifierState';
 
 export async function holderWorld() {
     let state = await initializeHolder();
@@ -20,20 +18,12 @@ export async function holderWorld() {
         state = await holderReducer(state, e);
         console.log('Holder event', e.type, e, state);
     };
+
     console.log('Holder initial state', state);
 
-    await dispatch({ 'type': 'begin-interaction', who: 'issuer' })
-
-    interaction = currentInteraction(state)
-    qrCodeUrl = (await simulatedOccurrence({ who: interaction.siopPartnerRole, type: 'display-qr-code' })).url;
-
-
-    await dispatch(receiveSiopRequest(qrCodeUrl, state))
-    await dispatch(prepareSiopResponse(state))
-
-    await dispatch(simulatedOccurrence({ who: 'issuer', type: 'notify-credential-ready' }))
-
-    const vcs = (await axios.get(`${serverBase}/lab/vcs/${encodeURIComponent(state.did)}`)).data.vcs
+    //TODO update to issueVe
+    const vcs = (await axios.get(`${serverBase}/fhir/Patient/123/$HealthWallet.covidCardQr`)).data.parameter.map(p => p.valueString)
+    
     await dispatch(retrieveVcs(vcs, state))
 
 
@@ -46,14 +36,46 @@ export async function holderWorld() {
 
 }
 
+export interface SiopRequest {
+    response_type: 'id_token';
+    scope: string;
+    nonce: string;
+    registration: {
+        id_token_encrypted_response_alg?: string;
+        id_token_encrypted_response_enc?: string;
+        id_token_signed_response_alg: string;
+        client_uri: string;
+    };
+    response_mode: 'form_post' | 'fragment' | 'query';
+    response_context?: 'wallet' | 'rp';
+    claims?: any;
+    client_id: string;
+    state: string;
+    iss: string;
+}
+
+export interface SiopResponse {
+  "iss": "https://self-issued.me",
+  "aud": string,
+  "nonce": string,
+  "exp": number,
+  "iat": number,
+  "sub_jwk": any, //TODO use JSON Web Key type from node-jose
+  "vp": {
+    "@context": string[],
+    "type": string[],
+    "verifiableCredential": string[]
+  }
+}
+
 export interface SiopInteraction {
     siopRequest?: {
         response_type: 'id_token';
         scope: string;
         nonce: string;
         registration: {
-            id_token_encrypted_response_alg?: string; 
-            id_token_encrypted_response_enc?: string; 
+            id_token_encrypted_response_alg?: string;
+            id_token_encrypted_response_enc?: string;
             id_token_signed_response_alg: string;
             client_uri: string;
         };
@@ -72,6 +94,7 @@ export interface SiopInteraction {
 export interface HolderState {
     ek: EncryptionKey;
     sk: SigningKey;
+    siopRequestManager: SiopManager;
     did: string;
     qrCodeUrl?: string;
     interactions: SiopInteraction[];
@@ -101,7 +124,8 @@ export const initializeHolder = async (): Promise<HolderState> => {
         sk,
         did: did.did,
         interactions: [],
-        vcStore: []
+        vcStore: [],
+        siopRequestManager: siopManager
     };
 };
 export async function holderReducer(state: HolderState, event: any): Promise<HolderState> {
@@ -190,15 +214,11 @@ export async function receiveSiopRequest(qrCodeUrl: string, state: HolderState) 
     const qrCodeParams = qs.parse(qrCodeUrl.split('?')[1]);
     const requestUri = qrCodeParams.request_uri as string;
     const siopRequestRaw = (await axios.get(requestUri)).data;
-    const siopRequestVerified = await verifyJws(siopRequestRaw, keyGenerators);
-    if (siopRequestVerified.valid) {
-        return ({
-            type: 'siop-request-received',
-            siopRequest: siopRequestVerified.payload,
-        });
-    } else {
-        console.log("IVALID SIOP REQUEST", siopRequestRaw, siopRequestVerified)
-    }
+    const siopRequestVerified = await state.siopRequestManager.validateSiopRequest(siopRequestRaw);
+    return ({
+        type: 'siop-request-received',
+        siopRequest: siopRequestVerified,
+    });
 }
 
 const claimsForType = (k: ClaimType, vcStore: HolderState["vcStore"]) => {
@@ -209,7 +229,7 @@ const presentationForEssentialClaims = (vcStore: HolderState["vcStore"], claims:
     id_token: {
         string: { essential: boolean }
     }
-}): object => {
+}): {vp: SiopResponse['vp']} => {
 
     const id_token = claims?.id_token;
 
@@ -217,8 +237,6 @@ const presentationForEssentialClaims = (vcStore: HolderState["vcStore"], claims:
         .entries(id_token || {})
         .filter(([k, v]) => v.essential)
         .flatMap(([k, v]) => claimsForType(k as ClaimType, vcStore))
-
-    if (!essentialClaims.length) return {};
 
     return {
         'vp': {
@@ -233,22 +251,19 @@ const presentationForEssentialClaims = (vcStore: HolderState["vcStore"], claims:
 
 export async function prepareSiopResponse(state: HolderState) {
     const interaction = currentInteraction(state)
-    const idTokenHeader = {
-        'kid': state.did + '#signing-key-1'
-    };
     const idTokenPayload = {
-        'iss': 'https://self-issued.me',
+        'iss': 'https://self-issued.me' as 'https://self-issued.me',
         'aud': interaction.siopRequest.client_id,
         'nonce': interaction.siopRequest?.nonce,
         'iat': new Date().getTime() / 1000,
         'exp': new Date().getTime() / 1000 + 120,
-        'did': state.did,
+        'sub_jwk': publicJwks.holder.keys[0],
         ...presentationForEssentialClaims(state.vcStore, currentInteraction(state).siopRequest.claims)
     };
-    const idTokenSigned = await state.sk.sign({ kid: state.did + '#signing-key-1' }, idTokenPayload);
+    const idTokenSigned = await state.siopRequestManager.signSiopResponse(idTokenPayload);
     let idTokenEncrypted
     if (interaction?.siopRequest?.registration?.id_token_encrypted_response_alg) {
-        idTokenEncrypted = await encryptFor(idTokenSigned, interaction.siopRequest.iss, keyGenerators);
+        idTokenEncrypted = await state.siopRequestManager.encryptJwsToIssuer(idTokenSigned, interaction.siopRequest.iss);
     }
     const siopResponse = {
         state: interaction.siopRequest.state,
@@ -273,22 +288,14 @@ export async function prepareSiopResponse(state: HolderState) {
     });
 }
 
+//TODO rename to receiveVcs
 export async function retrieveVcs(vcs: string[], state: HolderState) {
-
-    const vcsExpanded = await Promise.all(vcs.map(async (vcEncrypted) => {
-        const vcSigned = await state.ek.decrypt(vcEncrypted);
-        const vcVerified = await verifyJws(vcSigned, keyGenerators);
-
-        if (!vcVerified.valid) {
-            throw `Invalid Vc signature on ${vcSigned} --> ${vcSigned}`
-        }
-
-
+    const vcsExpanded = await Promise.all(vcs.map(async (vcSigned) => {
+        const vcVerified = await state.siopRequestManager.verifyHealthCardJws(vcSigned);
         return {
-            type: vcVerified.payload.vc.type,
+            type: vcVerified.vc.type,
             vcSigned,
-            verified: vcVerified.valid,
-            vcPayload: vcVerified.payload
+            vcPayload: vcVerified
         }
     }))
     console.log({ 'type': 'vc-retrieved', vcs: vcsExpanded })

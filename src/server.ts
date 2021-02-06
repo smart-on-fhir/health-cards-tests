@@ -17,10 +17,12 @@ import examplePt from './fixtures/patient.json'
 import exampleCapabilityStatement from './fixtures/capability-statement.json'
 
 import { VerifierState } from './VerifierState';
-import { generateDid, verifyJws, encryptFor } from './dids';
+import { generateDid, encryptFor, siopManager } from './dids';
 import { issuerReducer, prepareSiopRequest, issueHealthCardsToHolder, parseSiopResponse, CredentialGenerationDetals, createHealthCards as createHealthCards } from './VerifierLogic';
+import { publicJwks } from './config';
 
 const app = express();
+app.set('json spaces', 2);
 app.use(express.raw({ type: 'application/x-www-form-urlencoded', limit: '5000kb' }));
 app.use(express.json({ type: 'application/json', limit: '5000kb'}));
 app.use(express.json({ type: 'application/fhir+json', limit: '5000kb'}));
@@ -31,9 +33,7 @@ const port = 8080; // default port to listen
 const fhirBase = 'https://hapi.fhir.org/baseR4';
 
 async function resolveDid(did: string) {
-    console.log("preparsed", did);
     const parsedDid = await Did.create(did, 'ion');
-    console.log("Parsed", parsedDid);
     const operationWithMockedAnchorTime: AnchoredOperationModel = {
         didUniqueSuffix: parsedDid.uniqueSuffix,
         type: OperationType.Create,
@@ -128,6 +128,15 @@ type WellKnownDidConfigurationResponse = {
     "@context": "https://identity.foundation/.well-known/did-configuration/v1",
     linked_dids: [SignedDomainLinkageCredentialJWTPayload["signedPayload"]]
 }
+
+
+["issuer", "verifier"].forEach(role => {
+    const jwksUrl = `${role}/.well-known/jwks.json`;
+    app.get('/' + jwksUrl, async (req, res, err) => {
+        res.json(publicJwks[role])
+    });
+});
+
 
 const didConfig = '.well-known/did-configuration.json';
 
@@ -258,6 +267,7 @@ async function getHealthCardsForPatient(patientId, details: CredentialGeneration
         return (await createHealthCards(issuerState, details)).vcs;
     }
 
+    // TODO remove when holder binding is removed from spec
     const state = patientToSiopResponse[patientId];
     if (!state || siopCache[state].responseDeferred.pending){
         throw new OperationOutcomeError("did-not-bound", `No SIOP request has been completed for patient ${patientId}`)
@@ -492,6 +502,7 @@ const initializeIssuer = async (): Promise<VerifierState> => {
         domains: [new URL(process.env.SERVER_BASE).origin]
     });
     return {
+        siopManager: siopManager,
         config: {
             serverBase: process.env.SERVER_BASE,
             claimsRequired: [],
@@ -659,7 +670,7 @@ app.get('/api/test/did-debug', (req, res) => {
 app.post('/api/test/validate-jws', async (req, res, err) => {
     try {
         const jws = req.body.toString()
-        const jwsVerified = await verifyJws(jws, keyGenerators);
+        const jwsVerified = await siopManager.verifyHealthCardJws(jws);
         res.json(jwsVerified)
     } catch (e) {
         err(e);

@@ -1,3 +1,4 @@
+import { SiopManager } from './dids';
 import { EncryptionKey, SigningKey, KeyGenerators } from './KeyTypes';
 export type ClaimType = 'https://smarthealth.cards#covid19' | 'https://smarthealth.cards#immunization' | 'https://smarthealth.cards#tdap';
 export type SiopResponseMode = 'form_post' | 'fragment';
@@ -7,6 +8,7 @@ export interface VerifierState {
     sk: SigningKey;
     did: string;
     didDebugging?: any;
+    siopManager: SiopManager;
     config: {
         role: string;
         skipVcPostToServer?: boolean;
