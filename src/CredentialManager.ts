@@ -87,7 +87,6 @@ export const vcToJwtPayload = (vcIn: VC): VcJWTPayload => {
 
     const ret: VcJWTPayload = {
         iss: vc.issuer,
-        nbf: isoToNumericDate(vc.issuanceDate),
         iat: isoToNumericDate(vc.issuanceDate),
         exp: vc.expirationDate ? isoToNumericDate(vc.expirationDate) : undefined,
         jti: vc.id,

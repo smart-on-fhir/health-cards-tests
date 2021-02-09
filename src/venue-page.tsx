@@ -11,22 +11,30 @@ import { initializeVerifier, receiveSiopResponse } from './verifier';
 import { prepareSiopRequest, verifierReducer } from './VerifierLogic';
 import { VerifierState } from './VerifierState';
 
-export const QrDisplay: React.FC<{ url: string, noLink?: boolean }> = (props) => {
+export const QrDisplay: React.FC<{ numeric?: number[], url?: string, noLink?: boolean }> = (props) => {
     useEffect(() => {
-        console.log("QR canvas", props.url)
-    }, [props.url])
+        console.log("QR canvas", props.url, props.numeric)
+    }, [props.url, props.numeric])
 
     const canvasCallback = useCallback(canvasElement => {
         if (!canvasElement) return;
-        QRCode.toCanvas(canvasElement, props.url, { scale: 20 }, (error) => {
-            canvasElement.style.width = '';
-            canvasElement.style.height = '';
-            if (error) console.error(error);
-        });
+        if (props.url) {
+            QRCode.toCanvas(canvasElement, props.url, { scale: 20 }, (error) => {
+                canvasElement.style.width = '';
+                canvasElement.style.height = '';
+                if (error) console.error(error);
+            });
+        } else if (props.numeric) {
+            QRCode.toCanvas(canvasElement, [{ data: props.numeric!.join(""), mode: 'numeric' }], { errorCorrectionLevel: 'L', scale: 20 }, (error) => {
+                canvasElement.style.width = '';
+                canvasElement.style.height = '';
+                if (error) console.error(error);
+            });
+        }
     }, [props.url])
 
     return <div>
-        <a href={props.noLink? "#" :  props.url} >
+        <a href={props.noLink ? "#" : props.url} >
             <canvas ref={canvasCallback} style={{ maxHeight: "50vmin", maxWidth: "50vmin", width: undefined, height: undefined }} />
         </a>
     </div>
@@ -65,7 +73,7 @@ const App: React.FC<{
     let name, conclusion;
     if (displayResponse) {
         const fhirName = displayResponse?.idTokenVcs[0].vc.credentialSubject.fhirBundle.entry[0].resource.name[0]
-        name = fhirName?.given[0]  + " " + fhirName?.family
+        name = fhirName?.given[0] + " " + fhirName?.family
         conclusion = displayResponse?.idTokenVcs.map(jwtPayload => jwtPayload.vc.credentialSubject.fhirBundle.entry[1].resource.conclusion)
     }
 

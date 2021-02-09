@@ -34,34 +34,17 @@
                 {
                   "family": "Anyperson",
                   "given": [
-                    "John",
-                    "B."
+                    "Johnathan",
+                    "Biggleston III"
                   ]
-                }
-              ],
-              "telecom": [
-                {
-                  "system": "phone",
-                  "value": "555-555-5555",
-                  "use": "home"
-                },
-                {
-                  "system": "email",
-                  "value": "john.anyperson@example.com"
                 }
               ],
               "gender": "male",
               "birthDate": "1951-01-20",
-              "address": [
-                {
-                  "line": [
-                    "123 Main St"
-                  ],
-                  "city": "Anytown",
+              "address": [ {
                   "postalCode": "12345",
                   "country": "US"
-                }
-              ]
+                } ]
             }
           },
           {
@@ -80,7 +63,7 @@
               "patient": {
                 "reference": "Patient/Scenario1Patient"
               },
-              "occurrenceDateTime": "2021-01-01T11:45:33+11:00",
+              "occurrenceDateTime": "2021-01-01",
               "primarySource": true,
               "location": {
                 "reference": "Location/Scenario1Location"
@@ -104,10 +87,10 @@
               "patient": {
                 "reference": "Patient/Scenario1Patient"
               },
-              "occurrenceDateTime": "2021-01-29T11:45:33+11:00",
+              "occurrenceDateTime": "2021-01-29",
               "primarySource": true,
               "location": {
-                "reference": "Location/Scenario1Location"
+                "reference": "resource:3"
               },
               "lotNumber": "Lot #0000007"
             }
@@ -116,7 +99,8 @@
             "fullUrl": "http://example.org/fhir/Immunization/Scenario1Location",
             "resource": {
               "resourceType": "Location",
-              "name": "ABC Pharmacy"
+              "name": "ABC Pharmacy",
+              "address": {"line": ["29182 South Main St NE"], "postalCode": "53726", "city": "Madision", "state": "WI", "country": "US"}
             }
           }
         ]

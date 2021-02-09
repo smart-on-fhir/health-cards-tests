@@ -64,48 +64,6 @@ setInterval(() => {
 }, 1000 * 60);
 */
 
-const enum SecondsSinceEpochBrand {}
-type SecondsSinceEpoch = number & SecondsSinceEpochBrand
-
-const enum DateTimeStringBrand { _ = "" }
-type DateTimeString = string & DateTimeStringBrand
-
-const enum LongFormDIDBrand { _ = "" }
-type LongFormDid = string & LongFormDIDBrand
-
-type DomainLinkageCredentialJWTPayload = {
-   exp: SecondsSinceEpoch,
-   iss: LongFormDid
-   nbf: SecondsSinceEpoch,
-   sub: LongFormDid,
-   vc: {
-       "@context": [
-           "https://www.w3.org/2018/credentials/v1",
-           "https://identity.foundation/.well-known/did-configuration/v1"
-        ],
-        credentialSubject: {
-            id: LongFormDid,
-            origin: string
-        },
-        expirationDate: DateTimeString,
-        issuanceDate: DateTimeString,
-        issuer: LongFormDid,
-        type: ["VerifiableCredential", "DomainLinkageCredential"]
-   }
-}
-
-type JWSSignedPayload<T> = {
-    unsignedPayload: T
-    signedPayload: string
-}
-
-type SignedDomainLinkageCredentialJWTPayload = JWSSignedPayload<DomainLinkageCredentialJWTPayload>
-
-type WellKnownDidConfigurationResponse = {
-    "@context": "https://identity.foundation/.well-known/did-configuration/v1",
-    linked_dids: [SignedDomainLinkageCredentialJWTPayload["signedPayload"]]
-}
-
 
 ["issuer", "verifier"].forEach(role => {
     const jwksUrl = `${role}/.well-known/jwks.json`;

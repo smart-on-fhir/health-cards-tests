@@ -92,7 +92,9 @@ const CovidCard: React.FC<{
             "verifiableCredential": [
                 covidVcs.map(v => v.vcSigned)
             ]
-        })], "c19.smart-health-card")
+        })], "c19.smart-health-card", {
+            type: "application/smart-health-card"
+        })
         const url = window.URL.createObjectURL(file);
         setDownloadFileUrl(url)
     }, [covidVcs.length])
