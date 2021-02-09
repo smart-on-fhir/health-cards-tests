@@ -89,9 +89,7 @@ const CovidCard: React.FC<{
             return;
         }
         let file = new File([JSON.stringify({
-            "verifiableCredential": [
-                covidVcs.map(v => v.vcSigned)
-            ]
+            "verifiableCredential": covidVcs.map(v => v.vcSigned)
         })], "c19.smart-health-card", {
             type: "application/smart-health-card"
         })
