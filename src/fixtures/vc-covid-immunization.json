@@ -1,5 +1,5 @@
 {
-  "iss": "<<did:ion identifier for issuer>>",
+  "iss": "<<URL for Issuer>>",
   "iat": 1611160486,
   "vc": {
     "@context": [
