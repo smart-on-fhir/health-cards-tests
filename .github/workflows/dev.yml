@@ -1,4 +1,4 @@
-name: Deploy Health Wallet Demo master branch to ci
+name: Deploy Health Wallet Demo dev branch to ci
 # Basics from https://docs.microsoft.com/en-us/azure/dev-spaces/how-to/github-actions
 on:
   push:
@@ -28,5 +28,5 @@ jobs:
         docker build . \
           -t ${{ secrets.CONTAINER_REGISTRY }}/siop:$GITHUB_SHA \
           -t ${{ secrets.CONTAINER_REGISTRY }}/siop:dev
-        docker push ${{ secrets.CONTAINER_REGISTRY }}/siop
+        docker push ${{ secrets.CONTAINER_REGISTRY }}/siop:dev
         kubectl -n siop rollout restart deployment/siop-dev
