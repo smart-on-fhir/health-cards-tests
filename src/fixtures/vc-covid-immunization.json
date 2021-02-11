@@ -1,8 +1,6 @@
 {
   "iss": "<<did:ion identifier for issuer>>",
-  "nbf": 1611160486,
   "iat": 1611160486,
-  "nonce": "FD790F250D50-BCF95D9ECB7E",
   "vc": {
     "@context": [
       "https://www.w3.org/2018/credentials/v1"
@@ -13,7 +11,6 @@
       "https://smarthealth.cards#immunization",
       "https://smarthealth.cards#covid19"
     ],
-    "holder": "<<did:ion identifier for holder>>",
     "credentialSubject": {
       "fhirVersion": "4.0.1",
       "fhirBundle": {
@@ -21,7 +18,7 @@
         "type": "collection",
         "entry": [
           {
-            "fullUrl": "http://example.org/fhir/Patient/Scenario1Patient",
+            "fullUrl": "resource:0",
             "resource": {
               "resourceType": "Patient",
               "extension": [
@@ -48,7 +45,7 @@
             }
           },
           {
-            "fullUrl": "http://example.org/fhir/Immunization/Scenario1Immunization1",
+            "fullUrl": "resource:1",
             "resource": {
               "resourceType": "Immunization",
               "status": "completed",
@@ -61,18 +58,18 @@
                 ]
               },
               "patient": {
-                "reference": "Patient/Scenario1Patient"
+                "reference": "resource:0"
               },
               "occurrenceDateTime": "2021-01-01",
               "primarySource": true,
               "location": {
-                "reference": "Location/Scenario1Location"
+                "reference": "resource:3"
               },
               "lotNumber": "Lot #0000001"
             }
           },
           {
-            "fullUrl": "http://example.org/fhir/Immunization/Scenario1Immunization2",
+            "fullUrl": "resource:2",
             "resource": {
               "resourceType": "Immunization",
               "status": "completed",
@@ -85,7 +82,7 @@
                 ]
               },
               "patient": {
-                "reference": "Patient/Scenario1Patient"
+                "reference": "resource:0"
               },
               "occurrenceDateTime": "2021-01-29",
               "primarySource": true,
@@ -96,7 +93,7 @@
             }
           },
           {
-            "fullUrl": "http://example.org/fhir/Immunization/Scenario1Location",
+            "fullUrl": "resource:3",
             "resource": {
               "resourceType": "Location",
               "name": "ABC Pharmacy",
