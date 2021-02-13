@@ -17,7 +17,7 @@ const jwsParts = <T>(token: string): {
     const signature = base64url.decode(signatureEnc);
     let bodyRaw = base64url.toBuffer(bodyEnc);
     if (header.zip == 'DEF') {
-        bodyRaw = Buffer.from(pako.inflate(bodyRaw));
+        bodyRaw = Buffer.from(pako.inflateRaw(bodyRaw));
     }
     let body: T = JSON.parse(bodyRaw.toString());
     return { header, body, signature };
@@ -105,7 +105,7 @@ export class SiopManager {
 
         let body = verified.payload;
         if ((verified.header as any).zip === 'DEF') {
-            body = Buffer.from(pako.inflate(body));
+            body = Buffer.from(pako.inflateRaw(body));
         }
 
         return JSON.parse(body.toString());
@@ -122,7 +122,7 @@ export class SiopManager {
         let signingKey = await JWK.asKey(this.signingKey)
 
         let fields = deflate ? {zip: 'DEF'} : {}
-        let body = deflate ? pako.deflate(bodyString) : bodyString
+        let body = deflate ? pako.deflateRaw(bodyString) : bodyString
 
         let signed = await jose.JWS.createSign({format: 'compact', fields}, signingKey).update(body).final()
         return signed as unknown as string;
