@@ -24,8 +24,8 @@
 
 This demo should work wiht Node.js 15 (current LTS) as well as Node.js 13. See `Dockerfile` for details if you want to build/develop locally using docker; otherwise, you can get started with:
 
-    git clone https://github.com/microsoft-healthcare-madison/health-wallet-demo
-    cd health-wallet-demo
+    git clone https://github.com/smart-on-fhir/health-cards-tests
+    cd health-cards-tests
 
     # In first terminal
     export SERVER_BASE=http://localhost:8080/api
