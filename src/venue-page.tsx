@@ -25,7 +25,7 @@ export const QrDisplay: React.FC<{ numeric?: number[], url?: string, noLink?: bo
                 if (error) console.error(error);
             });
         } else if (props.numeric) {
-            QRCode.toCanvas(canvasElement, [{ data: props.numeric!.join(""), mode: 'numeric' }], { errorCorrectionLevel: 'L', scale: 20 }, (error) => {
+            QRCode.toCanvas(canvasElement, [{data: "shc:/", mode: 'byte'}, { data: props.numeric!.join(""), mode: 'numeric' }], { errorCorrectionLevel: 'L', scale: 20 }, (error) => {
                 canvasElement.style.width = '';
                 canvasElement.style.height = '';
                 if (error) console.error(error);
