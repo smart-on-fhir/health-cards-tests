@@ -109,6 +109,7 @@ app.post('/api/fhir/[\$]token', (req, res) => {
     const authorizeState = JSON.parse(code as string);
     res.json({
         'access_token': base64url.encode(crypto.randomBytes(32)),
+        'refresh_token': base64url.encode(crypto.randomBytes(32)),
         'token_type': 'bearer',
         'expires_in': 3600,
         ...authorizeState
