@@ -312,9 +312,7 @@ app.post('/api/fhir/Patient/:patientID/[\$]HealthWallet.issueVc', async (req, re
         'resourceType': 'Parameters',
         'parameter': vcs.map(vc => ({
             'name': 'verifiableCredential',
-            'valueAttachment': {
-                "data": base64.encode(vc)
-            }
+            'valueString': vc
         }))
     });
 
