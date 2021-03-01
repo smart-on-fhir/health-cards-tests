@@ -84,7 +84,7 @@ app.get('/api/fhir/' + smartConfig, (req, res) => {
         'token_endpoint_auth_methods_supported': ['client_secret_basic'],
         'scopes_supported': ['launch/patient', 'patient/*.*', 'user/*.*', 'offline_access'],
         'response_types_supported': ['code', 'refresh_token'],
-        'capabilities': ['launch-ehr', 'client-public', 'client-confidential-symmetric', 'context-ehr-patient']
+        'capabilities': ['health-cards', 'launch-ehr', 'client-public', 'client-confidential-symmetric', 'context-ehr-patient']
     });
 });
 
