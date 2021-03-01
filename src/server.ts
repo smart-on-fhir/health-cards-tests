@@ -84,7 +84,7 @@ app.get('/api/fhir/' + smartConfig, (req, res) => {
         'token_endpoint_auth_methods_supported': ['client_secret_basic'],
         'scopes_supported': ['launch/patient', 'patient/*.*', 'user/*.*', 'offline_access'],
         'response_types_supported': ['code', 'refresh_token'],
-        'capabilities': ['launch-ehr', 'client-public', 'client-confidential-symmetric', 'context-ehr-patient']
+        'capabilities': ['health-cards', 'launch-ehr', 'client-public', 'client-confidential-symmetric', 'context-ehr-patient']
     });
 });
 
@@ -109,6 +109,7 @@ app.post('/api/fhir/[\$]token', (req, res) => {
     const authorizeState = JSON.parse(code as string);
     res.json({
         'access_token': base64url.encode(crypto.randomBytes(32)),
+        'refresh_token': base64url.encode(crypto.randomBytes(32)),
         'token_type': 'bearer',
         'expires_in': 3600,
         ...authorizeState
@@ -312,9 +313,7 @@ app.post('/api/fhir/Patient/:patientID/[\$]HealthWallet.issueVc', async (req, re
         'resourceType': 'Parameters',
         'parameter': vcs.map(vc => ({
             'name': 'verifiableCredential',
-            'valueAttachment': {
-                "data": base64.encode(vc)
-            }
+            'valueString': vc
         }))
     });
 
