@@ -66,7 +66,7 @@ const CovidCard: React.FC<{
                 }]
             })
             credentials.then(response => {
-                const vcs = response.data.parameter.filter(p => p.name === 'verifiableCredential').map(p => base64.decode(p.valueAttachment.data))
+                const vcs = response.data.parameter.filter(p => p.name === 'verifiableCredential').map(p => p.valueString)
                 dispatchToHolder(receiveVcs(vcs, holderState))
             })
         }

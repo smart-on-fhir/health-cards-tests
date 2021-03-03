@@ -27,7 +27,7 @@ export async function holderWorld() {
                     "name": "credentialType",
                     "valueUri": "https://smarthealth.cards#covid19"
                 }]
-            })).data.parameter.map(p => base64.decode(p.valueAttachment.data));
+            })).data.parameter.map(p => p.valueString);
     
     await dispatch(receiveVcs(vcs, state))
 
