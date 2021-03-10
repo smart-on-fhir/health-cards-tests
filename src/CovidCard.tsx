@@ -52,7 +52,7 @@ const CovidCard: React.FC<{
 
     useEffect(() => {
         if (smartState?.access_token && holderState.vcStore.length === 0) {
-            const credentials = axios.post(uiState.fhirClient.server + `/Patient/${smartState.patient}/$HealthWallet.issueVc`, {
+            const credentials = axios.post(uiState.fhirClient.server + `/Patient/${smartState.patient}/$health-cards-issue`, {
                 "resourceType": "Parameters",
                 "parameter": [{
                     "name": "credentialType",

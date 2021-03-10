@@ -21,7 +21,7 @@ export async function holderWorld() {
 
     console.log('Holder initial state', state);
 
-    const vcs = (await axios.post(`${serverBase}/fhir/Patient/123/$HealthWallet.issueVc`, {
+    const vcs = (await axios.post(`${serverBase}/fhir/Patient/123/$health-cards-issue`, {
                 "resourceType": "Parameters",
                 "parameter": [{
                     "name": "credentialType",
