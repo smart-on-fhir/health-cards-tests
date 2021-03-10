@@ -117,7 +117,7 @@ app.post('/api/fhir/[\$]token', (req, res) => {
 });
 
 const patientToSiopResponse = {};
-app.get('/api/fhir/Patient/:patientID/[\$]HealthWallet.connect', async (req, res, err) => {
+app.get('/api/fhir/Patient/:patientID/[\$]health-cards-connect', async (req, res, err) => {
     try {
 
     await dispatchToIssuer(prepareSiopRequest(issuerState));
@@ -243,38 +243,7 @@ class OperationOutcomeError extends Error {
   }
 }
 
-app.get('/api/fhir/Patient/:patientID/[\$]HealthWallet.covidCardQr', async (req, res, err) => {
-    try {
-        const requestedCredentialType = ["https://smarthealth.cards#immunization"];
-        const requestedPresentationContext = "https://smarthealth.cards#online";
-
-    let vcs = [];
-    for (const vcType of requestedCredentialType) {
-        const newVcs = await getHealthCardsForPatient(req.params.patientID, {
-            type: vcType,
-            presentationContext: requestedPresentationContext,
-            identityClaims: null,
-            holderDid: null
-        });
-        vcs = [...vcs, ...newVcs]
-    }
-
-    res.json({
-        'resourceType': 'Parameters',
-        'parameter': vcs.map(vc => ({
-            'name': 'qr',
-            'valueString': vc,
-            'debug': vc.length
-        }))
-    });
-
-    } catch (e) {
-        err(e);
-    }
-});
-
-
-app.post('/api/fhir/Patient/:patientID/[\$]HealthWallet.issueVc', async (req, res, err) => {
+app.post('/api/fhir/Patient/:patientID/[\$]health-cards-issue', async (req, res, err) => {
     try {
 
     const requestBody = (req.body || {})

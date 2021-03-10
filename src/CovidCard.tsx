@@ -52,7 +52,7 @@ const CovidCard: React.FC<{
 
     useEffect(() => {
         if (smartState?.access_token && holderState.vcStore.length === 0) {
-            const credentials = axios.post(uiState.fhirClient.server + `/Patient/${smartState.patient}/$HealthWallet.issueVc`, {
+            const credentials = axios.post(uiState.fhirClient.server + `/Patient/${smartState.patient}/$health-cards-issue`, {
                 "resourceType": "Parameters",
                 "parameter": [{
                     "name": "credentialType",
@@ -66,7 +66,7 @@ const CovidCard: React.FC<{
                 }]
             })
             credentials.then(response => {
-                const vcs = response.data.parameter.filter(p => p.name === 'verifiableCredential').map(p => base64.decode(p.valueAttachment.data))
+                const vcs = response.data.parameter.filter(p => p.name === 'verifiableCredential').map(p => p.valueString)
                 dispatchToHolder(receiveVcs(vcs, holderState))
             })
         }
