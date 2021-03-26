@@ -131,7 +131,6 @@ const CovidCard: React.FC<{
                 <DropdownMenu style={{ width: "100%" }}>
                     <DropdownItem onClick={connectToFhir} >Connect with SMART on FHIR </DropdownItem>
                     <DropdownItem >Load from file (todo)</DropdownItem>
-                    <DropdownItem onClick={openScannerUi} >Scan from QR (todo)</DropdownItem>
                 </DropdownMenu>
             </RS.UncontrolledButtonDropdown>
             <Button
