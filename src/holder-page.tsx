@@ -233,16 +233,7 @@ const App: React.FC<AppProps> = (props) => {
                     </Card>
                 </RS.Col>
             </RS.Row>
-            <RS.Row style={{
-                justifyContent: "flex-end"
-            }}>
-                {holderState.vcStore.length ? <img
-                    onClick={() => { dispatch({ type: 'open-scanner', 'label': 'Verifier' }) }}
-                    style={{ cursor: "pointer" }} src="img/qr-scan-icon.svg"></img> : ""
-                }
-            </RS.Row>
         </RS.Container>
-
         <div>
         </div>
     </div>

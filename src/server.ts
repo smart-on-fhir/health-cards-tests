@@ -24,12 +24,8 @@ app.use(express.json({ type: 'application/json+fhir', limit: '5000kb'}));
 app.use(cors());
 const port = 8080; // default port to listen
 
-const fhirBase = 'https://hapi.fhir.org/baseR4';
+const exampleBase = 'https://smarthealth.cards/examples';
 
-
-const client = {
-    get: async (url: string) => (await axios.get(fhirBase + '/' + url)).data
-};
 
 type VerifierResponse = VerifierState["siopResponse"]
 const siopCache: Record<string, {
@@ -419,6 +415,23 @@ app.post('/api/test/validate-jwe', async (req, res, err) => {
         err(e);
     }
 });
+
+app.get('/examples/:exampleFileName', async (req, res, err) => {
+    try {
+        const exampleFileName = req.params.exampleFileName;
+        const proxied = (await axios.get(exampleBase + '/' + exampleFileName));
+        const headers: Record<string,string> = {
+            ...proxied.headers,
+            'content-type':  exampleFileName.endsWith('.smart-health-card') ? 'application/smart-health-card' : proxied.headers['content-type']
+        }
+        res.status(proxied.status)
+        Object.entries(headers).forEach(([h, v]) => res.setHeader(h, v))
+        res.send(proxied.data)
+    } catch (e) {
+        err(e);
+    }
+});
+
 
 app.use(express.static('dist/static', {
     extensions: ['html']
