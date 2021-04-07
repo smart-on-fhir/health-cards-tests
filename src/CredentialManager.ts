@@ -72,9 +72,9 @@ interface VcJWTPayload {
     sub: string;
     jti?: string;
     iss: string;
-    iat: number;
+    iat?: number;
     exp?: number;
-    nbf?: number;
+    nbf: number;
     nonce?: string;
     vc: any;
 }
@@ -87,7 +87,7 @@ export const vcToJwtPayload = (vcIn: VC): VcJWTPayload => {
 
     const ret: VcJWTPayload = {
         iss: vc.issuer,
-        iat: isoToNumericDate(vc.issuanceDate),
+        nbf: isoToNumericDate(vc.issuanceDate),
         exp: vc.expirationDate ? isoToNumericDate(vc.expirationDate) : undefined,
         jti: vc.id,
         sub: vc.credentialSubject.id,

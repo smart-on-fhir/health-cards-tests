@@ -87,12 +87,8 @@ export const defaultIdentityClaims = {
         "Patient.name",
     ],
     "https://smarthealth.cards#presentation-context-online": [
-        "Patient.telecom",
         "Patient.name",
-        "Patient.gender",
         "Patient.birthDate",
-        "Patient.telecom",
-        "Patient.address",
     ],
     "https://smarthealth.cards#presentation-context-in-person": [
         "Patient.name",
@@ -130,9 +126,9 @@ export const createHealthCards = async (state: VerifierState, details: Credentia
                     ...prev,
                     [element]: examplePatient[element]
                 }), {
-                    resourceType: examplePatient.resourceType,
-                    extension: examplePatient.extension
+                    resourceType: examplePatient.resourceType
                 })
+            console.log("Restricting", defaultIdentityClaims[details.presentationContext], examplePatientRestricted)
 
             const holderDid: string | null = state.siopResponse ? state.siopResponse.idTokenPayload.did : null
 
