@@ -24,6 +24,8 @@ The demo stands up two endpoint illustrating the SMART Health Card operations:
  - one listening on port 8081 offering a demo API, as documented in [RESTAPI.md](RESTAPI.md)
  - one listening on port 8443 offering a finer-grained API for testing, as used by [issuer](https://localhost:8443/IssuerPortal.html) or [developer](https://localhost:8443/DevPortal.html) portals
 
+The default config creates a self-signed TLS certificate for localhost (needed for the in-browser QR scanning to work), that will not be trusted by the browser. Chrome and Edge, for example, rightfully complain that "Your connection isn't private"); to access the portal pages, you need to click "Advanced" and then "Continue to localhost (unsafe)". The config can be updated with new endoints and certificate to avoid these warnings.
+
 ## Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
