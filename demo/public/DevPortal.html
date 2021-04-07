@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Developer Portal</title>
+
+    <link rel="stylesheet" href="IssuerPortal.css">
+
+    <script>
+        const fhirBundle = JSON.stringify(JSON.parse('{"resourceType":"Bundle","type":"collection","entry":[{"fullUrl":"resource:0","resource":{"resourceType":"Patient","name":[{"family":"Anyperson","given":["John","B."]}],"gender":"male","birthDate":"1951-01-20"}},{"fullUrl":"resource:1","resource":{"resourceType":"Immunization","status":"completed","vaccineCode":{"coding":[{"system":"http://hl7.org/fhir/sid/cvx","code":"207"}]},"patient":{"reference":"resource:0"},"occurrenceDateTime":"2021-01-01","lotNumber":"Lot #0000001","performer":[{"actor":{"display":"ABC General Hospital"}}]}},{"fullUrl":"resource:2","resource":{"resourceType":"Immunization","status":"completed","vaccineCode":{"coding":[{"system":"http://hl7.org/fhir/sid/cvx","code":"207"}]},"patient":{"reference":"resource:0"},"occurrenceDateTime":"2021-01-29","lotNumber":"Lot #0000007","performer":[{"actor":{"display":"ABC General Hospital"}}]}}]}'), null, 4);
+
+        const signingKey = JSON.stringify({
+            "kty": "EC",
+            "kid": "d630duSMWmVfmOtrMKZX6izJfcampjK1h0D4jrXxJwU",
+            "use": "sig",
+            "alg": "ES256",
+            "crv": "P-256",
+            "x": "IpNzj8m7NEZdNG4mdEsTmDWFFyKLE7PmtBLWLGIoJuA",
+            "y": "mVqRexUnULniMBghiSfb8L3HDZSTxhdKWfIcP6Tvabs",
+            "d": "qYg7yrhjPYGJNHc0e9xYNodLaKQvVNG6cShRyhwtwHQ"
+        }, null, 4);
+
+    </script>
+
+</head>
+
+<body style="background-color: #404040;">
+
+
+    <div class="container" style="display:block; height: 100px; height: fit-content;">
+
+        <div style='padding: 5%; padding-right: 3%'>
+
+            <div>
+                <textarea id="taFhirBundleRequest" style="width:100%" rows="10"></textarea>
+                <textarea id="taFhirBundleResponse" style="width:100%" rows="2"></textarea>
+            </div>
+
+            <br />
+
+            <div>
+                <input type="button" id='buttonCreateCredential' value="Create Credential" />
+                <input type="text" id ='textIssuer' placeholder="https://smarthealth.cards/examples/issuer" style="width:100%;height: 35px;"/>
+                <textarea id="taCreateCredential" style="width:100%" rows="10"></textarea>
+            </div>
+
+            <br />
+
+            <div>
+                <input type="button" id='buttonDeflatePayload' value="Deflate Payload" />
+                <textarea id="taDeflatePayload" style="width:100%;white-space:normal;" rows="10"></textarea>
+            </div>
+
+            <br />
+
+            <div>
+                <input type="button" id='buttonSignPayload' value="Sign Payload" />
+                <textarea id="taSignKey" style="width:100%;white-space:normal;" rows="10"></textarea>
+                <textarea id="taSignPayload" style="width:100%;white-space:normal;" rows="10"></textarea>
+            </div>
+
+            <br />
+
+            <div>
+                <input type="button" id='buttonSmartHealthCard' value="SMART Health Card" />
+                <textarea id="taSmartHealthCard" style="width:100%" rows="10"></textarea>
+            </div>
+
+            <br />
+
+            <div>
+                <input type="button" id='buttonNumericEncode' value="Numeric Encode" />
+                <textarea id="taNumericEncode" style="width:100%;white-space:normal;" rows="10"></textarea>
+            </div>
+
+            <br />
+
+            <div>
+                <input type="button" id='buttonQRCode' value="Generate QR Code" style="clear: right;" />
+            </div>
+
+            <div>
+                <image id='imageQRCode' style="width: 300px; height: 300px;  border: 1px solid black;" />
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="footer">
+        <input type="button" id='buttonClear' value="Clear" />
+
+    </div>
+
+
+    <div id="CenterDIV">
+        <div class="divFloat" style="text-align: center;">
+            <video id='vid' style="height: 300px;"></video>
+            <input type="button" id='buttonCloseVideo' value="Close" />
+        </div>
+    </div>
+
+    <script>
+
+
+        document.getElementById('taFhirBundleRequest').value = fhirBundle;
+
+        document.getElementById('taSignKey').value = signingKey;
+
+
+        document.getElementById('taFhirBundleRequest').onchange = restValidateFhirBundle;
+
+        document.getElementById('buttonCreateCredential').onclick = restCreateVc;
+
+        document.getElementById('buttonDeflatePayload').onclick = restDeflatePayload;
+
+        document.getElementById('buttonSignPayload').onclick = restSignVc;
+
+        document.getElementById('buttonSmartHealthCard').onclick = restSmartHealthCard;
+
+        document.getElementById('buttonNumericEncode').onclick = restNumericEncode;
+
+        document.getElementById('buttonQRCode').onclick = restGenerateQRCode;
+
+        document.getElementById('buttonClear').onclick = clear;
+
+
+
+        async function restValidateFhirBundle() {
+            let fhirBundleText = document.getElementById('taFhirBundleRequest').value;
+            try {
+                JSON.parse(fhirBundleText);
+                document.getElementById('taFhirBundleResponse').value = '';
+            } catch {
+                setValue(['taFhirBundleResponse'], "Not valid JSON", '#FFd0d0');
+            }
+        }
+
+
+        async function restCreateVc() {
+            const fhirBundleText = document.getElementById('taFhirBundleRequest').value;
+            const issuer = document.getElementById('textIssuer').value;
+            const url = '/create-vc';
+            const result = await restCall(url, JSON.stringify({ fhir: fhirBundleText, issuer: issuer }), 'POST');
+            setValue(['taCreateCredential'], formatJson(result));
+        }
+
+
+        async function restDeflatePayload() {
+            const vcText = JSON.parse(document.getElementById('taCreateCredential').value);
+            const url = '/deflate-payload';
+            const result = await restCall(url, JSON.stringify({ vc: vcText }), 'POST', "arraybuffer");
+            setValue(['taDeflatePayload'], arrayBufferToBase64url(result));
+        }
+
+
+        async function restSignVc() {
+            const payload = document.getElementById('taDeflatePayload').value;
+            const key = JSON.parse(document.getElementById('taSignKey').value);
+            const url = '/sign-payload';
+            const result = await restCall(url, JSON.stringify({ payload: payload, key: key }), 'POST');
+            setValue(['taSignPayload'], result);
+        }
+
+
+        async function restSmartHealthCard() {
+            const vcText = document.getElementById('taSignPayload').value;
+            const url = '/smart-health-card';
+            const result = await restCall(url, JSON.stringify({ jws: vcText }), 'POST');
+            setValue(['taSmartHealthCard'], formatJson(result));
+        }
+
+
+        async function restNumericEncode() {
+            const shc = document.getElementById('taSignPayload').value;
+            const url = '/numeric-encode';
+            const result = await restCall(url, JSON.stringify({ shc: shc }), 'POST');
+            setValue(['taNumericEncode'], result);
+        }
+
+
+        async function restGenerateQRCode() {
+            const shc = document.getElementById('taNumericEncode').value;
+            const url = '/generate-qr-code';
+            const result = await restCall(url, JSON.stringify({ shc: shc }), 'POST', 'image/png');
+            document.getElementById('imageQRCode').src = result;
+        }
+
+
+        async function clear() {
+
+            setValue([
+                'taFhirBundleResponse',
+                'taCreateCredential',
+                'taDeflatePayload',
+                'taSignPayload',
+                'taSmartHealthCard',
+                'taNumericEncode',
+                'imageQRCode'
+            ], "");
+
+            document.getElementById('imageQRCode').src = undefined;
+
+        }
+
+
+        function setValue(idArray, value, color = '#d0FFd0') {
+
+            for (let i = 0; i < idArray.length; i++) {
+                const element = document.getElementById(idArray[i]);
+                element.value = value;
+
+                const bgColor = element.style.background;
+                element.style.background = color;
+
+                setTimeout(() => {
+                    element.style.background = bgColor;
+                }, 1000);
+            }
+
+        }
+
+
+        function formatJson(jsonText, spacing = 4) {
+            return JSON.stringify(JSON.parse(jsonText), null, spacing);
+        }
+
+
+        async function restCall(url, data, method = 'GET', responseType) {
+
+            const xhr = new XMLHttpRequest();
+
+            return new Promise(function (resolve, reject) {
+                xhr.open(method, url);
+                xhr.setRequestHeader("Accept", "application/json");
+                xhr.setRequestHeader("Content-Type", "application/json");
+                responseType && (xhr.responseType = responseType);
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4) {
+                        resolve(xhr.response);
+                    }
+                };
+                xhr.onerror = function (err) {
+                    reject(err);
+                }
+                method === 'POST' ? xhr.send(data) : xhr.send();
+            });
+
+        }
+
+        function arrayBufferToBase64url(arrayBuffer) {
+            return btoa(String.fromCharCode(...new Uint8Array(arrayBuffer))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+        }
+
+
+    </script>
+
+
+
+
+</body>
+
+</html>

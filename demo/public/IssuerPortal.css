@@ -1,0 +1,72 @@
+
+textarea {
+    white-space: nowrap;
+    overflow: scroll;
+    overflow: -moz-scrollbars-horizontal;
+}
+
+input[type=button] {
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    width: 300px;
+    background-color: #3498db;
+}
+
+textarea,
+input[type=text],
+input[type=button] {
+    resize: vertical;
+    border-radius: 3px;
+    margin-bottom: 5px;
+    border-width: 1px;
+}
+
+textarea,
+input[type=text] {
+    transition: background-color 1s ease;
+    background-color: white;
+}
+
+video {
+    border-width: 1px;
+    background-color: white;
+}
+
+.footer {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    color: white;
+    text-align: center;
+}
+
+#CenterDIV {
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: rgba(255, 255, 255, 0.75);
+    width: 100%;
+    height: 100%;
+    padding-top: 100px;
+    display: none;
+}
+
+.divFloat {
+    margin: 0 auto;
+    background-color: #FFF;
+    color: #000;
+    width: 600px;
+    height: auto;
+    padding: 20px;
+    border: solid 1px #999;
+    border-radius: 3px;
+    -webkit-box-orient: vertical;
+    transition: 200ms -webkit-transform;
+    box-shadow: 0 4px 23px 5px rgba(0, 0, 0, 0.2), 0 2px 6px rgba(0, 0, 0, 0.15);
+    display: block;
+}

@@ -1,8 +1,28 @@
-# SMART Health Card Tests
+# SMART Health Card Demo Service
 
-This fork provides additional tests to the [base project](https://github.com/smart-on-fhir/health-cards-tests). See the original [README.md](https://github.com/smart-on-fhir/health-cards-tests/blob/master/README.md).
+This project demonstrates the issuance and validation of cards specified in the [SMART Health Card Framework](https://smarthealth.cards/).
 
-The `demo` folder constains a project illustrating the issuance and validation of SMART Health Cards; see its [README.md](demo/README.md) for details.
+## Setup
+
+1. Make sure [node.js](https://nodejs.org/) and [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) are installed on your system; the latest Long-Term Support (LTS) version is recommended for both.
+
+2. Get the source, for example using git:
+
+                git clone -b sample-service https://github.com/microsoft/health-cards-tests
+                cd health-cards-tests
+
+3. Build the npm package:
+
+                npm install
+                npm run build
+
+3. Deploy the demo service (edit `src/config.ts` to change configuration):
+
+                npm run deploy
+
+The demo stands up two endpoint illustrating the SMART Health Card operations:
+ - one listening on port 8081 offering a demo API, as documented in [RESTAPI.md](RESTAPI.md)
+ - one listening on port 8443 offering a finer-grained API for testing, as used by [issuer](https://localhost:8443/IssuerPortal.html) or [developer](https://localhost:8443/DevPortal.html) portals
 
 ## Contributing
 
