@@ -48,9 +48,6 @@
             "resource": [
                 {
                     "type": "DiagnosticReport",
-                    "profile": {
-                        "reference": "http://hl7.org/fhir/profiles/DiagnosticReport"
-                    },
                     "interaction": [
                         {
                             "code": "search-type"
@@ -59,9 +56,6 @@
                 },
                 {
                     "type": "Patient",
-                    "profile": {
-                        "reference": "http://hl7.org/fhir/profiles/Patient"
-                    },
                     "interaction": [
                         {
                             "code": "read"
