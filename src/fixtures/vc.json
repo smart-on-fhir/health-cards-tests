@@ -51,9 +51,9 @@
             ]
          },
          "issued": "2020-05-01T11:59:00-07:00",
-         "performer": {
+         "performer": [{
            "display":  "Dr. Jones"
-          },
+          }],
           "result": [{
             "reference": "urn:uuid:911791c4-5131-44ba-85bd-8e6bdf652fd4"
           }, {

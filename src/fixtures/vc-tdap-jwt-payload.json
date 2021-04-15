@@ -70,9 +70,13 @@
               "patient": {
                 "reference": "urn:uuid:5372596F-4D2F-48D1-A2BC-19A3D8F583A8"
               },
-              "performer": {
-                "display": "Maria S, RN"
-              },
+              "performer": [
+                {
+                  "actor": {
+                    "display": "ABC General Hospital"
+                  }
+                }
+              ],
               "reported": false,
               "wasNotGiven": false
             }
