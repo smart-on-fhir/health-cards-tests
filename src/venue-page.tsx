@@ -10,7 +10,8 @@ import './style.css';
 import { initializeVerifier, receiveSiopResponse } from './verifier';
 import { prepareSiopRequest, verifierReducer } from './VerifierLogic';
 import { VerifierState } from './VerifierState';
-import logo from "./img/wallet.svg";
+
+const logo =  require("./img/wallet.svg") as string;
 
 export const QrDisplay: React.FC<{ numeric?: number[], url?: string, noLink?: boolean }> = (props) => {
     useEffect(() => {

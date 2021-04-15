@@ -14,7 +14,8 @@ import { QRPresentationModal } from './Modals';
 import { parseSiopApprovalProps, SiopApprovalModal, SiopRequestReceiver } from './SiopApproval';
 import './style.css';
 import { verifierWorld } from './verifier';
-import logo from "./img/wallet.svg";
+
+const logo =  require("./img/wallet.svg") as string;
 
 interface IssuerProps {
     issuerStartUrl: string;
