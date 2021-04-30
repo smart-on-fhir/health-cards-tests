@@ -7,7 +7,8 @@
     "build": "tsc",
     "deploy": "ts-node --files src/server.ts",
     "issue": "ts-node src/cli.ts --task issue",
-    "postinstall": "node src/init.js"
+    "postinstall": "node src/init.js",
+    "build-docs" : "ts-node --files src/buildDocs.ts"
   },
   "author": "",
   "license": "ISC",

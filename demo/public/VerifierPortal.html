@@ -18,17 +18,18 @@
 
 <body style="background-color: #3A4856;">
 
-    <!-- Converts Markdown to Html -->
-    <script src='showdown.min.js'></script>
-
     <!-- Markdown for expandible docs sections -->
     <script src='verifierDocs.js'></script>
+
+    <!-- section custom control -->
+    <script src='section.js'></script>
 
     <div>
 
         <div style='padding: 3%'>
 
             <div style="font-family: Arial, Helvetica, sans-serif;color: white;">
+
                 <hr />
                 <h2>Verifier Portal</h2>
                 <p>
@@ -39,111 +40,239 @@
                 </p>
                 <p>
                     Each step in the process does some amount of validation. Subsequent steps may no succeed without
-                    successfull processing of the previous step.
+                    successful processing of the previous step.
                 </p>
             </div>
 
 
             <br /><br />
 
-            <div class="section">
-                <input type="button" id='buttonScan' value="Scan QR Code" />
-                <span class="info collapsible">&nbsp;&nbsp;?&nbsp;&nbsp;</span>
-                <div id="docsScanQRCode" class="docs"></div>
 
-                <textarea id="taNumericEncode" rows="10"></textarea>
+            <div id="scanQr" class="section"></div>
+            <script>
 
-                <span class="error collapsible"></span>
-                <div id="div" class="content">
-                    <textarea class='taError' id="taNumericEncodeError"></textarea>
-                </div>
-            </div>
+                const secScanQr = new section('scanQr', "Scan QR Code", "Numeric QR Data");
+                secScanQr.setDocs(verifierDocs.scanQRCode.l, verifierDocs.scanQRCode.r);
+                secScanQr.button.onclick = () => {
 
+                    // start the camera-scanner and make the control visible
+                    !started ? qrScanner.start() : qrScanner.stop();
+                    document.getElementById('CenterDIV').style.display = 'block';
+                    started = !started;
 
-            <div class="section">
-                <input type="button" id='buttonSmartHealthCard' value="Decode Numeric" />
-                <span class="info collapsible">&nbsp;&nbsp;?</span>
-                <div id="docsDecodeNumeric" class="docs"></div>
+                    // set the square overlay over the camera image
+                    const vid = document.getElementById('vid');
+                    const overlay = document.getElementById('overlay');
+                    const i = parseInt;
+                    overlay.style.top = Math.ceil(i(vid.style.height) - i(overlay.style.height)) / 2 + "px";
+                    overlay.style.left = Math.ceil(vid.clientWidth - i(overlay.style.width)) / 2 + "px";
 
-                <textarea id="taJWS" rows="10"></textarea>
+                };
 
-                <span class="error collapsible"></span>
-                <div id="div" class="content">
-                    <textarea class='taError' id="taDecodeNumericError"></textarea>
-                </div>
-            </div>
+                secScanQr.setValue("shc:/567629095243206034602924374044603122295953265460346029254077280433602870286471674522280928613331456437653141590640220306450459085643550341424541364037063665417137241236380304375622046737407532323925433443326057360106452931531270742428395038692212766568637138065509583728050333376626627259361103715344441122263663212006032750733172032031372365042533044206270754425328450420593620711261243366607628440742343536705400631129066654206544365233663823596021077670317012713342764260503155433555083473413266332936737032113958587123117307120955595840355931687040115232417303384039651067632209384341412012703267325434534137225775120661765861421269067661005823117567074304560859437500341264712904260465583253733638100833123422126208775858655545243477645920507637325929080435682704763707055500422927584543582550667760036577704021621136444536642765760367352459654325362404697211447369565510627029036707240837002570376441400427096725423806682472440856124133125352537706124327303028440359750054286111584133366267631154450460382155670074592636502724332654657410553930124372573427586770715872663034390337363052554029546964315577217034085864376561750771565072773637280830405657636161707339286537290322637576316871661053005812705954596650343210253644712459045364097210712260255069686274722360622939404138605573276952275211255469034137545369355031217273644377560707664245737111013450617503375061533607550039290965506571383728412345227242047021455524306310105259744244503512257774576576320055645555586721595345706354123106576726246429436543754409642120");
 
-
-            <div class="section">
-                <input type="button" id='buttonDecodeJWS' value="Decode Compact-JWS" />
-                <span class="info collapsible">&nbsp;&nbsp;?</span>
-                <div id="docsDecodeJWS" class="docs"></div>
-
-                <input type='text' id="textJWSHeader" placeholder="JWS Header" />
-                <textarea type='text' id="taJWSPayload" placeholder="JWS Payload"></textarea>
-                <input type='text' id="textJWSSignature" placeholder="JWS Signature" />
-
-                <span class="error collapsible"></span>
-                <div id="div" class="content">
-                    <textarea class='taError' id="taJWSPayloadError"></textarea>
-                </div>
-            </div>
+            </script>
 
 
-            <div class="section">
-                <input type="button" id='buttonExtractPublicKey' value="Extract Public Key URL" />
-                <span class="info collapsible">&nbsp;&nbsp;?</span>
-                <div id="docsExtractPublicKey" class="docs"></div>
+            <div id="decodeNumeric" class="section"></div>
+            <script>
 
-                <input type='text' id="textIssuer" placeholder="Issuer Key URL" />
+                const secDecodeNumeric = new section('decodeNumeric', "Decode Numeric", "Compact JSON Web Signature (JWS)");
+                secDecodeNumeric.setDocs(verifierDocs.decodeNumeric.l, verifierDocs.decodeNumeric.r);
+                secDecodeNumeric.button.onclick = async () => {
 
-                <span class="error collapsible"></span>
-                <div id="div" class="content">
-                    <textarea class='taError' id="taExtractPublicKeyError"></textarea>
-                </div>
-            </div>
+                    const numericEncoded = secScanQr.getValue();
 
+                    const b64Offset = '-'.charCodeAt(0);
+                    const digitPairs = numericEncoded.match(/(\d\d?)/g);
 
-            <div class="section">
-                <input type="button" id='buttonDownloadKey' value="Download Issuer Public Key" />
-                <span class="info collapsible">&nbsp;&nbsp;?</span>
-                <div id="docsDownloadKey" class="docs"></div>
+                    const jws = digitPairs
+                        // for each number in array, add an offset and convert to a char in the base64 range
+                        .map((c) => String.fromCharCode(Number.parseInt(c) + b64Offset))
+                        // merge the array into a single base64 string
+                        .join('');
 
-                <textarea type='text' id="taIssuerKey" placeholder="Issuer Public Key"></textarea>
+                    secDecodeNumeric.setValue(jws.split('.').join('\n.\n'));
 
-                <span class="error collapsible"></span>
-                <div id="div" class="content">
-                    <textarea class='taError' id="taDownloadKeyError"></textarea>
-                </div>
-            </div>
+                    await validateJws();
 
+                    //allSteps && document.getElementById('buttonDecodeJWS').click();
 
-            <div class="section">
-                <input type="button" id='buttonVerifySignature' value="Verify Signature" />
-                <span class="info collapsible">&nbsp;&nbsp;?</span>
-                <div id="docsVerifySignature" class="docs"></div>
+                };
 
-                <input type='text' id="textVerifySignature" placeholder="Validation Result" />
-
-                <span class="error collapsible"></span>
-                <div id="div" class="content">
-                    <textarea class='taError' id="taVerifySignatureError"></textarea>
-                </div>
-            </div>
+            </script>
 
 
-            <div class="section">
-                <input type="button" id='buttonExtractFhirBundle' value="Extract Fhir Bundle" />
-                <span class="info collapsible">&nbsp;&nbsp;?</span>
-                <div id="docsExtractFhirBundle" class="docs"></div>
 
-                <textarea type='text' id="taExtractFhirBundle" placeholder="Fhir Bundle"></textarea>
+            <div id="decodeJWS" class="section"></div>
+            <script>
 
-                <span class="error collapsible"></span>
-                <div id="div" class="content">
-                    <textarea class='taError' id="taExtractFhirBundleError"></textarea>
-                </div>
-            </div>
+                const secDecodeJWS = new section('decodeJWS', "Decode Compact-JWS", "JWS Header");
+                secDecodeJWS.setDocs(verifierDocs.decodeJWS.l, verifierDocs.decodeJWS.r);
+
+                // set the id of the default textArea
+                delete secDecodeJWS.values[secDecodeJWS.fields[0].id];
+                secDecodeJWS.values["taJWSHeader"] = secDecodeJWS.fields[0];
+                secDecodeJWS.fields[0].id = "taJWSHeader";
+
+                secDecodeJWS.addTextField("taJWSPayload", "JWS Payload");
+                secDecodeJWS.addTextField("taJWSSignature", "JWS Signature");
+
+                secDecodeJWS.button.onclick = async () => {
+
+                    const numericEncoded = secDecodeNumeric.getValue();
+
+                    const jws = numericEncoded.replace(/\n/g, '');
+
+                    const parts = jws.split('.');
+
+                    secDecodeJWS.setValue(decodeBase64Url(parts[0], 'taJWSHeader'));
+
+                    let url = '/inflate-payload';
+                    const inflatedPayload = await restCall(url, { payload: parts[1] }, 'POST', "text");
+                    secDecodeJWS.setValue(inflatedPayload, 'taJWSPayload');
+
+                    secDecodeJWS.setValue(parts[2], 'taJWSSignature');
+
+                    await validateJwsPayload();
+
+                    //allSteps && document.getElementById('buttonExtractPublicKey').click();
+
+                };
+
+            </script>
+
+
+
+
+            <div id="extractPublicKey" class="section"></div>
+            <script>
+
+                const secExtractPublicKey = new section('extractPublicKey', "Extract Public Key URL", "Issuer Key URL");
+                secExtractPublicKey.setDocs(verifierDocs.extractPublicKey.l, verifierDocs.extractPublicKey.r);
+                secExtractPublicKey.button.onclick = async () => {
+
+                    const jwsPayloadText = secDecodeJWS.getValue('taJWSPayload');;
+                    const jwsPayload = tryParse(jwsPayloadText);
+
+                    if (jwsPayload === undefined) {
+                        secExtractPublicKey.setError("Failed to parse JWS-payload as JSON");
+                        return;
+                    }
+
+                    if (jwsPayload.iss === undefined) {
+                        secExtractPublicKey.setError("Cannot find .iss property");
+                        return;
+                    }
+
+                    secExtractPublicKey.setError(/* sending nothing, clears the error */);
+                    secExtractPublicKey.setValue(jwsPayload.iss + '/.well-known/jwks.json');
+
+
+                    //allSteps && document.getElementById('buttonDownloadKey').click();
+                };
+
+            </script>
+
+
+
+            <div id="downloadKey" class="section"></div>
+            <script>
+
+                const secDownloadKey = new section('downloadKey', "Download Issuer Public Key", "Issuer Public KeySet");
+                secDownloadKey.setDocs(verifierDocs.downloadKey.l, verifierDocs.downloadKey.r);
+                secDownloadKey.button.onclick = async () => {
+
+                    const previousControl = secExtractPublicKey;
+                    const publicKeyUrl = previousControl.getValue();
+
+                    const url = 'download-public-key';
+
+                    const result = await restCall(url, { keyUrl: publicKeyUrl }, 'POST');
+
+                    if (result.error.length) {
+                        const message = result.error.join('\n');
+                        secDownloadKey.setValue("");
+                        secDownloadKey.setError("taDownloadKeyError", message);
+                        return;
+                    } else {
+                        secDownloadKey.setError();
+                    }
+
+                    secDownloadKey.setValue(JSON.stringify(result.keySet, null, 2));
+
+                    await validateKeySet();
+
+                    //allSteps && document.getElementById('buttonVerifySignature').click();
+                };
+
+            </script>
+
+
+
+
+            <div id="verifySignature" class="section"></div>
+            <script>
+
+                const secVerifySignature = new section('verifySignature', "Verify Signature", "Validation Result");
+                secVerifySignature.setDocs(verifierDocs.verifySignature.l, verifierDocs.verifySignature.r);
+                secVerifySignature.button.onclick = async () => {
+
+                    let data = secDecodeNumeric.getValue().replace(/\n/g, '').split('.'); 
+                    let signature = secDecodeJWS.getValue('taJWSSignature');
+                    data.pop(); // removes the signature segment leaving header+payload
+                    data = data.join('.');
+                    const enc = new TextEncoder();
+                    data = enc.encode(data);
+
+                    signature = decodeBase64Url(signature);
+                    signature = signature.split('').map(c => c.charCodeAt(0));
+                    signature = new Uint8Array(signature);
+
+                    let key = selectKey();
+
+                    window.crypto.subtle.importKey("jwk", key, { name: "ECDSA", namedCurve: "P-256" }, false, ["verify"])
+                        .then(function (publicKey) {
+                            return window.crypto.subtle.verify({ name: "ECDSA", hash: { name: "SHA-256" } }, publicKey, signature, data);
+                        })
+                        .then(function (validationResult) {
+                            secVerifySignature.setValue(validationResult.toString());
+                            validationResult || secVerifySignature.setError("Signature Verification Failed");
+
+                        })
+                        .catch(function (err) {
+                            console.error(err);
+                        });
+
+                    //allSteps && document.getElementById('buttonExtractFhirBundle').click();
+
+                };
+
+            </script>
+
+
+
+            <div id="extractFhirBundle" class="section"></div>
+            <script>
+
+                const secExtractFhirBundle = new section('extractFhirBundle', "Extract FHIR Bundle", "FHIR Bundle");
+                secExtractFhirBundle.setDocs(verifierDocs.extractFhirBundle.l, verifierDocs.extractFhirBundle.r);
+                secExtractFhirBundle.button.onclick = async () => {
+
+                    const jwsPayloadText = secDecodeJWS.getValue('taJWSPayload');
+
+                    const jwsPayload = JSON.parse(jwsPayloadText);
+
+                    const fhirBundle = jwsPayload.vc.credentialSubject.fhirBundle;
+
+                    secExtractFhirBundle.setValue(JSON.stringify(fhirBundle, null, 2));
+
+                    await validateFhirBundle();
+
+                };
+
+            </script>
+
 
         </div>
 
@@ -174,7 +303,7 @@
 
     <script>
 
-        setValue(['taNumericEncode'], "shc:/567629095243206034602924374044603122295953265460346029254077280433602870286471674522280928613331456437653141590640220306450459085643550341424541364037063665417137241236380304375622046737407532323925433443326057360106452931531270742428395038692212766568637138065509583728050333376626627259361103715344441122263663212006032750733172032031372365042533044206270754425328450420593620711261243366607628440742343536705400631129066654206544365233663823596021077670317012713342764260503155433555083473413266332936737032113958587123117307120955595840355931687040115232417303384039651067632209384341412012703267325434534137225775120661765861421269067661005823117567074304560859437500341264712904260465583253733638100833123422126208775858655545243477645920507637325929080435682704763707055500422927584543582550667760036577704021621136444536642765760367352459654325362404697211447369565510627029036707240837002570376441400427096725423806682472440856124133125352537706124327303028440359750054286111584133366267631154450460382155670074592636502724332654657410553930124372573427586770715872663034390337363052554029546964315577217034085864376561750771565072773637280830405657636161707339286537290322637576316871661053005812705954596650343210253644712459045364097210712260255069686274722360622939404138605573276952275211255469034137545369355031217273644377560707664245737111013450617503375061533607550039290965506571383728412345227242047021455524306310105259744244503512257774576576320055645555586721595345706354123106576726246429436543754409642120");
+
         var allSteps = false;
 
 
@@ -199,8 +328,8 @@
         function qrResult(result) {
             // Display the qr-decoded text
             clear();
-            setValue(['taNumericEncode'], result);
-            allSteps = true;
+            secScanQr.setValue(result);
+            //allSteps = true;
             closeVideo();
             validateSch();
             allSteps && document.getElementById('buttonSmartHealthCard').click();
@@ -215,249 +344,44 @@
         // Initialize Validation Functions
         // These make rest calls validate a particular artifact
         // 
-        const validateSch = validate('taNumericEncode', '/validate-qr-numeric', "taNumericEncodeError");
-        const validateJws = validate('taJWS', '/validate-jws', "taDecodeNumericError");
-        const validateJwsPayload = validate('taJWSPayload', '/validate-jws-payload', "taJWSPayloadError");
-        const validateKeySet = validate('taIssuerKey', '/validate-key-set', "taDownloadKeyError");
-        const validateFhirBundle = validate('taExtractFhirBundle', '/validate-fhir-bundle', "taExtractFhirBundleError");
-
-
-
-
-
-
-
-        //
-        // Scan QR Code
-        //
-        document.getElementById('buttonScan').onclick = async function () {
-
-            // start the camera-scanner and make the control visible
-            !started ? qrScanner.start() : qrScanner.stop();
-            document.getElementById('CenterDIV').style.display = 'block';
-            started = !started;
-
-            // set the square overlay over the camera image
-            const vid = document.getElementById('vid');
-            const overlay = document.getElementById('overlay');
-            const i = parseInt;
-            overlay.style.top = Math.ceil(i(vid.style.height) - i(overlay.style.height)) / 2 + "px";
-            overlay.style.left = Math.ceil(vid.clientWidth - i(overlay.style.width)) / 2 + "px";
-        };
+        const validateSch = validate(secScanQr.fields[0], '/validate-qr-numeric', secScanQr);
+        const validateJws = validate(secDecodeNumeric.fields[0], '/validate-jws', secDecodeNumeric);
+        const validateJwsPayload = validate(secDecodeJWS.fields[1], '/validate-jws-payload', secDecodeJWS);
+        const validateKeySet = validate(secDownloadKey.fields[0], '/validate-key-set', secDownloadKey);
+        const validateFhirBundle = validate(secExtractFhirBundle.fields[0], '/validate-fhir-bundle', secExtractFhirBundle);
 
 
 
 
         //
-        // Decode Numeric Encoding to SMART Health Card Decode
-        // 
-        document.getElementById('buttonSmartHealthCard').onclick = async function () {
-            const numericEncoded = document.getElementById('taNumericEncode').value;
-
-            const b64Offset = '-'.charCodeAt(0);
-            const digitPairs = numericEncoded.match(/(\d\d?)/g);
-
-            const jws = digitPairs
-                // for each number in array, add an offset and convert to a char in the base64 range
-                .map((c) => String.fromCharCode(Number.parseInt(c) + b64Offset))
-                // merge the array into a single base64 string
-                .join('');
-
-            setValue(['taJWS'], jws.split('.').join('\n.\n'));
-
-            await validateJws();
-
-            allSteps && document.getElementById('buttonDecodeJWS').click();
-
-        };
-
-
-
-
-        //
-        // Decode Numeric Encoding to SMART Health Card Decode
-        // 
-        document.getElementById('buttonDecodeJWS').onclick = async function () {
-
-            const jws = document.getElementById('taJWS').value.replace(/\n/g, '');
-
-            const parts = jws.split('.');
-
-            setValue(['textJWSHeader'], decodeBase64Url(parts[0]));
-
-            let url = '/inflate-payload';
-            const inflatedPayload = await restCall(url, { payload: parts[1] }, 'POST', "text");
-            setValue(['taJWSPayload'], inflatedPayload);
-
-            setValue(['textJWSSignature'], parts[2]);
-
-            await validateJwsPayload();
-
-            allSteps && document.getElementById('buttonExtractPublicKey').click();
-
-        };
-
-
-
-
-        //
-        // Extract Public Key URL
-        // 
-        document.getElementById('buttonExtractPublicKey').onclick = async function () {
-
-            const jwsPayloadText = document.getElementById('taJWSPayload').value;
-            const jwsPayload = tryParse(jwsPayloadText);
-
-            if (jwsPayload === undefined) {
-                setError("taExtractPublicKeyError", "Failed to parse JWS-payload as JSON");
-                return;
-            }
-
-            if (jwsPayload.iss === undefined) {
-                setError("taExtractPublicKeyError", "Cannot find .iss property");
-                return;
-            }
-
-            clearError("taExtractPublicKeyError");
-            setValue(['textIssuer'], jwsPayload.iss + '/.well-known/jwks.json');
-
-
-            allSteps && document.getElementById('buttonDownloadKey').click();
-        };
-
-
-
-
-
-
-        //
-        // Download Keys
-        // 
-        document.getElementById('buttonDownloadKey').onclick = async function () {
-
-            const publicKeyUrl = document.getElementById('textIssuer').value;
-
-            const url = 'download-public-key';
-
-            const result = await restCall(url, { keyUrl: publicKeyUrl }, 'POST');
-
-            if (result.error.length) {
-                const message = result.error.join('\n');
-                setValue(['taIssuerKey'], "");
-                setError("taDownloadKeyError", message);
-                return;
-            } else {
-                clearError("taDownloadKeyError");
-            }
-
-            setValue(['taIssuerKey'], JSON.stringify(result.keySet, null, 2));
-
-            await validateKeySet();
-
-            allSteps && document.getElementById('buttonVerifySignature').click();
-        };
-
-
-
-
-        //
-        // Verify Signature
-        // 
-        document.getElementById('buttonVerifySignature').onclick = async function () {
-
-            let data = document.getElementById('taJWS').value.replace(/\n/g, '').split('.');
-            data.pop();
-            data = data.join('.');
-            const enc = new TextEncoder();
-            data = enc.encode(data);
-
-            let signature = document.getElementById('textJWSSignature').value;
-            signature = decodeBase64Url(signature);
-            signature = signature.split('').map(c => c.charCodeAt(0));
-            signature = new Uint8Array(signature);
-
-            let key = selectKey();
-
-            window.crypto.subtle.importKey("jwk", key, { name: "ECDSA", namedCurve: "P-256" }, false, ["verify"])
-                .then(function (publicKey) {
-                    return window.crypto.subtle.verify({ name: "ECDSA", hash: { name: "SHA-256" } }, publicKey, signature, data);
-                })
-                .then(function (validationResult) {
-                    setValue(['textVerifySignature'], validationResult.toString());
-                })
-                .catch(function (err) {
-                    console.error(err);
-                });
-
-            allSteps && document.getElementById('buttonExtractFhirBundle').click();
-
-        };
-
-
-        //
-        // Extract Fhir Bundle from JWS-Payload
-        // 
-        document.getElementById('buttonExtractFhirBundle').onclick = async function () {
-
-            const jwsPayloadText = document.getElementById('taJWSPayload').value;
-
-            const jwsPayload = JSON.parse(jwsPayloadText);
-
-            const fhirBundle = jwsPayload.vc.credentialSubject.fhirBundle;
-
-            setValue(['taExtractFhirBundle'], JSON.stringify(fhirBundle, null, 2));
-
-            validateFhirBundle();
-
-        };
-
-
-
-
-
-        //
-        // Clear
-        // Clears all the text elements
+        // Clears all the fields including errors
         // 
         document.getElementById('buttonClear').onclick = clear;
 
         function clear() {
-            setValue([
-                'taNumericEncode',
-                'taJWS',
-                'textJWSHeader',
-                'taJWSPayload',
-                'textJWSSignature',
-                'textIssuer',
-                'taIssuerKey',
-                'textVerifySignature',
-                'taExtractFhirBundle'
-            ], "");
-            clearError([
-                "taJWSPayloadError",
-                "taExtractFhirBundleError",
-                "taNumericEncodeError",
-                "taDecodeNumericError",
-                "taJWSPayloadError",
-                "taDownloadKeyError",
-                "taExtractFhirBundleError"
-            ]);
+            secScanQr.clear();
+            secDecodeNumeric.clear();
+            secDecodeJWS.clear();
+            secExtractPublicKey.clear();
+            secVerifySignature.clear();
+            secDownloadKey.clear();
+            secExtractFhirBundle.clear();
         }
 
 
         //
         // Validation Calls
         // Returns a function for validating an artifact using a rest-api call
+        // Wraps the rest call and error assignment.
+        // Also, wires the validated textarea to auto-validate on any updates
         //
-        function validate(valueId, url, errorId) {
-
-            const editElement = document.getElementById(valueId);
+        function validate(element, url, section) {
 
             async function validator() {
-                const text = editElement.value.replace(/\n/g, '');
+                const text = element.value.replace(/\n/g, '');
 
                 // no need to display errors for empty data
-                if (text === "") {
+                if (text.trim() === "") {
                     clearError(errorId);
                     return;
                 }
@@ -466,13 +390,13 @@
 
                 if (validation.errors.length) {
                     const message = validation.errors.map(e => JSON.stringify(e)).join('\n');
-                    setError(errorId, message);
+                    section.setError(message);
                 } else {
-                    clearError(errorId);
+                    section.setError();
                 }
             }
 
-            editElement.oninput = validator;
+            element.oninput = validator;
 
             return validator;
         }
@@ -484,10 +408,11 @@
         //
         function selectKey() {
 
-            let keySet = document.getElementById('taIssuerKey').value;
+            let keySet = secDownloadKey.getValue();
             keySet = JSON.parse(keySet).keys;
 
-            let jwsHeader = document.getElementById('textJWSHeader').value;
+            //secDecodeJWS.fields[0].id = "taJWSHeader";
+            let jwsHeader = secDecodeJWS.getValue('taJWSHeader');
             jwsHeader = JSON.parse(jwsHeader);
 
             const kid = jwsHeader.kid;
@@ -502,60 +427,6 @@
             return null;
         }
 
-
-
-        function setError(id, message) {
-            const errElement = document.getElementById(id);
-
-            errElement.value = message;
-
-            setValue([id], message, "#FFAAAA");
-
-            errElement.classList.toggle("active");
-            errElement.parentElement.style.maxHeight = errElement.scrollHeight + "px";
-        }
-
-
-        function clearError(idArray) {
-
-            if (typeof idArray === "string") idArray = [idArray];
-
-            for (let i = 0; i < idArray.length; i++) {
-
-                const id = idArray[i];
-
-                const errElement = document.getElementById(id);
-                const value = errElement.value;
-
-                errElement.value = "";
-                errElement.classList.remove("active");
-
-                errElement.parentElement.style.maxHeight = null;
-            }
-        }
-
-
-        // Sets a text element while giving a momentary color highlight
-        // Lets the user know that a field has been updated since much of
-        // data here is dense encoded values
-        function setValue(idArray, value, color = '#E6F4F1') {
-
-            for (let i = 0; i < idArray.length; i++) {
-                const element = document.getElementById(idArray[i]);
-                element.value = value;
-
-                element.style.height = "1px";
-                element.style.height = Math.min((25 + element.scrollHeight), 400) + "px";
-
-                const bgColor = element.style.background;
-                element.style.background = color;
-
-                setTimeout(() => {
-                    element.style.background = bgColor;
-                }, 500);
-            }
-
-        }
 
 
         //
@@ -639,66 +510,6 @@
         }
 
         //
-        // Initialize the page by setting up events and initializing default values.
-        //
-        async function setup() {
-
-            const elementCollection = document.getElementsByClassName('docs');
-
-            const ids = [];
-            for (let i = 0; i < elementCollection.length; i++) {
-                ids.push(elementCollection[i].id);
-            }
-            for (let i = 0; i < ids.length; i++) {
-                const id = ids[i];
-                createInfo(id, docs[id].docs, docs[id].code);
-            }
-
-            // Causes initial collapsed section to open
-            //document.getElementById('open').click();
-
-        }
-
-        //
-        // Programmatically creates the collapsible doc sections from markdown in docs.js
-        //
-        function createInfo(id, textDoc, textCode) {
-
-
-            // markdown to html converter
-            const converter = new showdown.Converter();
-            const docHtml = converter.makeHtml(textDoc);
-
-            var div0 = document.getElementById(id);
-            div0.style = "display: flex;margin-bottom: 10px;";
-            div0.className = "content";
-
-            var div00 = document.createElement('div');
-            div00.style = "width: 50%;padding-right: 5px;";
-            div0.appendChild(div00);
-
-            var article00 = document.createElement('article');
-            article00.className = "markdown-body";
-            article00.innerHTML = docHtml;
-            div00.appendChild(article00);
-
-            var div01 = document.createElement('div');
-            div01.style = "flex-grow: 1;padding-left: 5px;";
-            div0.appendChild(div01);
-
-            // Only include the right section if there is content
-            if (textCode) {
-                const codeHtml = converter.makeHtml(textCode);
-                var article01 = document.createElement('article');
-                article01.className = "markdown-body";
-                article01.innerHTML = codeHtml;
-                div01.appendChild(article01);
-            }
-
-            return div0;
-        }
-
-        //
         // Downloads a fhir bundle sample from the smarthealth.cards page to use as a sample
         // The examples may change, so downloading is preferable to hard-coding a sample
         //
@@ -707,27 +518,6 @@
             const result = await restCall(sampleUrl, "", 'GET', 'text');
             setValue(['taFhirBundle'], result);
         }
-
-
-        //
-        // Sets onClick handlers for each collapsible section
-        //
-        (function setCollapsibleEvents() {
-            var coll = document.getElementsByClassName("collapsible");
-            var i;
-            for (i = 0; i < coll.length; i++) {
-                coll[i].addEventListener("click", function () {
-                    this.classList.toggle("active");
-                    var content = this.nextElementSibling;
-                    if (content.style.maxHeight) {
-                        content.style.maxHeight = null;
-                    } else {
-                        content.style.maxHeight = content.scrollHeight + "px";
-                    }
-                });
-            }
-        })();
-
 
         //
         // Computes the 'kid' of a JWK key using SHA-256
@@ -749,75 +539,7 @@
         }
 
 
-        //
-        // Generates a new ES256 key with 'kid' and writes it to the Signing-Key textarea element
-        //
-        async function generateKeyPair() {
-
-            var key;
-
-            return window.crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256", }, true, ["sign"])
-                .then(function (keyPair) {
-                    return Promise.all([window.crypto.subtle.exportKey('jwk', keyPair.publicKey), window.crypto.subtle.exportKey('jwk', keyPair.privateKey)]);
-                })
-                .then(async function (exportedKeys) {
-
-                    const [publicKey, privateKey] = exportedKeys;
-                    //const privateKey = exportedKeys[1];
-
-
-                    const kid = await computeKid(publicKey);
-
-                    const newKeys =
-                    // Uncomment sections to export key pair instead of just private key
-                    //[
-                    // {
-                    //     "kty": "EC",
-                    //     "kid": kid,
-                    //     "use": "sig", "alg": "ES256", "crv": "P-256", "x": publicKey.x, "y": publicKey.y
-                    // },
-                    {
-                        "kty": "EC",
-                        "kid": kid,
-                        "use": "sig", "alg": "ES256", "crv": "P-256", "x": privateKey.x, "y": privateKey.y, "d": privateKey.d
-                    }
-                    //];
-
-                    setValue(['taSignKey'], JSON.stringify(newKeys, null, 2));
-
-                    formJWSHeader(newKeys);
-
-                })
-                .catch(function (err) {
-                    console.error(err);
-                });
-
-        }
-
-
-        //
-        // Creates a JWS header by populating the 'kid' field from the user's private key
-        //
-        function formJWSHeader(key) {
-            try {
-                const header = JSON.stringify({ "zip": "DEF", "alg": "ES256", "kid": key.kid });
-                setValue(['textAddHeader'], header);
-            } catch {
-                setValue(['textAddHeader'], '');
-            }
-        }
-
-
-        //
-        // Call setup() to initialize the page
-        //
-        (async () => setup())();
-
-
-
     </script>
-
-
 
 
 </body>
