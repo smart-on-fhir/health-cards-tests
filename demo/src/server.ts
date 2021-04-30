@@ -118,12 +118,12 @@ app.post(Config.VALIDATE_HEALTH_CARD_QRCODE_ENDPOINT, (req, res) => {
 
 // import { validate } from 'health-cards-validation-sdk';
 
-app.post(Config.VALIDATE_FHIR_BUNDLE, (req, res) => {
+app.post(Config.VALIDATE_FHIR_BUNDLE, async (req, res) => {
 
     console.log('Received POST for', Config.VALIDATE_FHIR_BUNDLE, req.body);
 
     const fhirJson = req.body.data;
-    const errors = validate.fhirbundle(fhirJson);
+    const errors = await validate.fhirbundle(fhirJson);
 
     res.type('json');
     res.send({ success: errors.length === 0, errors: errors });
@@ -175,7 +175,7 @@ app.post(Config.VALIDATE_KEYSET, async (req, res) => {
     console.log('Received POST for', Config.VALIDATE_KEYSET, req.body);
 
     const keyset = req.body.data;
-    const errors = await validate.keySet(keyset);
+    const errors = await validate.keyset(keyset);
 
     res.type('json');
     res.send({ success: errors.length === 0, errors: errors });
