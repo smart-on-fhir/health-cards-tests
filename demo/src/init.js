@@ -26,4 +26,8 @@ fs.copyFileSync('node_modules/qr-scanner/qr-scanner-worker.min.js.map', 'public/
 fs.copyFileSync('node_modules/qr-scanner/qr-scanner.umd.min.js', 'public/qr-scanner.umd.min.js');
 fs.copyFileSync('node_modules/qr-scanner/qr-scanner.umd.min.js.map', 'public/qr-scanner.umd.min.js.map');
 
+fs.copyFileSync('node_modules/github-markdown-css/github-markdown.css', 'public/github-markdown.css');
+fs.copyFileSync('node_modules/showdown/dist/showdown.min.js', 'public/showdown.min.js');
+fs.copyFileSync('node_modules/showdown/dist/showdown.min.js.map', 'public/showdown.min.js.map');
+
 console.log("Copied QR-scanner scripts to ./public");

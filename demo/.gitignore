@@ -127,8 +127,15 @@ cards/*
 js/*
 
 # qr-scanner js files to enable in-browser qr scanning
+# showdown js files to markdown to html
+# github-markdown css files format markdown in a github style
 public/qr-scanner*
+public/showdown*
+public/github-markdown*
 
 # localhost tls cert and key generated at install
 public/localhost.crt
 private/localhost.key
+
+# include packed validation packages
+!packages/*

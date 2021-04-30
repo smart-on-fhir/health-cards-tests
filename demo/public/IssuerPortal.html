@@ -97,19 +97,7 @@
     <script>
 
 
-        const qrScanner = new QrScanner(document.getElementById('vid'), qrResult);
-
-
-        function qrResult(result) {
-            setValue(['textAreaValidateHealthCardQRRequest'], result);
-            closeVideo();
-        }
-
-        function closeVideo() {
-            document.getElementById('CenterDIV').style.display = 'none';
-            qrScanner.stop();
-            started = false;
-        }
+ 
 
 
         document.getElementById('textAreaIssueHealthCardRequest').value = JSON.stringify({

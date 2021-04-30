@@ -18,7 +18,8 @@ import fs from 'fs';
 import https from 'https';
 import http from 'http';
 import pako from 'pako';
-
+import got from 'got';
+import { validate } from 'health-cards-validation-sdk/js/src/api';
 
 
 var privateKey = fs.readFileSync('./private/localhost.key', 'utf8');
@@ -115,14 +116,14 @@ app.post(Config.VALIDATE_HEALTH_CARD_QRCODE_ENDPOINT, (req, res) => {
 
 // TODO: document the dev API calls
 
-app.post(Config.VALIDATE_FHIR_BUNDLE, (req, res) => {
+// import { validate } from 'health-cards-validation-sdk';
 
-    // Currently does nothing until fhir-validation is integrated
+app.post(Config.VALIDATE_FHIR_BUNDLE, (req, res) => {
 
     console.log('Received POST for', Config.VALIDATE_FHIR_BUNDLE, req.body);
 
-    const fhirJson = req.body.fhir;
-    const errors: any[] = []; 
+    const fhirJson = req.body.data;
+    const errors = validate.fhirbundle(fhirJson);
 
     res.type('json');
     res.send({ success: errors.length === 0, errors: errors });
@@ -130,15 +131,54 @@ app.post(Config.VALIDATE_FHIR_BUNDLE, (req, res) => {
 });
 
 
-app.post(Config.SIGN_PAYLOAD, async (req, res) => {
+app.post(Config.VALIDATE_QR_NUMERIC, async (req, res) => {
 
-    console.log('Received POST for', Config.SIGN_PAYLOAD, req.body);
+    console.log('Received POST for', Config.VALIDATE_QR_NUMERIC, req.body);
 
-    const payloadJson = Buffer.from(req.body.payload, 'base64');
+    const shc = req.body.data;
+    const errors = await validate.qrnumeric(shc);
 
-    const result = await signJws(payloadJson, req.body.key);
+    res.type('json');
+    res.send({ success: errors.length === 0, errors: errors });
 
-    res.send(result);
+});
+
+
+app.post(Config.VALIDATE_JWS, async (req, res) => {
+
+    console.log('Received POST for', Config.VALIDATE_JWS, req.body);
+
+    const jws = req.body.data;
+    const errors = await validate.jws(jws);
+
+    res.type('json');
+    res.send({ success: errors.length === 0, errors: errors });
+
+});
+
+
+app.post(Config.VALIDATE_PAYLOAD, async (req, res) => {
+
+    console.log('Received POST for', Config.VALIDATE_PAYLOAD, req.body);
+
+    const payload = req.body.data;
+    const errors = await validate.jwspayload(payload);
+
+    res.type('json');
+    res.send({ success: errors.length === 0, errors: errors });
+
+});
+
+
+app.post(Config.VALIDATE_KEYSET, async (req, res) => {
+
+    console.log('Received POST for', Config.VALIDATE_KEYSET, req.body);
+
+    const keyset = req.body.data;
+    const errors = await validate.keySet(keyset);
+
+    res.type('json');
+    res.send({ success: errors.length === 0, errors: errors });
 
 });
 
@@ -166,6 +206,17 @@ app.post(Config.DEFLATE_PAYLOAD, async (req, res) => {
 
 });
 
+app.post(Config.INFLATE_PAYLOAD, async (req, res) => {
+
+    console.log('Received POST for', Config.INFLATE_PAYLOAD, req.body);
+
+    const payload = JSON.stringify(req.body.payload);
+    const result = await inflatePayload(payload);
+
+    res.send(result);
+
+});
+
 
 app.post(Config.SMART_HEALTH_CARD, async (req, res) => {
 
@@ -173,6 +224,20 @@ app.post(Config.SMART_HEALTH_CARD, async (req, res) => {
     const jws = req.body.jws;
     res.type('json');
     res.send({ "verifiableCredential": [jws] });
+
+});
+
+
+app.post(Config.SIGN_PAYLOAD, async (req, res) => {
+
+    console.log('Received POST for', Config.SIGN_PAYLOAD, req.body);
+
+    const payloadJson = Buffer.from(req.body.payload, 'base64');
+
+    const result = await signJws(payloadJson, req.body.key);
+
+    res.type('text');
+    res.send(result);
 
 });
 
@@ -198,13 +263,40 @@ app.post(Config.GENERATE_QR_CODE, async (req, res) => {
     console.log('Received POST for', Config.GENERATE_QR_CODE, req.body);
     const shc = req.body.shc.split('/');
 
-    QrCode.toDataURL([{data: shc[0] + "/", mode: 'byte'}, { data: shc[1], mode: 'numeric' }], { errorCorrectionLevel: 'low' }).then(
+    QrCode.toDataURL([{ data: shc[0] + "/", mode: 'byte' }, { data: shc[1], mode: 'numeric' }], { errorCorrectionLevel: 'low' }).then(
         url => res.send(url)
     );
 
 });
 
 
+app.post(Config.DOWNLOAD_PUBLIC_KEY, async (req, res) => {
+
+    console.log('Received POST for', Config.DOWNLOAD_PUBLIC_KEY, req.body);
+
+    const publicKeyUrl = req.body.keyUrl;
+
+    let result : {keySet: string, error : string[]} = {keySet: "", error : []};
+    let response;
+
+    try {
+        response = await got(publicKeyUrl, { https: { rejectUnauthorized: false } });
+    } catch (err) {
+        result.error = ["Can't download issuer key from : " + publicKeyUrl + " : " + err];
+        res.send(result);
+        return;
+    }
+
+    try {
+        result.keySet = JSON.parse(response.body);
+    } catch (err) {
+        result.error = ["Can't parse key set as JSON : " + response.body + " : " + err];
+        res.send(result);
+        return;
+    }
+
+    res.send(result);
+});
 
 
 const httpServer = http.createServer(app).listen(Config.SERVICE_PORT, () => {
@@ -217,6 +309,7 @@ const httpServer = http.createServer(app).listen(Config.SERVICE_PORT, () => {
     }
     console.log("Demo service listening at " + url);
     console.log("\nIssuerPortal:  " + url + '/IssuerPortal.html');
+    console.log("\nVerifierPortal:  " + url + '/VerifierPortal.html');
     console.log("DevPortal:  " + url + '/DevPortal.html');
 });
 
@@ -231,6 +324,7 @@ const httpsServer = https.createServer(credentials, app).listen(Config.SERVICE_P
     }
     console.log("\n\nDemo service listening at " + url);
     console.log("\nIssuerPortal:  " + url + '/IssuerPortal.html');
+    console.log("\nVerifierPortal:  " + url + '/VerifierPortal.html');
     console.log("DevPortal:  " + url + '/DevPortal.html');
 });
 
@@ -239,20 +333,17 @@ import jose, { JWK } from 'node-jose';
 
 
 async function signJws(payload: Buffer, signingKey: JWK.Key): Promise<string> {
-
     let fields = { zip: 'DEF' };
-
     let signed = await jose.JWS.createSign({ format: 'compact', fields }, signingKey).update(payload).final();
     return signed as unknown as string;
-
 }
 
 
-async function createVc(fhirBundle: string, issuer: string): Promise<object> {
+async function createVc(fhirBundle: FhirBundle, issuer: string): Promise<object> {
 
     const vc = {
-        "iss": issuer || "https://smarthealth.cards/examples/issuer",
-        "nbr": Number(new Date()),
+        "iss": issuer ? "https://" + issuer : "https://contoso.com/issuer",
+        "nbf": Number(new Date()),
         "vc": {
             "@context": [
                 "https://www.w3.org/2018/credentials/v1"
@@ -265,7 +356,7 @@ async function createVc(fhirBundle: string, issuer: string): Promise<object> {
             ],
             "credentialSubject": {
                 "fhirVersion": "4.0.1",
-                "fhirBundle": JSON.parse(fhirBundle)
+                "fhirBundle": fhirBundle
             }
         }
     };
@@ -276,5 +367,10 @@ async function createVc(fhirBundle: string, issuer: string): Promise<object> {
 
 async function deflatePayload(payload: string): Promise<object> {
     const body = pako.deflateRaw(payload);
+    return body;
+}
+
+async function inflatePayload(payload: string): Promise<string> {
+    const body = pako.inflateRaw(Buffer.from(payload, 'base64'), { to: 'string' });
     return body;
 }
