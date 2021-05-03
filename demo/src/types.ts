@@ -13,7 +13,6 @@ interface Immunization {
 interface HealthCard {
     iss: string;
     iat: number;
-    exp: number;
     vc: {
         type: string[];
         credentialSubject: {
