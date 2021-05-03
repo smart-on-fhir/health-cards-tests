@@ -1,8 +1,5 @@
 {
-  "@context": [
-    "https://www.w3.org/2018/credentials/v1"
-  ],
-  "type": [ "VerifiableCredential", "https://smarthealth.cards#health-card"],
+  "type": ["https://smarthealth.cards#health-card"],
   "issuer": "<<did:ion identifier for issuer>>",
   "issuanceDate": "2020-06-01T11:59:00-07:00",
   "credentialSubject": {

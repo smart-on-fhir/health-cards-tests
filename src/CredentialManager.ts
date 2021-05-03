@@ -45,7 +45,7 @@ export const createHealthCard = (presentationContext: string, types: string[], i
         resource: r
     }))
 
-    vc.type = unique([...types, ...(vc.type)])
+    vc.type = unique([...types, ...(vc.type)]).filter(t => t !== 'VerifiableCredential')
     vc.issuer = issuer;
 
 
@@ -54,7 +54,7 @@ export const createHealthCard = (presentationContext: string, types: string[], i
 }
 
 interface VC {
-    "@context": string[],
+    "@context"?: string[],
     type: string[],
     id?: string;
     issuer?: string;
