@@ -24,7 +24,7 @@ const verifierDocs = {
     "r": ""
   },
   "extractFhirBundle": {
-    "l": "<h2 id=\"extractfhirbundle\">Extract Fhir Bundle</h2>\n<p>After signature verification, the Fhir Bundle is extracted from the JWS payload field and formatted for display.    </p>\n<p><br><br></p>",
+    "l": "<h2 id=\"extractfhirbundle\">Extract FHIR Bundle</h2>\n<p>After signature verification, the FHIR Bundle is extracted from the JWS payload field and formatted for display.    </p>\n<p><br><br></p>",
     "r": ""
   }
 }

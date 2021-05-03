@@ -10,25 +10,28 @@
 class section {
 
     taError;
-    button;
+    button = undefined;
     doc0;
     doc1;
     fields = [];
     values = {};
     id;
+    content;
 
-    constructor(id, buttonText, textPlaceHolder) {
+    constructor(id, buttonText, textPlaceHolder, fieldId = "ta" + id) {
 
         this.id = id;
 
         // <div class="section">
         const div0 = document.getElementById(id);
 
-        // <input type="button" ...
-        this.button = document.createElement("INPUT");
-        this.button.setAttribute("type", "button");
-        this.button.value = buttonText || "Button";
-        div0.appendChild(this.button);
+        if (buttonText) {
+            // <input type="button" ...
+            this.button = document.createElement("INPUT");
+            this.button.setAttribute("type", "button");
+            this.button.value = buttonText || "Button";
+            div0.appendChild(this.button);
+        }
 
         //<span class="info collapsible"
         const span0 = document.createElement("SPAN");
@@ -59,16 +62,19 @@ class section {
         div01.appendChild(div011);
 
         // placeholder for controls
-        const div02 = document.createElement("DIV");
-        div0.appendChild(div02);
+        this.content = document.createElement("DIV");
+        div0.appendChild(this.content);
+
+        var content0 = document.createElement("DIV");
+        this.content.appendChild(content0);
 
         // <textarea type='text' id="taJWSPayload" placeholder="JWS Payload"></textarea>
         const ta0 = document.createElement("TEXTAREA");
-        ta0.setAttribute("id", "ta" + id);
+        ta0.setAttribute("id", fieldId);
         ta0.setAttribute("placeholder", textPlaceHolder || id);
-        div02.appendChild(ta0);
+        content0.appendChild(ta0);
         this.fields.push(ta0);
-        this.values["ta" + id] = ta0;
+        this.values[fieldId] = ta0;
 
         // <span class="error collapsible"></span>
         const span1 = document.createElement("SPAN");
@@ -129,6 +135,7 @@ class section {
 
     }
 
+
     //
     // Sets the collapsable documentation sections 0-left, 1-right
     // accepts text as markdown and converts it to formatted html
@@ -136,7 +143,16 @@ class section {
     setDocs(markdownLeft, markdownRight) {
 
         if (markdownLeft && markdownLeft.trim().length) {
+            //doc0 parent style = "width: 50%;padding-right: 5px;";
             this.doc0.innerHTML = markdownLeft;
+
+            if(markdownRight === null) {
+                // span left across 100%
+                this.doc0.parentElement.style = "width: 100%;";
+                const rightDiv = this.doc0.parentElement.nextElementSibling;
+                this.doc0.parentElement.parentElement.removeChild(rightDiv);
+                return;
+            }
         }
 
         if (markdownRight && markdownRight.trim().length) {
@@ -162,11 +178,15 @@ class section {
         ta.setAttribute("id", id);
         placeholder && ta.setAttribute("placeholder", placeholder);
 
-        const parent = this.fields[0].parentElement;
+        const div = document.createElement("DIV");
+        div.appendChild(ta);
+
+
+        //const parent = this.fields[0].parentElement;
         this.fields.push(ta);
         this.values[id] = ta;
 
-        parent.appendChild(ta);
+        this.content.appendChild(div);
     }
 
     //
@@ -178,7 +198,7 @@ class section {
 
 
     //
-    // Gets the value of a field by id or the first field
+    // Sets the value of a field by id or the first field
     //
     setValue(value, id, color = '#E6F4F1') {
 
@@ -190,6 +210,9 @@ class section {
 
         const bgColor = element.style.background;
         element.style.background = color;
+
+        // Dispatch the 'input' event to trigger validation
+        element.dispatchEvent(new Event('input'));
 
         setTimeout(() => {
             element.style.background = bgColor;
@@ -204,6 +227,18 @@ class section {
         for (let i = 0; i < this.fields.length; i++) {
             this.fields[i].value = "";
         }
+    }
+
+
+    sideBySide(id, placeholder) {
+
+        this.addTextField(id, placeholder);
+
+        this.content.style = "display: flex; max-height: null;";
+
+        this.content.childNodes[0].style = "width: 50%; padding-right: 5px;";
+        this.content.childNodes[1].style = "flex-grow: 1; padding-left: 5px;";
+
     }
 
 

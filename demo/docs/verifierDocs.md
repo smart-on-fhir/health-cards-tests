@@ -125,9 +125,9 @@ Signature verification results in a __true__ or __false__ value.
 
 
 <!-- label:extractFhirBundle side:left -->
-## Extract Fhir Bundle  
+## Extract FHIR Bundle  
 
-After signature verification, the Fhir Bundle is extracted from the JWS payload field and formatted for display.    
+After signature verification, the FHIR Bundle is extracted from the JWS payload field and formatted for display.    
 
 <br><br>
 <!-- label:extractFhirBundle side:right-->
