@@ -16,11 +16,14 @@
 
 <body style="background-color: #3A4856;">
 
-    <!-- Converts Markdown to Html -->
-    <script src='showdown.min.js'></script>
 
-    <!-- Markdown for expandible docs sections -->
+    <!-- Html for expandible docs sections -->
     <script src='developerDocs.js'></script>
+
+
+    <!-- section custom control -->
+    <script src='section.js'></script>
+
 
     <div>
 
@@ -29,277 +32,248 @@
             <div style="font-family: Arial, Helvetica, sans-serif;color: white;">
                 <hr />
                 <h2>Developer Portal</h2>
-                <p>Generate a SMART Health Card, step by step, from an initial Fhir Bundle and Key</p>
+                <p>Generate a SMART Health Card, step by step, from an initial FHIR Bundle and Key</p>
             </div>
 
-            <br/> <br/>
+            <p>
 
-            <div class="section">
 
-                <span id="open" class="info collapsible"></span>
-                <div id="docsFhirBundle" class="docs"></div>
-
-                <div style="display: flex; max-height: null;">
-                    <div style="width: 50%; padding-right: 5px;">
-                        <textarea id="taFhirBundle" placeholder='Paste Fhir Bundle JSON here:' rows="10"></textarea>
-                    </div>
-                    <div style="flex-grow: 1; padding-left: 5px;">
-                        <textarea id="taSignKey" placeholder="Paste private ES256 JWK Key here" rows="10"></textarea>
-                    </div>
+            <!--
+                Initial FHIR-Bundle and Signing-Key
+            -->
+            <div style="display: flex; max-height: null;">
+                <div style="width: 50%; padding-right: 5px;">
+                    <div id="initFhir" class="section"></div>
                 </div>
-
+                <div style="flex-grow: 1; padding-left: 5px;">
+                    <div id="initKey" class="section"></div>
+                </div>
             </div>
+            <script>
+                const secInitFhir = new section('initFhir', "", "Paste FHIR Bundle JSON here:");
+                secInitFhir.setDocs(developerDocs.initFhir.l, null);
+                secInitFhir.fields[0].rows = 10;
+
+                const secInitKey = new section('initKey', "", "Paste private ES256 JWK Key here:");
+                secInitKey.setDocs(developerDocs.initKey.l, null);
+                secInitKey.fields[0].rows = 10;
+
+                // Update the JWS header if the private key is edited
+                function createJWSHeader() {
+                    secAddHeader.setValue(formJWSHeader(JSON.parse(secInitKey.getValue()), 'taJWSHeader'));
+                }
+                // Force an Input event to update after programmatic update
+                secInitKey.fields[0].addEventListener("input", createJWSHeader);
+            </script>
 
 
-            <div class="section">
-                <input type="button" id='buttonValidateFhirBundle' value="Validate Fhir Bundle" />
-                <span class="info collapsible"> ?</span>
-                <div id="docsValidateFhirBundle" class="docs"></div>
-                <textarea id="taFhirBundleIssues" placeholder="Validation results" rows="2"></textarea>
-            </div>
+            <!-- 
+                Create Credential 
+            -->
+            <div id="createCredential" class="section"></div>
+            <script>
+                const secCreateCredential = new section('createCredential', "Create Credential", "Credential");
+                secCreateCredential.setDocs(developerDocs.createCredential.l, developerDocs.createCredential.r);
+                secCreateCredential.button.onclick = async () => {
+                    const fhirBundle = JSON.parse(secInitFhir.getValue());
+                    const issuer = document.getElementById('textIssuer').value;
+                    const result = await restCall('/create-vc', { fhir: fhirBundle, issuer: issuer });
+                    secCreateCredential.setValue(JSON.stringify(result, null, 2));
+                };
+            </script>
 
 
-            <div class="section">
-                <input type="button" id='buttonCreateCredential' value="Create Credential" />
-                <span class="info collapsible">?</span>
-                <div id="docsCreateCredential" class="docs"></div>
-                <textarea id="taCreateCredential" rows="10"></textarea>
-            </div>
+            <!-- 
+                Minify Payload 
+            -->
+            <div id="minimizePayload" class="section"></div>
+            <script>
+                const secMinimizePayload = new section('minimizePayload', "Minify Payload", "Payload");
+                secMinimizePayload.setDocs(developerDocs.minimizePayload.l, developerDocs.minimizePayload.r);
+                secMinimizePayload.button.onclick = async () => {
+                    const credentialFullText = secCreateCredential.getValue();
+                    secMinimizePayload.setValue(JSON.stringify(JSON.parse(credentialFullText)));
+                };
+            </script>
 
 
-            <div class="section">
-                <input type="button" id='buttonMinimizePayload' value="Minify Payload" />
-                <span class="info collapsible">?</span>
-                <div id="docsMinimizePayload" class="docs"></div>
-                <textarea id="taMinimizePayload" rows="10"></textarea>
-            </div>
+            <!-- 
+                Deflate Payload 
+            -->
+            <div id="deflatePayload" class="section"></div>
+            <script>
+                const secDeflatePayload = new section('deflatePayload', "Deflate Payload", "Payload");
+                secDeflatePayload.setDocs(developerDocs.deflatePayload.l, developerDocs.deflatePayload.r);
+                secDeflatePayload.button.onclick = async () => {
+                    const minimizedCredential = JSON.parse(secMinimizePayload.getValue());
+                    const url = '/deflate-payload';
+                    const result = await restCall(url, { vc: minimizedCredential }, 'POST', "arraybuffer");
+                    secDeflatePayload.setValue(arrayBufferToBase64url(result));
+                };
+            </script>
 
 
-            <div class="section">
-                <input type="button" id='buttonDeflatePayload' value="Deflate Payload" />
-                <span class="info collapsible">?</span>
-                <div id="docsDeflatePayload" class="docs"></div>
-                <textarea id="taDeflatePayload" rows="10"></textarea>
-            </div>
+            <!-- 
+                Add JWS Header 
+            -->
+            <div id="addHeader" class="section"></div>
+            <script>
+                const secAddHeader = new section('addHeader', "Add JWS Header", "Header", "taJWSHeader");
+                secAddHeader.setDocs(developerDocs.addHeader.l, developerDocs.addHeader.r);
+                secAddHeader.addTextField("taJWSPayload", "JWS Payload");
+                secAddHeader.button.onclick = async () => {
+                    const payload = secDeflatePayload.getValue();
+                    // stringify(parse(...)) removes whitespace possibly introduced by editing on page
+                    const textHeader = JSON.stringify(JSON.parse(secAddHeader.getValue('taJWSHeader')));
+                    const b64urlHeader = toBase64Url(btoa(textHeader));
+                    secAddHeader.setValue([b64urlHeader, payload].join('\n.\n'), "taJWSPayload");
+                };
+            </script>
 
 
-            <div class="section">
-                <input type="button" id='buttonAddHeader' value="Add JWS Header" />
-                <span class="info collapsible">?</span>
-                <div id="docsAddHeader" class="docs"></div>
-                <input type="text" id="textAddHeader" />
-                <textarea id="taAddHeader" rows="10"></textarea>
-            </div>
+            <!-- 
+                Sign Payload 
+            -->
+            <div id="signPayload" class="section"></div>
+            <script>
+                const secSignPayload = new section('signPayload', "Sign Payload", "Signed Payload");
+                secSignPayload.setDocs(developerDocs.signPayload.l, developerDocs.signPayload.r);
+                secSignPayload.button.onclick = async () => {
+                    const payload = secDeflatePayload.getValue();
+                    const key = JSON.parse(secInitKey.getValue());
+                    const url = '/sign-payload';
+                    const result = await restCall(url, { payload: payload, key: key }, 'POST', 'text');
+                    secSignPayload.setValue(result.split('.').join('\n.\n'));
+                };
+            </script>
 
 
-            <div class="section">
-                <input type="button" id='buttonSignPayload' value="Sign Payload" />
-                <span class="info collapsible">?</span>
-                <div id="docsSignPayload" class="docs"></div>
-                <textarea id="taSignPayload" rows="10"></textarea>
-            </div>
+            <!-- 
+                SMART Health Card 
+            -->
+            <div id="smartHealthCard" class="section"></div>
+            <script>
+                const secSmartHealthCard = new section('smartHealthCard', "SMART Health Card", "SMART Health Card");
+                secSmartHealthCard.setDocs(developerDocs.smartHealthCard.l, developerDocs.smartHealthCard.r);
+                secSmartHealthCard.button.onclick = async () => {
+                    const vcText = secSignPayload.getValue().replace(/\n/g, '');
+                    const url = '/smart-health-card';
+                    const result = await restCall(url, { jws: vcText });
+                    secSmartHealthCard.setValue(JSON.stringify(result, null, 2));
+                };
+            </script>
 
 
-            <div class="section">
-                <input type="button" id='buttonSmartHealthCard' value="SMART Health Card" />
-                <span class="info collapsible">?</span>
-                <div id="docsSmartHealthCard" class="docs"></div>
-                <textarea id="taSmartHealthCard" rows="10"></textarea>
-            </div>
+            <!-- 
+                Numeric Encode 
+            -->
+            <div id="numericEncode" class="section"></div>
+            <script>
+                const secNumericEncode = new section('numericEncode', "Numeric Encode", "Numeric Encoding");
+                secNumericEncode.setDocs(developerDocs.numericEncode.l, developerDocs.numericEncode.r);
+                secNumericEncode.button.onclick = async () => {
+                    const shc = secSignPayload.getValue().replace(/\n/g, '');
+                    const url = '/numeric-encode';
+                    const result = await restCall(url, { shc: shc }, 'POST', 'text');
+                    secNumericEncode.setValue(result);
+                };
+            </script>
 
 
-            <div class="section">
-                <input type="button" id='buttonNumericEncode' value="Numeric Encode" />
-                <span class="info collapsible">?</span>
-                <div id="docsNumericEncode" class="docs"></div>
-                <textarea id="taNumericEncode" rows="10"></textarea>
-            </div>
-
-
+            <!-- 
+                QR Encode 
+            -->
             <div class="section">
                 <input type="button" id='buttonQRCode' value="Generate QR Code" />
                 <span class="info collapsible">?</span>
                 <div id="docsQRCode" class="docs"></div>
                 <image id='imageQRCode' src="//:0" />
             </div>
-
+            <script>
+                document.getElementById('buttonQRCode').onclick = async function () {
+                    const shc = secNumericEncode.getValue();
+                    const url = '/generate-qr-code';
+                    const result = await restCall(url, { shc: shc }, 'POST', 'image/png');
+                    document.getElementById('imageQRCode').src = result;
+                };
+            </script>
 
         </div>
 
     </div>
 
+
+    <!--
+        Clear
+    -->
     <div class="footer">
         <input type="button" id='buttonClear' value="Clear" />
     </div>
+    <script>
+        document.getElementById('buttonClear').onclick = clear;
+        function clear() {
+            secInitFhir.clear();
+            secInitKey.clear();
+            secCreateCredential.clear();
+            secMinimizePayload.clear();
+            secDeflatePayload.clear();
+            secAddHeader.clear();
+            secSignPayload.clear();
+            secSmartHealthCard.clear();
+            secNumericEncode.clear();
+            // Single pixel image to prevent 'missing-image' icon
+            document.getElementById('imageQRCode').src =
+                "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+        }
+    </script>
 
 
-    <div id="CenterDIV">
-        <div class="divFloat" style="text-align: center;">
-            <video id='vid' style="height: 300px;"></video>
-            <input type="button" id='buttonCloseVideo' value="Close" />
-        </div>
-    </div>
-
-    
     <script>
 
-
         //
-        // Fhir Bundle 
+        // Initialize and Attach Validation Functions to 
+        // These make rest calls validate a particular artifact
         // 
-        document.getElementById('buttonValidateFhirBundle').onclick = async function () {
+        validate(secNumericEncode.fields[0], '/validate-qr-numeric', secNumericEncode);
+        validate(secInitFhir.fields[0], '/validate-fhir-bundle', secInitFhir);
+        validate(secSignPayload.fields[0], '/validate-jws', secSignPayload);
+        validate(secMinimizePayload.fields[0], '/validate-jws-payload', secMinimizePayload);
+        validate(secCreateCredential.fields[0], '/validate-jws-payload', secCreateCredential);
 
-            const fhirBundle = document.getElementById('taFhirBundle').value;
-
-            const url = '/validate-fhir-bundle';
-            const result = await restCall(url, { data: fhirBundle });
-            //document.getElementById('taFhirBundleResponse').value = '';
-            setValue(['taFhirBundleIssues'], JSON.stringify(result.errors, null, 2), '#FFd0d0');
-
-        };
 
 
         //
-        // Create Credential
-        // 
-        document.getElementById('buttonCreateCredential').onclick = async function () {
-            const fhirBundle = JSON.parse(document.getElementById('taFhirBundle').value);
-            const issuer = document.getElementById('textIssuer').value;
-            const url = '/create-vc';
-            const result = await restCall(url, { fhir: fhirBundle, issuer: issuer });
-            setValue(['taCreateCredential'], JSON.stringify(result, null, 2));
-        };
-
-
+        // Validation Calls
+        // Returns a function for validating an artifact using a rest-api call
+        // Wraps the rest call and error assignment.
+        // Also, wires the validated textarea to auto-validate on any updates
         //
-        // Minimize Payload
-        // 
-        document.getElementById('buttonMinimizePayload').onclick = async function () {
-            const credentialFullText = document.getElementById('taCreateCredential').value;
-            setValue(['taMinimizePayload'], JSON.stringify(JSON.parse(credentialFullText)));
-        };
+        function validate(element, url, section) {
 
+            async function validator() {
+                const text = element.value.replace(/\n/g, '');
 
-        //
-        // Deflate Payload
-        // 
-        document.getElementById('buttonDeflatePayload').onclick = async function () {
-            const minimizedCredential = JSON.parse(document.getElementById('taMinimizePayload').value);
-            const url = '/deflate-payload';
-            const result = await restCall(url, { vc: minimizedCredential }, 'POST', "arraybuffer");
-            setValue(['taDeflatePayload'], arrayBufferToBase64url(result));
-        }
+                // no need to display errors for empty data
+                if (text.trim() === "") {
+                    section.setError();
+                    return;
+                }
 
+                const validation = await restCall(url, { data: text }, 'POST');
 
-        //
-        // Add JWS Header
-        // 
-        document.getElementById('buttonAddHeader').onclick = async function () {
-            const payload = document.getElementById('taDeflatePayload').value;
-            // stringify(parse(...)) removes whitespace possibly introduced by editing on page
-            const textHeader = JSON.stringify(JSON.parse(document.getElementById('textAddHeader').value));
-            const b64urlHeader = toBase64Url(btoa(textHeader));
-            setValue(['taAddHeader'], [b64urlHeader, payload].join('\n.\n'));
-        }
-
-
-        //
-        // Sign Payload
-        // 
-        document.getElementById('buttonSignPayload').onclick = async function () {
-            const payload = document.getElementById('taDeflatePayload').value;
-            const key = JSON.parse(document.getElementById('taSignKey').value);
-            const url = '/sign-payload';
-            const result = await restCall(url, { payload: payload, key: key }, 'POST', 'text');
-            setValue(['taSignPayload'], result.split('.').join('\n.\n'));
-        };
-
-
-        //
-        // SMART Health Card
-        // 
-        document.getElementById('buttonSmartHealthCard').onclick = async function () {
-            const vcText = document.getElementById('taSignPayload').value.replace(/\n/g, '');
-            const url = '/smart-health-card';
-            const result = await restCall(url, { jws: vcText });
-            setValue(['taSmartHealthCard'], JSON.stringify(result, null, 2));
-        };
-
-
-        //
-        // Numeric Encode
-        // 
-        document.getElementById('buttonNumericEncode').onclick = async function () {
-            const shc = document.getElementById('taSignPayload').value.replace(/\n/g, '')
-            const url = '/numeric-encode';
-            const result = await restCall(url, { shc: shc }, 'POST', 'text');
-            setValue(['taNumericEncode'], result);
-        };
-
-
-        //
-        // QR Code
-        // 
-        document.getElementById('buttonQRCode').onclick = async function () {
-            const shc = document.getElementById('taNumericEncode').value;
-            const url = '/generate-qr-code';
-            const result = await restCall(url, { shc: shc }, 'POST', 'image/png');
-            document.getElementById('imageQRCode').src = result;
-        };
-
-
-        //
-        // Clear
-        // 
-        document.getElementById('buttonClear').onclick = async function () {
-            setValue([
-                'taFhirBundle',
-                'taSignKey',
-                'taCreateCredential',
-                'taMinimizePayload',
-                'taDeflatePayload',
-                'textAddHeader',
-                'taAddHeader',
-                'taSignPayload',
-                'taSmartHealthCard',
-                'taNumericEncode',
-                'imageQRCode'
-            ], "");
-            document.getElementById('imageQRCode').src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
-        };
-
-
-        //
-        // Update the JWS header if the private key is edited
-        //
-        document.getElementById('taSignKey').onchange = function (evt) {
-            formJWSHeader(JSON.parse(this.value));
-        }
-
-
-        // Sets a text element while giving a momentary color highlight
-        // Lets the user know that a field has been updated since much of
-        // data here is dense encoded values
-        function setValue(idArray, value, color = '#E6F4F1') {
-
-            for (let i = 0; i < idArray.length; i++) {
-                const element = document.getElementById(idArray[i]);
-                element.value = value;
-
-
-                element.style.height = "1px";
-                element.style.height = Math.min((25 + element.scrollHeight), 400) + "px";
-
-                const bgColor = element.style.background;
-                element.style.background = color;
-
-                setTimeout(() => {
-                    
-                    element.style.background = bgColor;
-                }, 500);
+                if (validation.errors.length) {
+                    const message = validation.errors.map(e => JSON.stringify(e)).join('\n');
+                    section.setError(message);
+                } else {
+                    section.setError();
+                }
             }
 
+            element.addEventListener("input", validator);
+
+            return validator;
         }
+
 
         //
         // Calls the Rest API on the server.
@@ -339,6 +313,7 @@
 
         }
 
+
         //
         // Converts data om an ArrayBuffer to a base64-url encoded string
         //
@@ -346,74 +321,14 @@
             return toBase64Url(btoa(String.fromCharCode(...new Uint8Array(arrayBuffer))));
         }
 
+
         //
-        // Converts regular base64 to base64-url
+        // Converts standard base64 to base64-url
         //
         function toBase64Url(base64Text) {
             return base64Text.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
         }
 
-        //
-        // Initialize the page by setting up events and initializing default values.
-        //
-        async function setup() {
-
-            const elementCollection = document.getElementsByClassName('docs');
-
-            const ids = [];
-            for (let i = 0; i < elementCollection.length; i++) {
-                ids.push(elementCollection[i].id);
-            }
-            for (let i = 0; i < ids.length; i++) {
-                const id = ids[i];
-                createInfo(id, docs[id].docs, docs[id].code);
-            }
-
-            // Causes initial collapsed section to open
-            document.getElementById('open').click();
-
-            // Uncomment the line below to generate a new key on page load
-            // await generateKey();
-
-        }
-
-        //
-        // Programmatically creates the collapsible doc sections from markdown in docs.js
-        //
-        function createInfo(id, textDoc, textCode) {
-
-            const converter = new showdown.Converter();
-
-            const docHtml = converter.makeHtml(textDoc);
-
-            var div0 = document.getElementById(id);
-            div0.style = "display: flex;margin-bottom: 10px;";
-            div0.className = "content";
-
-            var div00 = document.createElement('div');
-            div00.style = "width: 50%;padding-right: 5px;";
-            div0.appendChild(div00);
-
-            var article00 = document.createElement('article');
-            article00.className = "markdown-body";
-            article00.innerHTML = docHtml;
-            div00.appendChild(article00);
-
-            var div01 = document.createElement('div');
-            div01.style = "flex-grow: 1;padding-left: 5px;";
-            div0.appendChild(div01);
-
-            // Only include the right section if there is content
-            if (textCode) {
-                const codeHtml = converter.makeHtml(textCode);
-                var article01 = document.createElement('article');
-                article01.className = "markdown-body";
-                article01.innerHTML = codeHtml;
-                div01.appendChild(article01);
-            }
-
-            return div0;
-        }
 
         //
         // Downloads a fhir bundle sample from the smarthealth.cards page to use as a sample
@@ -422,28 +337,9 @@
         async function downloadFhirBundleSample() {
             const sampleUrl = 'https://smarthealth.cards/examples/example-00-a-fhirBundle.json'
             const result = await restCall(sampleUrl, "", 'GET', 'text');
-            setValue(['taFhirBundle'], result);
+            secInitFhir.setValue(result);
+            secInitFhir.fields[0].dispatchEvent(new Event('input'));
         }
-
-
-        //
-        // Sets onClick handlers for each collapsible section
-        //
-        (function setCollapsibleEvents() {
-            var coll = document.getElementsByClassName("collapsible");
-            var i;
-            for (i = 0; i < coll.length; i++) {
-                coll[i].addEventListener("click", function () {
-                    this.classList.toggle("active");
-                    var content = this.nextElementSibling;
-                    if (content.style.maxHeight) {
-                        content.style.maxHeight = null;
-                    } else {
-                        content.style.maxHeight = content.scrollHeight + "px";
-                    }
-                });
-            }
-        })();
 
 
         //
@@ -451,7 +347,7 @@
         //
         async function computeKid(keyJwk) {
 
-            // Only required properties in alphabetical order
+            // Kid computation requires properties in alphabetical order
             keyJwk = { "crv": "P-256", "kty": "EC", "x": keyJwk.x, "y": keyJwk.y, };
 
             const keyBytes = new Uint8Array(JSON.stringify(keyJwk).split('').map(c => c.charCodeAt(0)));
@@ -480,29 +376,15 @@
                 .then(async function (exportedKeys) {
 
                     const [publicKey, privateKey] = exportedKeys;
-                    //const privateKey = exportedKeys[1];
-
-
                     const kid = await computeKid(publicKey);
-
-                    const newKeys =
-                    // Uncomment sections to export key pair instead of just private key
-                    //[
-                    // {
-                    //     "kty": "EC",
-                    //     "kid": kid,
-                    //     "use": "sig", "alg": "ES256", "crv": "P-256", "x": publicKey.x, "y": publicKey.y
-                    // },
-                    {
+                    const newKeys = {
                         "kty": "EC",
                         "kid": kid,
                         "use": "sig", "alg": "ES256", "crv": "P-256", "x": privateKey.x, "y": privateKey.y, "d": privateKey.d
                     }
-                    //];
 
-                    setValue(['taSignKey'], JSON.stringify(newKeys, null, 2));
-
-                    formJWSHeader(newKeys);
+                    secInitKey.setValue(JSON.stringify(newKeys, null, 2));
+                    secInitKey.fields[0].dispatchEvent(new Event('input'));
 
                 })
                 .catch(function (err) {
@@ -517,25 +399,14 @@
         //
         function formJWSHeader(key) {
             try {
-                const header = JSON.stringify({ "zip": "DEF", "alg": "ES256", "kid": key.kid });
-                setValue(['textAddHeader'], header);
+                return JSON.stringify({ "zip": "DEF", "alg": "ES256", "kid": key.kid });
             } catch {
-                setValue(['textAddHeader'], '');
+                return '';
             }
         }
 
 
-        //
-        // Call setup() to initialize the page
-        //
-        (async () => setup())();
-
-
-
     </script>
-
-
-
 
 </body>
 
