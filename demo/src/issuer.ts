@@ -99,9 +99,8 @@ async function trimBundleForHealthCard(bundleIn: Bundle) {
 function createHealthCardJwsPayload(fhirBundle: Bundle, types: string[]): Record<string, unknown> {
   return {
     iss: Config.ISSUER_URL,
-    iat: new Date().getTime() / 1000,
+    nbf: new Date().getTime() / 1000,
     vc: {
-      '@context': ['https://www.w3.org/2018/credentials/v1'],
       type: [
         'VerifiableCredential',
         'https://smarthealth.cards#health-card',
