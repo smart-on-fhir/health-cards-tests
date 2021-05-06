@@ -20,12 +20,7 @@ fs.writeFileSync("private/localhost.key", pems.private);
 console.log("Created self-signed certificate for https : localhost.crt");
 
 // copies js file from the node_modules qr-scanner folder for use by the html pages in ./public
-
-fs.copyFileSync('node_modules/qr-scanner/qr-scanner-worker.min.js', 'public/qr-scanner-worker.min.js');
-fs.copyFileSync('node_modules/qr-scanner/qr-scanner-worker.min.js.map', 'public/qr-scanner-worker.min.js.map');
-fs.copyFileSync('node_modules/qr-scanner/qr-scanner.umd.min.js', 'public/qr-scanner.umd.min.js');
-fs.copyFileSync('node_modules/qr-scanner/qr-scanner.umd.min.js.map', 'public/qr-scanner.umd.min.js.map');
-
+fs.copyFileSync('node_modules/jsqr/dist/jsQR.js', 'public/jsQR.js');
 fs.copyFileSync('node_modules/github-markdown-css/github-markdown.css', 'public/github-markdown.css');
 
 console.log("Copied QR-scanner scripts to ./public");
