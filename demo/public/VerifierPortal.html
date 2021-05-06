@@ -12,7 +12,8 @@
     <link rel="stylesheet" href="IssuerPortal.css">
     <link rel="stylesheet" href="github-markdown.css">
 
-    <script src="qr-scanner.umd.min.js"></script>
+    <script src="jsQR.js"></script>
+    <script src="qrscanner.js"></script>
 
 </head>
 
@@ -53,23 +54,23 @@
 
                 const secScanQr = new section('scanQr', "Scan QR Code", "Numeric QR Data");
                 secScanQr.setDocs(verifierDocs.scanQRCode.l, verifierDocs.scanQRCode.r);
-                secScanQr.button.onclick = () => {
+                secScanQr.button.onclick = async () => {
 
-                    // start the camera-scanner and make the control visible
-                    !started ? qrScanner.start() : qrScanner.stop();
-                    document.getElementById('CenterDIV').style.display = 'block';
-                    started = !started;
+                    const qrScanDiv = document.getElementById('CenterDIV');
+                    qrScanDiv.style.display = 'block';
+                    const scanResult = await qrScanner.scan();
 
-                    // set the square overlay over the camera image
-                    const vid = document.getElementById('vid');
-                    const overlay = document.getElementById('overlay');
-                    const i = parseInt;
-                    overlay.style.top = Math.ceil(i(vid.style.height) - i(overlay.style.height)) / 2 + "px";
-                    overlay.style.left = Math.ceil(vid.clientWidth - i(overlay.style.width)) / 2 + "px";
+                    qrScanDiv.style.display = 'none';
+
+                    if (scanResult.data) {
+                        secScanQr.setValue(scanResult.data);
+
+                        if (scanResult.version > 22) {
+                            secScanQr.setError(`QR code version of ${scanResult.version} is larger than the maximum allowed of 22`);
+                        }
+                    }
 
                 };
-
-                //secScanQr.setValue("shc:/567629095243206034602924374044603122295953265460346029254077280433602870286471674522280928613331456437653141590640220306450459085643550341424541364037063665417137241236380304375622046737407532323925433443326057360106452931531270742428395038692212766568637138065509583728050333376626627259361103715344441122263663212006032750733172032031372365042533044206270754425328450420593620711261243366607628440742343536705400631129066654206544365233663823596021077670317012713342764260503155433555083473413266332936737032113958587123117307120955595840355931687040115232417303384039651067632209384341412012703267325434534137225775120661765861421269067661005823117567074304560859437500341264712904260465583253733638100833123422126208775858655545243477645920507637325929080435682704763707055500422927584543582550667760036577704021621136444536642765760367352459654325362404697211447369565510627029036707240837002570376441400427096725423806682472440856124133125352537706124327303028440359750054286111584133366267631154450460382155670074592636502724332654657410553930124372573427586770715872663034390337363052554029546964315577217034085864376561750771565072773637280830405657636161707339286537290322637576316871661053005812705954596650343210253644712459045364097210712260255069686274722360622939404138605573276952275211255469034137545369355031217273644377560707664245737111013450617503375061533607550039290965506571383728412345227242047021455524306310105259744244503512257774576576320055645555586721595345706354123106576726246429436543754409642120");
 
             </script>
 
@@ -95,8 +96,6 @@
                     secDecodeNumeric.setValue(jws.split('.').join('\n.\n'));
 
                     await validateJws();
-
-                    //allSteps && document.getElementById('buttonDecodeJWS').click();
 
                 };
 
@@ -136,8 +135,6 @@
 
                     await validateJwsPayload();
 
-                    //allSteps && document.getElementById('buttonExtractPublicKey').click();
-
                 };
 
             </script>
@@ -168,8 +165,6 @@
                     secExtractPublicKey.setError(/* sending nothing, clears the error */);
                     secExtractPublicKey.setValue(jwsPayload.iss + '/.well-known/jwks.json');
 
-
-                    //allSteps && document.getElementById('buttonDownloadKey').click();
                 };
 
             </script>
@@ -203,7 +198,6 @@
 
                     await validateKeySet();
 
-                    //allSteps && document.getElementById('buttonVerifySignature').click();
                 };
 
             </script>
@@ -218,7 +212,7 @@
                 secVerifySignature.setDocs(verifierDocs.verifySignature.l, verifierDocs.verifySignature.r);
                 secVerifySignature.button.onclick = async () => {
 
-                    let data = secDecodeNumeric.getValue().replace(/\n/g, '').split('.'); 
+                    let data = secDecodeNumeric.getValue().replace(/\n/g, '').split('.');
                     let signature = secDecodeJWS.getValue('taJWSSignature');
                     data.pop(); // removes the signature segment leaving header+payload
                     data = data.join('.');
@@ -243,8 +237,6 @@
                         .catch(function (err) {
                             console.error(err);
                         });
-
-                    //allSteps && document.getElementById('buttonExtractFhirBundle').click();
 
                 };
 
@@ -289,10 +281,7 @@
         <div class="divFloat" style="text-align: center;">
 
             <div id="container" style="position:relative;">
-                <video id='vid' style="height: 300px;"></video>
-                <div id='overlay'
-                    style="position:absolute; border-color: #6B7987;border-style: solid;border-width: 2px;width: 200px; height: 200px; top: 0px; left: 0px">
-                </div>
+                <video id='vid'></video>
             </div>
             <input type="button" id='buttonCloseVideo' value="Close" />
 
@@ -304,40 +293,15 @@
     <script>
 
 
-        var allSteps = false;
-
-
         //
         // Scanner
         //
-        const qrScanner = new QrScanner(document.getElementById('vid'), qrResult);
-        var started;
-
+        const qrScanner = QrScanner('vid');
         function closeVideo() {
             document.getElementById('CenterDIV').style.display = 'none';
             qrScanner.stop();
-            started = false;
         }
-
         document.getElementById('buttonCloseVideo').onclick = closeVideo;
-
-
-
-
-
-        function qrResult(result) {
-            // Display the qr-decoded text
-            clear();
-            secScanQr.setValue(result);
-            //allSteps = true;
-            closeVideo();
-            validateSch();
-            allSteps && document.getElementById('buttonSmartHealthCard').click();
-        }
-
-
-
-
 
 
         //
@@ -349,8 +313,6 @@
         const validateJwsPayload = validate(secDecodeJWS.fields[1], '/validate-jws-payload', secDecodeJWS);
         const validateKeySet = validate(secDownloadKey.fields[0], '/validate-key-set', secDownloadKey);
         const validateFhirBundle = validate(secExtractFhirBundle.fields[0], '/validate-fhir-bundle', secExtractFhirBundle);
-
-
 
 
         //
@@ -402,7 +364,6 @@
         }
 
 
-
         // 
         // Select the first key in the key collection where 'kid' equals the 'kid' in the Jws-Header
         //
@@ -426,7 +387,6 @@
 
             return null;
         }
-
 
 
         //
@@ -479,6 +439,7 @@
 
         }
 
+
         //
         // Converts data om an ArrayBuffer to a base64-url encoded string
         //
@@ -486,12 +447,14 @@
             return toBase64Url(btoa(String.fromCharCode(...new Uint8Array(arrayBuffer))));
         }
 
+
         //
         // Converts regular base64 to base64-url
         //
         function toBase64Url(base64Text) {
             return base64Text.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
         }
+
 
         //
         // Decode Base64Url
@@ -509,6 +472,7 @@
             return decoded;
         }
 
+
         //
         // Downloads a fhir bundle sample from the smarthealth.cards page to use as a sample
         // The examples may change, so downloading is preferable to hard-coding a sample
@@ -518,6 +482,7 @@
             const result = await restCall(sampleUrl, "", 'GET', 'text');
             setValue(['taFhirBundle'], result);
         }
+
 
         //
         // Computes the 'kid' of a JWK key using SHA-256
