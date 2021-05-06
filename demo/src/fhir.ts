@@ -42,7 +42,7 @@ export const toFhirBundle = (hcd: HealthCardData): Bundle => {
       
     const patientEntry: Entry = {
       fullUrl: "resource:0",
-      resource: {resourceType: "Patient",name:[{family: hcd.patientData.lastName, given: hcd.patientData.firstName}], birthDate: hcd.patientData.dob}
+      resource: {resourceType: "Patient",name:[{family: hcd.patientData.lastName, given: [hcd.patientData.firstName]}], birthDate: hcd.patientData.dob}
     };
     
     let bundle = 
