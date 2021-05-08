@@ -12,12 +12,12 @@ interface Immunization {
 
 interface HealthCard {
     iss: string;
-    iat: number;
+    nbf: number;
     vc: {
         type: string[];
         credentialSubject: {
             fhirVersion: string;
-            fhirBundle: Record<string, unknown>;
+            fhirBundle: FhirBundle;
         };
     };
 }
@@ -51,8 +51,8 @@ interface ValidationResult {
 
 interface FhirBundle {
     text: string;
-    Coding: {display: unknown};
-    CodeableConcept: {text: unknown};
+    Coding: { display: unknown };
+    CodeableConcept: { text: unknown };
     meta: unknown;
     id: unknown;
     "resourceType": string,
@@ -97,4 +97,19 @@ interface SchemaProperty {
     additionalProperties?: boolean,
     enum?: string[],
     const?: string
+}
+
+interface Key {
+    kty: string,
+    kid: string,
+    use: string,
+    alg: string,
+    crv: string,
+    x: string,
+    y: string,
+    d?: string
+}
+
+interface VerifiableCredential {
+    verifiableCredential: string[]
 }

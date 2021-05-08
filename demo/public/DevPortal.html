@@ -9,7 +9,7 @@
 
     <base target="_blank">
 
-    <link rel="stylesheet" href="IssuerPortal.css">
+    <link rel="stylesheet" href="portal.css">
     <link rel="stylesheet" href="github-markdown.css">
 
 </head>
@@ -172,9 +172,9 @@
                 const secNumericEncode = new section('numericEncode', "Numeric Encode", "Numeric Encoding");
                 secNumericEncode.setDocs(developerDocs.numericEncode.l, developerDocs.numericEncode.r);
                 secNumericEncode.button.onclick = async () => {
-                    const shc = secSignPayload.getValue().replace(/\n/g, '');
+                    const jws = secSignPayload.getValue().replace(/\n/g, '');
                     const url = '/numeric-encode';
-                    const result = await restCall(url, { shc: shc }, 'POST', 'text');
+                    const result = await restCall(url, { jws: jws }, 'POST', 'text');
                     secNumericEncode.setValue(result);
                 };
             </script>
@@ -187,14 +187,18 @@
                 <input type="button" id='buttonQRCode' value="Generate QR Code" />
                 <span class="info collapsible">?</span>
                 <div id="docsQRCode" class="docs"></div>
-                <image id='imageQRCode' src="//:0" />
+                <div id="qrContainer"></div>
             </div>
             <script>
                 document.getElementById('buttonQRCode').onclick = async function () {
-                    const shc = secNumericEncode.getValue();
+                    const shc = secNumericEncode.getValue().match(/shc:\/(\d+\/\d+\/)?\d+/g) || [];
                     const url = '/generate-qr-code';
-                    const result = await restCall(url, { shc: shc }, 'POST', 'image/png');
-                    document.getElementById('imageQRCode').src = result;
+                    const result = await restCall(url, { shc: shc }, 'POST'/*, 'image/png'*/);
+                    const container = document.getElementById('qrContainer');
+                    container.innerHTML = ''; // clear previous images
+                    for (let i = 0; i < result.length; i++) {
+                        container.appendChild(document.createElement('img')).src = result[i];
+                    }
                 };
             </script>
 
@@ -221,9 +225,7 @@
             secSignPayload.clear();
             secSmartHealthCard.clear();
             secNumericEncode.clear();
-            // Single pixel image to prevent 'missing-image' icon
-            document.getElementById('imageQRCode').src =
-                "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+            document.getElementById('qrContainer').innerHTML = '';
         }
     </script>
 
@@ -255,7 +257,7 @@
 
                 // no need to display errors for empty data
                 if (text.trim() === "") {
-                    section.setError();
+                    section.clearError();
                     return;
                 }
 
@@ -263,9 +265,9 @@
 
                 if (validation.errors.length) {
                     const message = validation.errors.map(e => JSON.stringify(e)).join('\n');
-                    section.setError(message);
+                    section.setError(message, element.id);
                 } else {
-                    section.setError();
+                    section.clearError(element.id);
                 }
             }
 

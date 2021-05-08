@@ -4,12 +4,12 @@
 export const Config = {
 
     // REST API endpoints
-    ISSUE_HEALTH_CARD_ENDPOINT:             '/issue-health-card',
-    DOWNLOAD_HEALTH_CARD_FILE_ENDPOINT:     '/download-health-card-file',
-    DOWNLOAD_HEALTH_CARD_QRCODE_ENDPOINT:   '/download-health-card-qrcode',
-    DOWNLOAD_HEALTH_CARD_PDF_ENDPOINT:      '/download-health-card-pdf',
-    VALIDATE_HEALTH_CARD_FILE_ENDPOINT:     '/validate-health-card-file',
-    VALIDATE_HEALTH_CARD_QRCODE_ENDPOINT:   '/validate-health-card-qrcode',
+    //ISSUE_HEALTH_CARD_ENDPOINT:             '/issue-health-card',
+    //DOWNLOAD_HEALTH_CARD_FILE_ENDPOINT:     '/download-health-card-file',
+    // DOWNLOAD_HEALTH_CARD_QRCODE_ENDPOINT:   '/download-health-card-qrcode',
+    // DOWNLOAD_HEALTH_CARD_PDF_ENDPOINT:      '/download-health-card-pdf',
+    // VALIDATE_HEALTH_CARD_FILE_ENDPOINT:     '/validate-health-card-file',
+    // VALIDATE_HEALTH_CARD_QRCODE_ENDPOINT:   '/validate-health-card-qrcode',
 
     VALIDATE_FHIR_BUNDLE:                   '/validate-fhir-bundle',
     VALIDATE_QR_NUMERIC:                    '/validate-qr-numeric',

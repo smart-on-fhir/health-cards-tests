@@ -105,9 +105,6 @@ Notice that the __vs.credentialSubject.fhirBundle__ contains the Fhir Bundle fro
     "iss": "https://smarthealth.cards/examples/issuer",
     "nbr": 1617925250718,
     "vc": {
-        "@context": [
-            "https://www.w3.org/2018/credentials/v1"
-        ],
         "type": [
             "VerifiableCredential",
             "https://smarthealth.cards#health-card",
