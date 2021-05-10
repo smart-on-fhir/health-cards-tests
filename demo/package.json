@@ -27,7 +27,6 @@
         "node-jose": "^2.0.0",
         "pako": "^2.0.3",
         "qrcode": "^1.4.4",
-        "selfsigned": "^1.10.11",
         "showdown": "^1.9.1",
         "ts-node": "^9.1.1",
         "typescript": "^4.2.4"
