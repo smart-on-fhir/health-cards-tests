@@ -47,8 +47,8 @@ See:  [Determining keys associated with an issuer](https://smarthealth.cards/#de
 This public key will be used to verify the JWS signature and must be available at:  
 
 <div style="display: inline-block">
-<label>https:</label>
-<input type="text" id='textIssuer' placeholder="contoso.com/issuer"
+<label></label>
+<input type="text" id='textIssuer' placeholder="https://contoso.com/issuer"
     style="width: 300px;" />
 <label>/.well-known/jwks.json</label>
 </div>
