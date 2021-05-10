@@ -28,11 +28,12 @@ input[type="button"]
 	text-decoration: none;
 	width: 300px;
 }
-image
+img
 {
 	border: 1px solid black;
 	height: 300px;
 	width: 300px;
+	margin-right: 5px;
 }
 textarea,
  article,

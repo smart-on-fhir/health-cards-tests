@@ -17,6 +17,7 @@ class section {
     values = {};
     id;
     content;
+    validators = {};
 
     constructor(id, buttonText, textPlaceHolder, fieldId = "ta" + id) {
 
@@ -75,6 +76,7 @@ class section {
         content0.appendChild(ta0);
         this.fields.push(ta0);
         this.values[fieldId] = ta0;
+        this.validators[fieldId] = [];
 
         // <span class="error collapsible"></span>
         const span1 = document.createElement("SPAN");
@@ -109,21 +111,60 @@ class section {
     }
 
     //
+    //
+    //
+    addValidator(validator, id) {
+        this.validators[id].push(validator);
+    }
+
+
+    errors = {};
+
+    //
     // Sets text in the collapsable Error field. Field will collapse when empty
     //
-    setError(message) {
+    setError(message, label = 'default') {
+        if (message) {
+            this.errors[label] = message;
+        } else {
+            delete this.errors[label];
+        }
+        this.displayErrors();
+    }
+
+    //
+    // Sets text in the collapsable Error field. Field will collapse when empty
+    //
+    clearError(label) {
 
         const element = this.taError;
 
-        // clear the error
-        if (message == null || message.trim().length === 0) {
+        if (label) {
+            delete this.errors[label];
+        } else {
+            this.errors = {};
+        }
+
+        this.displayErrors();
+    }
+
+    displayErrors() {
+
+        const element = this.taError;
+
+        const allErrors = [];
+        for (const label in this.errors) {
+            allErrors.push(this.errors[label]);
+        }
+
+        if (allErrors.length === 0) {
             element.value = "";
             element.classList.remove("active");
             element.parentElement.style.maxHeight = null;
             return;
         }
 
-        element.value = message;
+        element.value = allErrors.join('\n');
         element.classList.toggle("active");
 
         element.parentElement.style.maxHeight = "1px";
@@ -132,7 +173,6 @@ class section {
         setTimeout(() => {
             element.style.background = '#FFFFFF';
         }, 500);
-
     }
 
 
@@ -146,7 +186,7 @@ class section {
             //doc0 parent style = "width: 50%;padding-right: 5px;";
             this.doc0.innerHTML = markdownLeft;
 
-            if(markdownRight === null) {
+            if (markdownRight === null) {
                 // span left across 100%
                 this.doc0.parentElement.style = "width: 100%;";
                 const rightDiv = this.doc0.parentElement.nextElementSibling;
@@ -185,6 +225,7 @@ class section {
         //const parent = this.fields[0].parentElement;
         this.fields.push(ta);
         this.values[id] = ta;
+        this.validators[id] = []
 
         this.content.appendChild(div);
     }
@@ -223,7 +264,7 @@ class section {
     // Clear all fields
     //
     clear() {
-        this.setError();
+        this.clearError();
         for (let i = 0; i < this.fields.length; i++) {
             this.fields[i].value = "";
         }

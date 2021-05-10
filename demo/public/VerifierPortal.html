@@ -9,7 +9,7 @@
 
     <base target="_blank">
 
-    <link rel="stylesheet" href="IssuerPortal.css">
+    <link rel="stylesheet" href="portal.css">
     <link rel="stylesheet" href="github-markdown.css">
 
     <script src="jsQR.js"></script>
@@ -24,6 +24,7 @@
 
     <!-- section custom control -->
     <script src='section.js'></script>
+
 
     <div>
 
@@ -66,7 +67,7 @@
                         secScanQr.setValue(scanResult.data);
 
                         if (scanResult.version > 22) {
-                            secScanQr.setError(`QR code version of ${scanResult.version} is larger than the maximum allowed of 22`);
+                            secScanQr.setError(`QR code version of ${scanResult.version} is larger than the maximum allowed of 22`, "qrVersion");
                         }
                     }
 
