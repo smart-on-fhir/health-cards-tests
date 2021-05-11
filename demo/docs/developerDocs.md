@@ -48,7 +48,7 @@ This public key will be used to verify the JWS signature and must be available a
 
 <div style="display: inline-block">
 <label></label>
-<input type="text" id='textIssuer' placeholder="https://contoso.com/issuer"
+<input type="text" id='textIssuer' placeholder="https://<your-issuer-site>/issuer"
     style="width: 300px;" />
 <label>/.well-known/jwks.json</label>
 </div>

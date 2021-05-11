@@ -19,8 +19,5 @@ export const Config = {
     UPLOAD_PUBLIC_KEY:                      '/upload-public-key',
 
     ISSUER_URL: '', // instantiated at startup if empty
-    SERVICE_PORT: 8080,
-
-    // Issuer name to be included in health cards
-    ISSUER_NAME: 'Contoso Hospital'
+    SERVICE_PORT: 8080
 }
