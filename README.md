@@ -1,27 +1,70 @@
-# SMART Health Card Tests
+# Health Cards Tests
 
-This fork provides additional tests to the [base project](https://github.com/smart-on-fhir/health-cards-tests). See the original [README.md](https://github.com/smart-on-fhir/health-cards-tests/blob/master/README.md).
+## Using the hosted demo components
 
-The `demo` folder constains a project illustrating the issuance and validation of SMART Health Cards; see its [README.md](demo/README.md) for details.
+### Mobile Wallet demo at <https://c19.cards>
 
-## Contributing
+- Click "Connect to Lab and get tested" to retrieve a VC
+- Review details (URLs, DIDs, keys, etc) in Dev Tools
+- Menu > "Scan QR Code" to share your VC with a verifier (e.g., the Verifier demo below)
 
-This project welcomes contributions and suggestions.  Most contributions require you to agree to a
-Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
-the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com.
+### Verifier demo at <https://c19.cards/venue>
 
-When you submit a pull request, a CLA bot will automatically determine whether you need to provide
-a CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions
-provided by the bot. You will only need to do this once across all repos using our CLA.
+- OpenID Request QR code is displayed automatically
+- Review details (URLs, DIDs, keys, etc) in Dev Tools
+- Scan the barcode from your Mobile Wallet to share your VC (e.g., the Mobile Wallet demo above)
 
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
-For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
-contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+### Lab demo at <https://c19.cards/api/fhir>
 
-## Trademarks
+- Connect your own Mobile Wallet to this demo lab interface
+- Supports SMART on FHIR discovery protocol (<https://c19.cards/api/fhir/.well-known/smart-configuration>)
+- No UI provided -- just an automatic "sign-in" workflow that redirects back to your Mobile Wallet
 
-This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft 
-trademarks or logos is subject to and must follow 
-[Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
-Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
-Any use of third-party trademarks or logos are subject to those third-party's policies.
+## Run locally in dev, with node and parcel watchers
+
+This demo should work with Node.js 15 (current LTS) as well as Node.js 13. See `Dockerfile` for details if you want to build/develop locally using docker; otherwise, you can get started with:
+
+    git clone https://github.com/smart-on-fhir/health-cards-tests
+    cd health-cards-tests
+
+    # In first terminal
+    export SERVER_BASE=http://localhost:8080/api
+    npm run dev-ui # Terminal 1
+
+    # In second terminal
+    export SERVER_BASE=http://localhost:8080/api
+    npm run dev    # Terminal 2
+
+## Build and run locally (no watchers)
+
+    npm run build-ui
+    npm run build
+
+    export SERVER_BASE=http://localhost:8080/api
+    npm run dev
+
+## Run locally in Docker
+
+    docker build -t health-wallet-demo .
+    docker run --rm -it --env SERVER_BASE=http://localhost:8080/api -p 8080:8080 health-wallet-demo
+
+## Run dev-only containers with watchers in Docker-Compose
+
+    export USER=$(id -u)
+    docker-compose --env-file ./compose.env up
+
+You can use the docker-compose.yaml file to spin up two dev containers with watchers, one for the UI and one for the server.
+
+### Note the following
+
+1. Both containers have their `src` directories bind-mounted to the local directory's `src` folder. Any changes made in the `dev` container (or the host) will propagate to both containers + host and be registered by the watchers. This is helpful since you can, for instance, launch programs inside the `dev` container and utilize dev dependencies without needing to ever install them locally.
+2. Both containers have their `dist` folders mounted to a named volume. This means the parcel watcher in the `dev-ui` container can write changes that are accessible by the `dev` container. Note the `dev-ui` container needs `root` privileges for this. See this [issue](https://github.com/moby/moby/issues/2259) for details.
+3. The `dev-ui` container has `root` privileges, but it has been given read-only access to the `src` folder. Any changes to `src` made from within this container will not be seen by the host or `dev` container.
+
+## Testing endpoints
+
+See [testing-endpoints.md](./testing-endpoints.md) for details.
+
+## Test portals
+
+The `demo` folder constains a project for test portals illustrating the issuance and validation of SMART Health Cards; see its [README.md](demo/README.md) for details.
