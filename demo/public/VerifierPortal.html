@@ -491,13 +491,14 @@
 
 
         //
-        // Downloads a fhir bundle sample from the smarthealth.cards page to use as a sample
+        // Downloads a numeric QR sample from the smarthealth.cards page to use as a sample
         // The examples may change, so downloading is preferable to hard-coding a sample
         //
-        async function downloadFhirBundleSample() {
-            const sampleUrl = 'https://smarthealth.cards/examples/example-00-a-fhirBundle.json'
+        async function downloadNumericQRSample() {
+            const sampleUrl = 'https://smarthealth.cards/examples/example-00-f-qr-code-numeric-value-0.txt'
             const result = await restCall(sampleUrl, "", 'GET', 'text');
-            setValue(['taFhirBundle'], result);
+            secScanQr.setValue(result);
+            secScanQr.fields[0].dispatchEvent(new Event('input'));
         }
 
 

@@ -7,6 +7,11 @@ When accessing the portal from a remote server, the browser will require a __HTT
 When using `localhost`, __HTTP__ is sufficient.  
 
 To Scan your QR code, try to align the QR code within the square overlay.  As camera resolutions may differ, you may have experiment with finding the best alignment. Make sure the QR-code is flat.
+
+Download a sample __Numeric QR Code__ from [https://smarthealth.cards/examples/example-00-f-qr-code-numeric-value-0.txt](https://smarthealth.cards/examples/example-00-f-qr-code-numeric-value-0.txt)  
+
+<input type="button" id='buttonDownloadSample' value="Download Sample" onclick="downloadNumericQRSample()" /> 
+
 <br><br>
 <!-- label:scanQRCode side:right-->
 <!-- separator --> <br><hr><br>
