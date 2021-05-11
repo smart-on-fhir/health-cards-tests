@@ -15,6 +15,8 @@ import { parseSiopApprovalProps, SiopApprovalModal, SiopRequestReceiver } from '
 import './style.css';
 import { verifierWorld } from './verifier';
 
+const logo =  require("./img/wallet.svg") as string;
+
 interface IssuerProps {
     issuerStartUrl: string;
     issuerDownloadUrl: string;
@@ -169,7 +171,7 @@ const App: React.FC<AppProps> = (props) => {
         <RS.Navbar expand="" className="navbar-dark bg-info fixed-top">
             <RS.Container>
                 <NavbarBrand style={{ marginRight: "2em" }} href="/">
-                    <img className="d-inline-block" style={{ maxHeight: "1em", maxWidth: "1em", marginRight: "10px" }} src="img/wallet.svg" />
+                    <img className="d-inline-block" style={{ maxHeight: "1em", maxWidth: "1em", marginRight: "10px" }} src={logo} />
                             Health Wallet Demo
                     </NavbarBrand>
                 <NavbarToggler onClick={toggle} />

@@ -1,6 +1,6 @@
 {
   "iss": "<<URL for Issuer>>",
-  "iat": 1611160486,
+  "nbf": 1611160486,
   "vc": {
     "@context": [
       "https://www.w3.org/2018/credentials/v1"
@@ -21,12 +21,6 @@
             "fullUrl": "resource:0",
             "resource": {
               "resourceType": "Patient",
-              "extension": [
-                {
-                  "url": "https://github.com/TransparentHealth/800-63-3-trustmark#P",
-                  "valueCode": "P1"
-                }
-              ],
               "name": [
                 {
                   "family": "Anyperson",
@@ -48,6 +42,7 @@
             "fullUrl": "resource:1",
             "resource": {
               "resourceType": "Immunization",
+              "meta": {"security": [{"code": "IAL1.2"}]},
               "status": "completed",
               "vaccineCode": {
                 "coding": [
@@ -61,10 +56,16 @@
                 "reference": "resource:0"
               },
               "occurrenceDateTime": "2021-01-01",
-              "primarySource": true,
               "location": {
                 "reference": "resource:3"
               },
+              "performer": [
+                {
+                  "actor": {
+                    "display": "ABC General Hospital"
+                  }
+                }
+              ],
               "lotNumber": "Lot #0000001"
             }
           },
@@ -85,19 +86,14 @@
                 "reference": "resource:0"
               },
               "occurrenceDateTime": "2021-01-29",
-              "primarySource": true,
-              "location": {
-                "reference": "resource:3"
-              },
+              "performer": [
+                {
+                  "actor": {
+                    "display": "ABC General Hospital"
+                  }
+                }
+              ],
               "lotNumber": "Lot #0000007"
-            }
-          },
-          {
-            "fullUrl": "resource:3",
-            "resource": {
-              "resourceType": "Location",
-              "name": "ABC Pharmacy",
-              "address": {"line": ["29182 South Main St NE"], "postalCode": "53726", "city": "Madision", "state": "WI", "country": "US"}
             }
           }
         ]

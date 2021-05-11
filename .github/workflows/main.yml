@@ -14,8 +14,8 @@ jobs:
     - uses: azure/docker-login@v1
       with:
         login-server: ${{ secrets.CONTAINER_REGISTRY }}
-        username: ${{ secrets.REGISTRY_USERNAME }}
-        password: ${{ secrets.REGISTRY_PASSWORD }}
+        username: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}
+        password: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}
 
     - uses: azure/aks-set-context@v1
       with:

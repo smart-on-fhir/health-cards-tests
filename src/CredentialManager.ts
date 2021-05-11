@@ -45,7 +45,7 @@ export const createHealthCard = (presentationContext: string, types: string[], i
         resource: r
     }))
 
-    vc.type = unique([...types, ...(vc.type)])
+    vc.type = unique([...types, ...(vc.type)]).filter(t => t !== 'VerifiableCredential')
     vc.issuer = issuer;
 
 
@@ -54,7 +54,7 @@ export const createHealthCard = (presentationContext: string, types: string[], i
 }
 
 interface VC {
-    "@context": string[],
+    "@context"?: string[],
     type: string[],
     id?: string;
     issuer?: string;
@@ -72,9 +72,9 @@ interface VcJWTPayload {
     sub: string;
     jti?: string;
     iss: string;
-    iat: number;
+    iat?: number;
     exp?: number;
-    nbf?: number;
+    nbf: number;
     nonce?: string;
     vc: any;
 }
@@ -87,7 +87,7 @@ export const vcToJwtPayload = (vcIn: VC): VcJWTPayload => {
 
     const ret: VcJWTPayload = {
         iss: vc.issuer,
-        iat: isoToNumericDate(vc.issuanceDate),
+        nbf: isoToNumericDate(vc.issuanceDate),
         exp: vc.expirationDate ? isoToNumericDate(vc.expirationDate) : undefined,
         jti: vc.id,
         sub: vc.credentialSubject.id,

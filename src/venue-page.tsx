@@ -11,6 +11,8 @@ import { initializeVerifier, receiveSiopResponse } from './verifier';
 import { prepareSiopRequest, verifierReducer } from './VerifierLogic';
 import { VerifierState } from './VerifierState';
 
+const logo =  require("./img/wallet.svg") as string;
+
 export const QrDisplay: React.FC<{ numeric?: number[], url?: string, noLink?: boolean }> = (props) => {
     useEffect(() => {
         console.log("QR canvas", props.url, props.numeric)
@@ -81,7 +83,7 @@ const App: React.FC<{
         <RS.Navbar expand="" className="navbar navbar-dark bg-success fixed-top">
             <RS.Container>
                 <NavbarBrand style={{ marginRight: "2em" }} href="/">
-                    <img className="d-inline-block" style={{ maxHeight: "1em", maxWidth: "1em", marginRight: "10px" }} src="img/wallet.svg" />
+                    <img className="d-inline-block" style={{ maxHeight: "1em", maxWidth: "1em", marginRight: "10px" }} src={logo} />
                             Share your COVID Card with <b>Venue</b>
                 </NavbarBrand>
             </RS.Container>

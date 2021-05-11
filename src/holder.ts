@@ -65,6 +65,7 @@ export interface SiopResponse {
   "nonce": string,
   "exp": number,
   "iat": number,
+  "nbf": number,
   "sub_jwk": JWKECKey,
   "vp": {
     "@context": string[],
@@ -244,7 +245,7 @@ export async function prepareSiopResponse(state: HolderState) {
         'iss': 'https://self-issued.me' as 'https://self-issued.me',
         'aud': interaction.siopRequest.client_id,
         'nonce': interaction.siopRequest?.nonce,
-        'iat': new Date().getTime() / 1000,
+        'nbf': new Date().getTime() / 1000,
         'exp': new Date().getTime() / 1000 + 120,
         'sub_jwk': publicJwks.holder.keys[0],
         ...presentationForEssentialClaims(state.vcStore, currentInteraction(state).siopRequest.claims)

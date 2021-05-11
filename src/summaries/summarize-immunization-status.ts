@@ -89,7 +89,7 @@ async function summarize() {
 
     let vcContents = {
         "iss": "https://issuer.example.org",
-        "iat": Math.floor(new Date().getTime()/1000),
+        "nbf": Math.floor(new Date().getTime()/1000),
         "vc": {
             "credentialSubject": {
                 ...output
