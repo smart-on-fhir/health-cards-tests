@@ -35,13 +35,13 @@
                 <hr />
                 <h2>Verifier Portal</h2>
                 <p>
-                    The Verifier Portal takes as input, a SMART Health Card as QR-Code image.
+                    The Verifier Portal takes as input, a QR-Code image of a SMART Health Card.
                 </p>
                 <p>
-                    After the images is scanned, it is decoded by a series of steps into a FHIR Bundle.
+                    After the image is scanned, it is decoded, in a series of stages, into a FHIR Bundle.
                 </p>
                 <p>
-                    Each step in the process does some amount of validation. Subsequent steps may no succeed without
+                    Each step in the process does some amount of validation. Subsequent steps may not succeed without
                     successful processing of the previous step.
                 </p>
             </div>
@@ -53,7 +53,7 @@
             <div id="scanQr" class="section"></div>
             <script>
 
-                const secScanQr = new section('scanQr', "Scan QR Code", "Numeric QR Data");
+                const secScanQr = new section('scanQr', "Scan QR Code", "Numeric QR Data (Scan QR code or paste Numeric here:)");
                 secScanQr.setDocs(verifierDocs.scanQRCode.l, verifierDocs.scanQRCode.r);
                 secScanQr.button.onclick = async () => {
 
