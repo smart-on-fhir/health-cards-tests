@@ -11,22 +11,16 @@
 import express from 'express';
 import { Config } from './config';
 import fs from 'fs';
-import https from 'https';
 import http from 'http';
 import got from 'got';
 import { validate } from 'health-cards-validation-sdk/js/src/api';
 import * as issuer from './issuer';
 
 
-var privateKey = fs.readFileSync('./private/localhost.key', 'utf8');
-var certificate = fs.readFileSync('./public/localhost.crt', 'utf8');
-var credentials = { key: privateKey, cert: certificate };
-
 const app = express();
 app.use(express.json()) // for parsing application/json
 app.use(express.static('./public')) // issuer public key set
 app.use(express.static('./cards'))  // issued card files
-
 
 
 app.post(Config.VALIDATE_FHIR_BUNDLE, async (req, res) => {
@@ -161,6 +155,14 @@ app.post(Config.DOWNLOAD_PUBLIC_KEY, async (req, res) => {
 });
 
 
+app.post(Config.UPLOAD_PUBLIC_KEY, async (req, res) => {
+    console.log('Received POST for', Config.UPLOAD_PUBLIC_KEY, req.body);
+    const publicKey = JSON.stringify(req.body.pk);
+    fs.writeFileSync('./public/issuer/.well-known/jwks.json', publicKey);
+    res.send();
+});
+
+
 const httpServer = http.createServer(app).listen(Config.SERVICE_PORT, () => {
     const address = httpServer.address() as unknown as { address: string, family: string, port: string };
     const host = address.address === '::' ? 'localhost' : address.address;
@@ -170,20 +172,6 @@ const httpServer = http.createServer(app).listen(Config.SERVICE_PORT, () => {
         Config.ISSUER_URL = url;
     }
     console.log("Demo service listening at " + url);
-    console.log("\nVerifierPortal:  " + url + '/VerifierPortal.html');
-    console.log("DevPortal:  " + url + '/DevPortal.html');
-});
-
-
-const httpsServer = https.createServer(credentials, app).listen(Config.SERVICE_PORT_HTTPS, () => {
-    const address = httpsServer.address() as unknown as { address: string, family: string, port: string };
-    const host = address.address === '::' ? 'localhost' : address.address;
-    const port = address.port === '80' ? '' : ':' + address.port;
-    const url = `https://${host}${port}`;
-    if (!Config.ISSUER_URL) {
-        Config.ISSUER_URL = url;
-    }
-    console.log("\n\nDemo service listening at " + url);
     console.log("\nVerifierPortal:  " + url + '/VerifierPortal.html');
     console.log("DevPortal:  " + url + '/DevPortal.html');
 });

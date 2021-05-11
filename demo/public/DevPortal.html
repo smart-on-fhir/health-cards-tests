@@ -38,7 +38,7 @@
             <p>
 
 
-            <!--
+                <!--
                 Initial FHIR-Bundle and Signing-Key
             -->
             <div style="display: flex; max-height: null;">
@@ -387,6 +387,11 @@
 
                     secInitKey.setValue(JSON.stringify(newKeys, null, 2));
                     secInitKey.fields[0].dispatchEvent(new Event('input'));
+
+                    delete newKeys.d;
+                    const result = await restCall('/upload-public-key', { pk: {keys: [newKeys]} }, 'POST');
+
+                    document.getElementById('textIssuer').value = document.location.origin + "/issuer";
 
                 })
                 .catch(function (err) {
