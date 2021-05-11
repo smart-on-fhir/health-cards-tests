@@ -85,8 +85,10 @@
 
                     const numericEncoded = secScanQr.getValue();
 
+                    if (!numericEncoded) return;
+
                     const b64Offset = '-'.charCodeAt(0);
-                    const digitPairs = numericEncoded.match(/(\d\d?)/g);
+                    const digitPairs = numericEncoded.match(/(\d\d?)/g) || [];
 
                     const jws = digitPairs
                         // for each number in array, add an offset and convert to a char in the base64 range
@@ -98,7 +100,10 @@
 
                     await validateJws();
 
+                    secDecodeJWS.button.onclick();
+
                 };
+
 
             </script>
 
@@ -121,12 +126,16 @@
                 secDecodeJWS.button.onclick = async () => {
 
                     const numericEncoded = secDecodeNumeric.getValue();
+                    if (!numericEncoded) return;
 
                     const jws = numericEncoded.replace(/\n/g, '');
 
                     const parts = jws.split('.');
+                    if(parts.length !== 3) return;
 
-                    secDecodeJWS.setValue(decodeBase64Url(parts[0], 'taJWSHeader'));
+                    try {
+                        secDecodeJWS.setValue(decodeBase64Url(parts[0], 'taJWSHeader'));
+                    } catch { return; }
 
                     let url = '/inflate-payload';
                     const inflatedPayload = await restCall(url, { payload: parts[1] }, 'POST', "text");
@@ -154,7 +163,6 @@
                     const jwsPayload = tryParse(jwsPayloadText);
 
                     if (jwsPayload === undefined) {
-                        secExtractPublicKey.setError("Failed to parse JWS-payload as JSON");
                         return;
                     }
 
@@ -182,8 +190,9 @@
                     const previousControl = secExtractPublicKey;
                     const publicKeyUrl = previousControl.getValue();
 
-                    const url = 'download-public-key';
+                    if (!publicKeyUrl) return;
 
+                    const url = 'download-public-key';
                     const result = await restCall(url, { keyUrl: publicKeyUrl }, 'POST');
 
                     if (result.error.length) {
@@ -214,7 +223,11 @@
                 secVerifySignature.button.onclick = async () => {
 
                     let data = secDecodeNumeric.getValue().replace(/\n/g, '').split('.');
+                    if (!data) return;
+
                     let signature = secDecodeJWS.getValue('taJWSSignature');
+                    if (!signature) return;
+
                     data.pop(); // removes the signature segment leaving header+payload
                     data = data.join('.');
                     const enc = new TextEncoder();
@@ -253,10 +266,13 @@
                 secExtractFhirBundle.button.onclick = async () => {
 
                     const jwsPayloadText = secDecodeJWS.getValue('taJWSPayload');
+                    if (!jwsPayloadText) return;
 
-                    const jwsPayload = JSON.parse(jwsPayloadText);
+                    const jwsPayload = tryParse(jwsPayloadText);
+                    if (!jwsPayload) return;
 
                     const fhirBundle = jwsPayload.vc.credentialSubject.fhirBundle;
+                    if (!fhirBundle) return;
 
                     secExtractFhirBundle.setValue(JSON.stringify(fhirBundle, null, 2));
 
@@ -310,7 +326,7 @@
         // These make rest calls validate a particular artifact
         // 
         const validateSch = validate(secScanQr.fields[0], '/validate-qr-numeric', secScanQr);
-        const validateJws = validate(secDecodeNumeric.fields[0], '/validate-jws', secDecodeNumeric);
+        const validateJws = validate(secDecodeNumeric.fields[0], '/validate-jws', secDecodeJWS);
         const validateJwsPayload = validate(secDecodeJWS.fields[1], '/validate-jws-payload', secDecodeJWS);
         const validateKeySet = validate(secDownloadKey.fields[0], '/validate-key-set', secDownloadKey);
         const validateFhirBundle = validate(secExtractFhirBundle.fields[0], '/validate-fhir-bundle', secExtractFhirBundle);
@@ -345,7 +361,7 @@
 
                 // no need to display errors for empty data
                 if (text.trim() === "") {
-                    clearError(errorId);
+                    section.clearError();
                     return;
                 }
 
@@ -353,13 +369,13 @@
 
                 if (validation.errors.length) {
                     const message = validation.errors.map(e => JSON.stringify(e)).join('\n');
-                    section.setError(message);
+                    section.setError(message, element.id);
                 } else {
-                    section.setError();
+                    section.clearError(element.id);
                 }
             }
 
-            element.oninput = validator;
+            element.addEventListener("input", validator);
 
             return validator;
         }

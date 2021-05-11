@@ -95,7 +95,7 @@ __Paste your ES256 private key below in JWK format:__
 See: [Modeling W3C Verifiable Credentials in FHIR](https://smarthealth.cards/credential-modeling/)
 
 The __Fhir Bundle__ above is inserted into a Verifiable Credential (VC) structure. 
-The issuer field \`iss\` is set to the value you enter into the __Issuer Signing Key__ text field above.  
+The issuer field `iss` is set to the value you enter into the __Issuer Signing Key__ text field above.  
 &nbsp;  
 
 <!-- label:createCredential side:right-->
@@ -208,7 +208,7 @@ __Note:__ Additional line-breaks at the periods '.' below have been added for di
 
 See: [SMART Health Card](https://smarthealth.cards/#user-retrieves-health-cards)  
 
-The SMART Health Card is formed by wrapping the JWS above in a \`{ verifiableCredential[ <jws> [, <jws>, ...] }\`  structure  
+The SMART Health Card is formed by wrapping the JWS above in a `{ verifiableCredential[ <jws> [, <jws>, ...] }`  structure  
 &nbsp; 
 <!-- label:smartHealthCard side:right-->
 <!-- separator --> <br><hr><br>

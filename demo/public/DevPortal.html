@@ -50,6 +50,20 @@
                 </div>
             </div>
             <script>
+
+                //
+                // Try JSON.Parse
+                //
+                function tryParseJSON(text) {
+
+                    try {
+                        return JSON.parse(text);
+                    } catch {
+                        return '';
+                    }
+                }
+
+
                 const secInitFhir = new section('initFhir', "", "Paste FHIR Bundle JSON here:");
                 secInitFhir.setDocs(developerDocs.initFhir.l, null);
                 secInitFhir.fields[0].rows = 10;
@@ -58,9 +72,13 @@
                 secInitKey.setDocs(developerDocs.initKey.l, null);
                 secInitKey.fields[0].rows = 10;
 
+
+
                 // Update the JWS header if the private key is edited
                 function createJWSHeader() {
-                    secAddHeader.setValue(formJWSHeader(JSON.parse(secInitKey.getValue()), 'taJWSHeader'));
+                    const key = tryParseJSON(secInitKey.getValue());
+                    if (!key) return;
+                    secAddHeader.setValue(formJWSHeader(key, 'taJWSHeader'));
                 }
                 // Force an Input event to update after programmatic update
                 secInitKey.fields[0].addEventListener("input", createJWSHeader);
@@ -75,7 +93,8 @@
                 const secCreateCredential = new section('createCredential', "Create Credential", "Credential");
                 secCreateCredential.setDocs(developerDocs.createCredential.l, developerDocs.createCredential.r);
                 secCreateCredential.button.onclick = async () => {
-                    const fhirBundle = JSON.parse(secInitFhir.getValue());
+                    const fhirBundle = tryParseJSON(secInitFhir.getValue());
+                    if (!fhirBundle) return;
                     const issuer = document.getElementById('textIssuer').value;
                     const result = await restCall('/create-vc', { fhir: fhirBundle, issuer: issuer });
                     secCreateCredential.setValue(JSON.stringify(result, null, 2));
@@ -91,8 +110,9 @@
                 const secMinimizePayload = new section('minimizePayload', "Minify Payload", "Payload");
                 secMinimizePayload.setDocs(developerDocs.minimizePayload.l, developerDocs.minimizePayload.r);
                 secMinimizePayload.button.onclick = async () => {
-                    const credentialFullText = secCreateCredential.getValue();
-                    secMinimizePayload.setValue(JSON.stringify(JSON.parse(credentialFullText)));
+                    const credential = tryParseJSON(secCreateCredential.getValue());
+                    if (!credential) return;
+                    secMinimizePayload.setValue(JSON.stringify(credential));
                 };
             </script>
 
@@ -105,7 +125,8 @@
                 const secDeflatePayload = new section('deflatePayload', "Deflate Payload", "Payload");
                 secDeflatePayload.setDocs(developerDocs.deflatePayload.l, developerDocs.deflatePayload.r);
                 secDeflatePayload.button.onclick = async () => {
-                    const minimizedCredential = JSON.parse(secMinimizePayload.getValue());
+                    const minimizedCredential = tryParseJSON(secMinimizePayload.getValue());
+                    if (!minimizedCredential) return;
                     const url = '/deflate-payload';
                     const result = await restCall(url, { vc: minimizedCredential }, 'POST', "arraybuffer");
                     secDeflatePayload.setValue(arrayBufferToBase64url(result));
@@ -123,9 +144,11 @@
                 secAddHeader.addTextField("taJWSPayload", "JWS Payload");
                 secAddHeader.button.onclick = async () => {
                     const payload = secDeflatePayload.getValue();
+                    if (!payload) return;
                     // stringify(parse(...)) removes whitespace possibly introduced by editing on page
-                    const textHeader = JSON.stringify(JSON.parse(secAddHeader.getValue('taJWSHeader')));
-                    const b64urlHeader = toBase64Url(btoa(textHeader));
+                    const textHeader = tryParseJSON(secAddHeader.getValue('taJWSHeader'));
+                    if (!textHeader) return;
+                    const b64urlHeader = toBase64Url(btoa(JSON.stringify(textHeader)));
                     secAddHeader.setValue([b64urlHeader, payload].join('\n.\n'), "taJWSPayload");
                 };
             </script>
@@ -140,7 +163,9 @@
                 secSignPayload.setDocs(developerDocs.signPayload.l, developerDocs.signPayload.r);
                 secSignPayload.button.onclick = async () => {
                     const payload = secDeflatePayload.getValue();
-                    const key = JSON.parse(secInitKey.getValue());
+                    if (!payload) return;
+                    const key = tryParseJSON(secInitKey.getValue());
+                    if (!key) return;
                     const url = '/sign-payload';
                     const result = await restCall(url, { payload: payload, key: key }, 'POST', 'text');
                     secSignPayload.setValue(result.split('.').join('\n.\n'));
@@ -157,6 +182,7 @@
                 secSmartHealthCard.setDocs(developerDocs.smartHealthCard.l, developerDocs.smartHealthCard.r);
                 secSmartHealthCard.button.onclick = async () => {
                     const vcText = secSignPayload.getValue().replace(/\n/g, '');
+                    if (!vcText) return;
                     const url = '/smart-health-card';
                     const result = await restCall(url, { jws: vcText });
                     secSmartHealthCard.setValue(JSON.stringify(result, null, 2));
@@ -173,6 +199,7 @@
                 secNumericEncode.setDocs(developerDocs.numericEncode.l, developerDocs.numericEncode.r);
                 secNumericEncode.button.onclick = async () => {
                     const jws = secSignPayload.getValue().replace(/\n/g, '');
+                    if (!jws) return;
                     const url = '/numeric-encode';
                     const result = await restCall(url, { jws: jws }, 'POST', 'text');
                     secNumericEncode.setValue(result);
@@ -244,6 +271,8 @@
 
 
 
+
+
         //
         // Validation Calls
         // Returns a function for validating an artifact using a rest-api call
@@ -275,6 +304,33 @@
 
             return validator;
         }
+
+
+        // 
+        // Validate Key
+        //
+        async function validatePrivateKey(evt) {
+
+            const key = tryParseJSON(evt.target.value);
+            if (!key) {
+                secInitKey.setError("Key is not valid JSON");
+                return;
+            }
+            secInitKey.clearError();
+
+            const required = ["kid", "x", "y", "d", "use", "alg", "crv", "kty"];
+            const b64url = /^[0-9a-zA-Z_-]+$/;
+            const values = [b64url, b64url, b64url, b64url, /^sig$/, /^ES256$/, /^P-256$/, /^EC$/];
+            const errors = [];
+            Object.keys(key).forEach(field => required.includes(field) || errors.push("Key contains extra field + " + field));
+            required.forEach((field, i) => {
+                key[field] || errors.push("Key missing required field + " + field);
+                values[i].test(key[field]) || errors.push( field + " contains unexpected value. Expect (" + values[i].toString() + ")");
+            });
+
+            secInitKey.setError(errors.join('\n'));
+        }
+        secInitKey.fields[0].addEventListener('input', validatePrivateKey);
 
 
         //
@@ -389,7 +445,7 @@
                     secInitKey.fields[0].dispatchEvent(new Event('input'));
 
                     delete newKeys.d;
-                    const result = await restCall('/upload-public-key', { pk: {keys: [newKeys]} }, 'POST');
+                    const result = await restCall('/upload-public-key', { pk: { keys: [newKeys] } }, 'POST');
 
                     document.getElementById('textIssuer').value = document.location.origin + "/issuer";
 
@@ -411,6 +467,7 @@
                 return '';
             }
         }
+
 
 
     </script>

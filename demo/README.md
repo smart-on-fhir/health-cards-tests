@@ -9,22 +9,28 @@ This project demonstrates the issuance and validation of cards specified in the 
 2. Get the source, for example using git:
 
                 git clone -b sample-service https://github.com/microsoft/health-cards-tests
-                cd health-cards-tests
+                cd health-cards-tests/demo
 
 3. Build the npm package:
 
                 npm install
                 npm run build
 
-3. Deploy the demo service (edit `src/config.ts` to change configuration):
+4. Deploy the demo service (edit `src/config.ts` to change configuration):
 
                 npm run deploy
 
-The demo stands up two endpoint illustrating the SMART Health Card operations:
- - one listening on port 8081 offering a demo API, as documented in [RESTAPI.md](RESTAPI.md)
- - one listening on port 8443 offering a finer-grained API for testing, as used by [issuer](https://localhost:8443/IssuerPortal.html) or [developer](https://localhost:8443/DevPortal.html) portals
 
-The default config creates a self-signed TLS certificate for localhost (needed for the in-browser QR scanning to work), that will not be trusted by the browser. Chrome and Edge, for example, rightfully complain that "Your connection isn't private"); to access the portal pages, you need to click "Advanced" and then "Continue to localhost (unsafe)". The config can be updated with new endoints and certificate to avoid these warnings.
+5. (Optionally) Deploy the service in a Docker container:
+
+        docker build -t health-wallet-demo-portals .
+        docker run --rm -it -p 8080:8080 health-wallet-demo-portals
+
+
+    The demo stands up an endpoint illustrating the SMART Health Card operations listening on port 8080:
+    - [developer](https://localhost:8080/DevPortal.html) portal for constructing SMART Health Cards from FHIR data.
+    - [verifier](https://localhost:8080/VerifierPortal.html) for validating SMART Health Cards and extracting embedded FHIR data.  
+    
 
 ## Contributing
 
