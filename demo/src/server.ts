@@ -1,6 +1,3 @@
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-
 // ----------------------------------------------------------------------
 // Simple test server for SMART Health Card operations
 // This code is for illustration purposes only, it shouldn't be used in 
