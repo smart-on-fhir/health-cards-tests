@@ -17,6 +17,13 @@ metadata:
   namespace: siop
 spec:
   rules:
+  - host: demo-portals.smarthealth.cards
+    http:
+      paths:
+      - backend:
+          serviceName: demo-portals
+          servicePort: 80
+        path: /(.*)
   - host: dev.c19.cards
     http:
       paths:
@@ -35,6 +42,7 @@ spec:
   - hosts:
     - c19.cards
     - dev.c19.cards
+    - demo-portals.smarthealth.cards
     secretName: tls-secret
 status:
   loadBalancer:
@@ -121,3 +129,44 @@ spec:
         env:
         - name: SERVER_BASE
           value: "https://dev.c19.cards/api"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: siop
+  name: demo-portals
+spec:
+  selector:
+    app: demo-portals
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: siop
+  name: demo-portals
+  labels:
+    app: demo-portals
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo-portals
+  template:
+    metadata:
+      labels:
+        app: demo-portals
+    spec:
+      volumes:
+      containers:
+      - name: demo-portals
+        image: argonautcontainerregistry.azurecr.io/demo-portals:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        env:
+        - name: SERVER_BASE
+          value: "https://demo-portals.smarthealth.cards/"
