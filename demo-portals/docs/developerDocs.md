@@ -74,9 +74,9 @@ The __Signing Key__ is expected in the following form:
 
 
 
-Generate a new sample ES256 key for creating a JWS signature:  
+Use a sample ES256 key from [https://raw.githubusercontent.com/smart-on-fhir/health-cards/main/generate-examples/src/config/issuer.jwks.private.json](https://raw.githubusercontent.com/smart-on-fhir/health-cards/main/generate-examples/src/config/issuer.jwks.private.json) for creating a JWS signature:
 
-<input type="button" id='buttonGenerateKey' value="Generate Key" onclick="generateKeyPair()" />
+<input type="button" id='buttonGenerateKey' value="Use Sample Key" onclick="downloadIssuerKeySample()" />
 
 <br/><br/>
   
