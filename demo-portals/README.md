@@ -2,6 +2,13 @@
 
 This project demonstrates the issuance and validation of cards specified in the [SMART Health Card Framework](https://smarthealth.cards/).
 
+# Live Demo
+
+* https://demo-portals.smarthealth.cards/VerifierPortal.html
+* https://demo-portals.smarthealth.cards/DevPortal.html
+
+# Development
+
 ## Setup
 
 1. Make sure [node.js](https://nodejs.org/) and [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) are installed on your system; the latest Long-Term Support (LTS) version is recommended for both.
