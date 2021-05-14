@@ -18,6 +18,6 @@ export const Config = {
     DOWNLOAD_PUBLIC_KEY:                    '/download-public-key',
     UPLOAD_PUBLIC_KEY:                      '/upload-public-key',
 
-    ISSUER_URL: '', // instantiated at startup if empty
-    SERVICE_PORT: 8080
+    SERVER_BASE : process.env.SERVER_BASE || 'http://localhost:' + (process.env.HOST_PORT || 8080) + '/',
+    SERVICE_PORT: process.env.HOST_PORT || 8080
 }

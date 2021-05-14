@@ -1,3 +1,5 @@
+declare var process: NodeJS.Process;
+
 interface Immunization {
     // vaccine code
     code: string;

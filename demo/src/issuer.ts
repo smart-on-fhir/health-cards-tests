@@ -48,7 +48,7 @@ export function healthCard(jws: string): VerifiableCredential {
 }
 
 export async function generateHealthCard(fhirBundle: FhirBundle, signingKey: Key) {
-  return healthCard(await sign(deflate(minify(credential(fhirBundle, Config.ISSUER_URL, []))), signingKey));
+  return healthCard(await sign(deflate(minify(credential(fhirBundle, Config.SERVER_BASE, []))), signingKey));
 }
 
 function partitionJws(jws: string): string[] {
