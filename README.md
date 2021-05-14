@@ -64,3 +64,7 @@ You can use the docker-compose.yaml file to spin up two dev containers with watc
 ## Testing endpoints
 
 See [testing-endpoints.md](./testing-endpoints.md) for details.
+
+## Test portals
+
+The `demo` folder constains a project for test portals illustrating the issuance and validation of SMART Health Cards; see its [README.md](demo/README.md) for details.
