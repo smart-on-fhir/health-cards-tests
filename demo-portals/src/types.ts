@@ -1,4 +1,5 @@
-declare var process: NodeJS.Process;
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 interface Immunization {
     // vaccine code

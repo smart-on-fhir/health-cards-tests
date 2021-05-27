@@ -1,7 +1,6 @@
 FROM node:15
 
-ENV HOST_PORT=8080
-ENV SERVER_BASE=http://localhost:8080/
+ENV SERVER_BASE=relative
 
 WORKDIR /usr/src/app
 
@@ -16,3 +15,4 @@ RUN npm run build
 
 # Start
 CMD [ "npm", "run", "deploy" ]
+EXPOSE 8080

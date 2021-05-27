@@ -48,7 +48,7 @@ This public key will be used to verify the JWS signature and must be available a
 
 <div style="display: inline-block">
 <label></label>
-<input type="text" id='textIssuer' placeholder="https://<your-issuer-site>/issuer"
+<input type="text" id='textIssuer' placeholder="https://contoso.com/issuer"
     style="width: 300px;" />
 <label>/.well-known/jwks.json</label>
 </div>
@@ -74,9 +74,9 @@ The __Signing Key__ is expected in the following form:
 
 
 
-Use a sample ES256 key from [https://raw.githubusercontent.com/smart-on-fhir/health-cards/main/generate-examples/src/config/issuer.jwks.private.json](https://raw.githubusercontent.com/smart-on-fhir/health-cards/main/generate-examples/src/config/issuer.jwks.private.json) for creating a JWS signature:
+Generate a new sample ES256 key for creating a JWS signature:  
 
-<input type="button" id='buttonGenerateKey' value="Use Sample Key" onclick="downloadIssuerKeySample()" />
+<input type="button" id='buttonGenerateKey' value="Generate Key" onclick="generateKeyPair()" />
 
 <br/><br/>
   

@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 import {jsPDF, ImageOptions} from 'jspdf';
 import {codeToVaccine} from './fhir';
 import fs from 'fs';
