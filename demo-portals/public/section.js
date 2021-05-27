@@ -18,6 +18,7 @@ class section {
     id;
     content;
     validators = {};
+    next = undefined;
 
     constructor(id, buttonText, textPlaceHolder, fieldId = "ta" + id) {
 
@@ -73,6 +74,7 @@ class section {
         const ta0 = document.createElement("TEXTAREA");
         ta0.setAttribute("id", fieldId);
         ta0.setAttribute("placeholder", textPlaceHolder || id);
+        ta0.defaultHeight = "55px";
         content0.appendChild(ta0);
         this.fields.push(ta0);
         this.values[fieldId] = ta0;
@@ -171,7 +173,7 @@ class section {
         element.parentElement.style.maxHeight = element.scrollHeight + "px";
 
         setTimeout(() => {
-            element.style.background = '#FFFFFF';
+            //element.style.background = '#FFFFFF';
         }, 500);
     }
 
@@ -248,15 +250,13 @@ class section {
 
         element.style.height = "1px";
         element.style.height = Math.min((25 + element.scrollHeight), 400) + "px";
-
-        const bgColor = element.style.background;
         element.style.background = color;
 
         // Dispatch the 'input' event to trigger validation
         element.dispatchEvent(new Event('input'));
 
         setTimeout(() => {
-            element.style.background = bgColor;
+            element.style.background = "#FFF";
         }, 500);
     }
 
@@ -266,7 +266,9 @@ class section {
     clear() {
         this.clearError();
         for (let i = 0; i < this.fields.length; i++) {
-            this.fields[i].value = "";
+            const element = this.fields[i];
+            element.value = "";
+            element.style.height = element.defaultHeight || "60px";
         }
     }
 
@@ -282,6 +284,22 @@ class section {
 
     }
 
+
+    valid() {
+        this.fields.forEach(ta => {
+            if(!ta.value) return false;
+        });
+        if(Object.keys(this.errors).length) return false;
+        return true;
+    }
+
+
+    goNext() {
+        if(!this.next) return;
+        setTimeout(() => {
+            this.next.button.onclick();
+        }, 0);
+    }
 
 }
 

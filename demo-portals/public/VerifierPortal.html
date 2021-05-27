@@ -73,6 +73,10 @@
 
                 };
 
+                secScanQr.fields[0].addEventListener("input", function() {
+                    secScanQr.valid() && secScanQr.goNext();
+                });
+
             </script>
 
 
@@ -100,10 +104,10 @@
 
                     await validateJws();
 
-                    secDecodeJWS.button.onclick();
+                    secDecodeNumeric.valid() && secDecodeNumeric.goNext();
 
                 };
-
+                secScanQr.next = secDecodeNumeric;
 
             </script>
 
@@ -131,7 +135,7 @@
                     const jws = numericEncoded.replace(/\n/g, '');
 
                     const parts = jws.split('.');
-                    if(parts.length !== 3) return;
+                    if (parts.length !== 3) return;
 
                     try {
                         secDecodeJWS.setValue(decodeBase64Url(parts[0], 'taJWSHeader'));
@@ -145,7 +149,10 @@
 
                     await validateJwsPayload();
 
+                    secDecodeJWS.valid() && secDecodeJWS.goNext();
+
                 };
+                secDecodeNumeric.next = secDecodeJWS;
 
             </script>
 
@@ -174,7 +181,10 @@
                     secExtractPublicKey.setError(/* sending nothing, clears the error */);
                     secExtractPublicKey.setValue(jwsPayload.iss + '/.well-known/jwks.json');
 
+                    secExtractPublicKey.valid() && secExtractPublicKey.goNext();
+
                 };
+                secDecodeJWS.next = secExtractPublicKey;
 
             </script>
 
@@ -208,7 +218,10 @@
 
                     await validateKeySet();
 
+                    secDownloadKey.valid() && secDownloadKey.goNext();
+
                 };
+                secExtractPublicKey.next = secDownloadKey;
 
             </script>
 
@@ -228,7 +241,7 @@
                     let signature = secDecodeJWS.getValue('taJWSSignature');
                     if (!signature) return;
 
-                    data.pop(); // removes the signature segment leaving header+payload
+                    data.pop(); // removes the signature segment leaving header.payload
                     data = data.join('.');
                     const enc = new TextEncoder();
                     data = enc.encode(data);
@@ -252,7 +265,10 @@
                             console.error(err);
                         });
 
+                    secVerifySignature.valid() && secVerifySignature.goNext();
+
                 };
+                secDownloadKey.next = secVerifySignature;
 
             </script>
 
@@ -278,7 +294,10 @@
 
                     await validateFhirBundle();
 
+                    secExtractFhirBundle.valid() && secExtractFhirBundle.goNext();
+
                 };
+                secVerifySignature.next = secExtractFhirBundle;
 
             </script>
 
@@ -356,6 +375,8 @@
         //
         function validate(element, url, section) {
 
+            const errorLabels = ["Debug", "Info", "Warning", "Error", "Fatal"];
+
             async function validator() {
                 const text = element.value.replace(/\n/g, '');
 
@@ -368,7 +389,7 @@
                 const validation = await restCall(url, { data: text }, 'POST');
 
                 if (validation.errors.length) {
-                    const message = validation.errors.map(e => JSON.stringify(e)).join('\n');
+                    const message = validation.errors.map(e => `· ${e.message} (${errorLabels[e.level]})` ).join('\n');
                     section.setError(message, element.id);
                 } else {
                     section.clearError(element.id);
@@ -498,7 +519,7 @@
             const sampleUrl = 'https://smarthealth.cards/examples/example-00-f-qr-code-numeric-value-0.txt'
             const result = await restCall(sampleUrl, "", 'GET', 'text');
             secScanQr.setValue(result);
-            secScanQr.fields[0].dispatchEvent(new Event('input'));
+            //secScanQr.fields[0].dispatchEvent(new Event('input'));
         }
 
 
