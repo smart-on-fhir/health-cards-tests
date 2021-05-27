@@ -29,7 +29,7 @@ const QrScanner = function (vidId) {
             promise.resolve = resolve;
             promise.reject = reject;
             // Use facingMode: environment to attempt to get the front camera on phones
-            navigator.mediaDevices.getUserMedia({ video: { width: 600 } }).then(function (stream) {
+            navigator.mediaDevices.getUserMedia({ video: { width: 600, facingMode: "environment" } }).then(function (stream) {
                 video.srcObject = stream;
                 video.setAttribute("playsinline", true); // required to tell iOS safari we don't want fullscreen
                 video.play();
