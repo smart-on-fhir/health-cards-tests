@@ -418,6 +418,20 @@
 
 
         //
+        // Downloads a sample issuer key
+        //
+        async function downloadIssuerKeySample() {
+            const sampleUrl = 'https://raw.githubusercontent.com/smart-on-fhir/health-cards/main/generate-examples/src/config/issuer.jwks.private.json'
+            const result = await restCall(sampleUrl, "", 'GET', 'text');
+            // select the first key from the sample JWK set
+            const key = JSON.stringify(JSON.parse(result).keys[0], null, 2);
+            secInitKey.setValue(key);
+            secInitKey.fields[0].dispatchEvent(new Event('input'));
+            document.getElementById('textIssuer').value = 'https://smarthealth.cards/examples/issuer';
+        }
+
+
+        //
         // Generates a new ES256 key with 'kid' and writes it to the Signing-Key textarea element
         //
         async function generateKeyPair() {

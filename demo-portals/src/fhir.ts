@@ -1,6 +1,3 @@
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-
 import {Config} from './config';
 
 // TODO: validate vaccine code https://www.cdc.gov/vaccines/programs/iis/COVID-19-related-codes.html
