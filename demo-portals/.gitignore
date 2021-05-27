@@ -129,7 +129,7 @@ js/*
 # qr-scanner js files to enable in-browser qr scanning
 # showdown js files to markdown to html
 # github-markdown css files format markdown in a github style
-public/jsQR.js
+public/jsQr.js
 public/github-markdown*
 
 # localhost tls cert and key generated at install

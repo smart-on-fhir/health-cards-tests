@@ -1,9 +1,0 @@
-- [X] Red in error boxes
-- [X] fade color gets stuck
-- [X] dev top side-by-side sections not even when shrinking window
-- [ ] dev fhir bad json no triggering error
-- [X] dev clearing key TA does not clear error (empty should result in clean validation)
-- [X] clear does not restore TA heights
-- [ ] 
-- [ ] 
-- [ ] 

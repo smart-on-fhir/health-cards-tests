@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 // ----------------------------------------------------------------------
 // Simple test server for SMART Health Card operations
 // This code is for illustration purposes only, it shouldn't be used in 
@@ -80,7 +83,6 @@ app.post(Config.DEFLATE_PAYLOAD, async (req, res) => {
     res.send(Buffer.from(result as Uint8Array));
 });
 
-
 app.post(Config.INFLATE_PAYLOAD, async (req, res) => {
     console.log('Received POST for', Config.INFLATE_PAYLOAD, req.body);
     const payload = JSON.stringify(req.body.payload);
@@ -161,9 +163,15 @@ app.post(Config.UPLOAD_PUBLIC_KEY, async (req, res) => {
 });
 
 
-http.createServer(app).listen(Config.SERVICE_PORT, () => {
-    const url = Config.SERVER_BASE;
-    console.log("Service listening at " + url);
-    console.log("\nVerifierPortal:  " + url + 'VerifierPortal.html');
-    console.log("DevPortal:  " + url + 'DevPortal.html');
+const httpServer = http.createServer(app).listen(Config.SERVICE_PORT, () => {
+    const address = httpServer.address() as unknown as { address: string, family: string, port: string };
+    const host = address.address === '::' ? 'localhost' : address.address;
+    const port = address.port === '80' ? '' : ':' + address.port;
+    const url = `http://${host}${port}`;
+    if (!Config.ISSUER_URL) {
+        Config.ISSUER_URL = url;
+    }
+    console.log("Demo service listening at " + url);
+    console.log("\nVerifierPortal:  " + url + '/VerifierPortal.html');
+    console.log("DevPortal:  " + url + '/DevPortal.html');
 });
