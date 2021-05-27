@@ -1,6 +1,3 @@
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-
 import jose, { JWK } from 'node-jose';
 import pako from 'pako';
 import QrCode, { QRCodeSegment } from 'qrcode';
@@ -51,7 +48,7 @@ export function healthCard(jws: string): VerifiableCredential {
 }
 
 export async function generateHealthCard(fhirBundle: FhirBundle, signingKey: Key) {
-  return healthCard(await sign(deflate(minify(credential(fhirBundle, Config.ISSUER_URL, []))), signingKey));
+  return healthCard(await sign(deflate(minify(credential(fhirBundle, Config.SERVER_BASE, []))), signingKey));
 }
 
 function partitionJws(jws: string): string[] {
