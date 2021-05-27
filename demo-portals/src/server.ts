@@ -10,7 +10,7 @@ import { Config } from './config';
 import fs from 'fs';
 import http from 'http';
 import got from 'got';
-import { validate } from 'health-cards-validation-sdk/js/src/api';
+import { validate , ValidationProfiles} from 'health-cards-validation-sdk/js/src/api';
 import * as issuer from './issuer';
 
 
@@ -18,6 +18,9 @@ const app = express();
 app.use(express.json()) // for parsing application/json
 app.use(express.static('./public')) // issuer public key set
 app.use(express.static('./cards'))  // issued card files
+
+
+validate.profile  = ValidationProfiles.any;
 
 
 app.post(Config.VALIDATE_FHIR_BUNDLE, async (req, res) => {
@@ -79,7 +82,6 @@ app.post(Config.DEFLATE_PAYLOAD, async (req, res) => {
     const result = issuer.deflate(payload);
     res.send(Buffer.from(result as Uint8Array));
 });
-
 
 app.post(Config.INFLATE_PAYLOAD, async (req, res) => {
     console.log('Received POST for', Config.INFLATE_PAYLOAD, req.body);
