@@ -416,7 +416,7 @@
         // The examples may change, so downloading is preferable to hard-coding a sample
         //
         async function downloadFhirBundleSample() {
-            const sampleUrl = 'https://smarthealth.cards/examples/example-00-a-fhirBundle.json'
+            const sampleUrl = 'https://spec.smarthealth.cards/examples/example-00-a-fhirBundle.json'
             const result = await restCall(sampleUrl, "", 'GET', 'text');
             secInitFhir.setValue(result);
             secInitFhir.fields[0].dispatchEvent(new Event('input'));
@@ -453,7 +453,7 @@
             const key = JSON.stringify(JSON.parse(result).keys[0], null, 2);
             secInitKey.setValue(key);
             secInitKey.fields[0].dispatchEvent(new Event('input'));
-            document.getElementById('textIssuer').value = 'https://smarthealth.cards/examples/issuer';
+            document.getElementById('textIssuer').value = 'https://spec.smarthealth.cards/examples/issuer';
         }
 
 

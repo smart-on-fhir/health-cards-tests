@@ -24,7 +24,7 @@ app.use(express.json({ type: 'application/json+fhir', limit: '5000kb'}));
 app.use(cors());
 const port = 8080; // default port to listen
 
-const exampleBase = 'https://smarthealth.cards/examples';
+const exampleBase = 'https://spec.smarthealth.cards/examples';
 
 
 type VerifierResponse = VerifierState["siopResponse"]

@@ -1,6 +1,6 @@
 # SMART Health Card Demo Service
 
-This project demonstrates the issuance and validation of cards specified in the [SMART Health Card Framework](https://smarthealth.cards/).
+This project demonstrates the issuance and validation of cards specified in the [SMART Health Card Framework](https://spec.smarthealth.cards/).
 
 # Live Demo
 
