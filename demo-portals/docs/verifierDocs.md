@@ -8,7 +8,7 @@ When using `localhost`, __HTTP__ is sufficient.
 
 To Scan your QR code, try to align the QR code within the square overlay.  As camera resolutions may differ, you may have experiment with finding the best alignment. Make sure the QR-code is flat.
 
-Download a sample __Numeric QR Code__ from [https://smarthealth.cards/examples/example-00-f-qr-code-numeric-value-0.txt](https://smarthealth.cards/examples/example-00-f-qr-code-numeric-value-0.txt)  
+Download a sample __Numeric QR Code__ from [https://spec.smarthealth.cards/examples/example-00-f-qr-code-numeric-value-0.txt](https://spec.smarthealth.cards/examples/example-00-f-qr-code-numeric-value-0.txt)  
 
 <input type="button" id='buttonDownloadSample' value="Download Sample" onclick="downloadNumericQRSample()" /> 
 
@@ -24,7 +24,7 @@ Download a sample __Numeric QR Code__ from [https://smarthealth.cards/examples/e
 
 Converts the `shc:/567629095243206...` encoded data to the compact JWS format __base64url__.__base64url__.__base64url__
 
-See: [Health Cards are encoded as Compact Serialization JSON Web Signatures (JWS)](https://smarthealth.cards/#health-cards-are-encoded-as-compact-serialization-json-web-signatures-jws)
+See: [Health Cards are encoded as Compact Serialization JSON Web Signatures (JWS)](https://spec.smarthealth.cards/#health-cards-are-encoded-as-compact-serialization-json-web-signatures-jws)
 
 >__Note:__ Additional line-breaks at the periods '.' below have been added for display purposes only.  
 
@@ -65,7 +65,7 @@ Extracts the public key url from the iss field in the JWS payload field above.
 
 >__Note__ : you may enter an alternate url here to use in the following steps.  
 
-See: [Protocol Details](https://smarthealth.cards/#protocol-details) for more information on `/.well-known/jwks.json`
+See: [Protocol Details](https://spec.smarthealth.cards/#protocol-details) for more information on `/.well-known/jwks.json`
 
 <br><br>
 <!-- label:extractPublicKey side:right-->
@@ -127,7 +127,7 @@ The signature field of the compact JWS is verified against the header and payloa
 
 Signature verification results in a __true__ or __false__ value.  
 
-See: [Protocol Details](https://smarthealth.cards/#protocol-details) for more information on signatures.
+See: [Protocol Details](https://spec.smarthealth.cards/#protocol-details) for more information on signatures.
 
 <br><br>
 <!-- label:verifySignature side:right-->

@@ -516,7 +516,7 @@
         // The examples may change, so downloading is preferable to hard-coding a sample
         //
         async function downloadNumericQRSample() {
-            const sampleUrl = 'https://smarthealth.cards/examples/example-00-f-qr-code-numeric-value-0.txt'
+            const sampleUrl = 'https://spec.smarthealth.cards/examples/example-00-f-qr-code-numeric-value-0.txt'
             const result = await restCall(sampleUrl, "", 'GET', 'text');
             secScanQr.setValue(result);
             //secScanQr.fields[0].dispatchEvent(new Event('input'));

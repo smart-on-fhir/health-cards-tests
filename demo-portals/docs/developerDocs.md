@@ -3,7 +3,7 @@
 
 __FHIR Bundle__ resource of type "collection" that includes all required FHIR resources (content + identity resources)  
 
-See: [Modeling W3C Verifiable Credentials in FHIR](https://smarthealth.cards/credential-modeling/)
+See: [Modeling W3C Verifiable Credentials in FHIR](https://spec.smarthealth.cards/credential-modeling/)
 
 
 The __FHIR Bundle__ is expected in the following form:  
@@ -20,7 +20,7 @@ The __FHIR Bundle__ is expected in the following form:
 
 <br/>
 
-Download a sample __FHIR Bundle__ from [https://smarthealth.cards/examples/example-00-a-fhirBundle.json](https://smarthealth.cards/examples/example-00-a-fhirBundle.json)  
+Download a sample __FHIR Bundle__ from [https://spec.smarthealth.cards/examples/example-00-a-fhirBundle.json](https://spec.smarthealth.cards/examples/example-00-a-fhirBundle.json)  
 
 
 <input type="button" id='buttonDownloadSample' value="Download Sample" onclick="downloadFhirBundleSample()" />  
@@ -38,12 +38,12 @@ __Paste your FHIR Bundle in the text box below:__
 <!-- label:initKey side:left -->
 ## Keys
 
-See: [Generating and resolving cryptographic keys](https://smarthealth.cards/#protocol-details)  
+See: [Generating and resolving cryptographic keys](https://spec.smarthealth.cards/#protocol-details)  
 
 
 ### Issuer Public Key  
 
-See:  [Determining keys associated with an issuer](https://smarthealth.cards/#determining-keys-associated-with-an-issuer)  
+See:  [Determining keys associated with an issuer](https://spec.smarthealth.cards/#determining-keys-associated-with-an-issuer)  
 This public key will be used to verify the JWS signature and must be available at:  
 
 <div style="display: inline-block">
@@ -92,7 +92,7 @@ __Paste your ES256 private key below in JWK format:__
 <!-- label:createCredential side:left -->
 ## Create Credential
 
-See: [Modeling W3C Verifiable Credentials in FHIR](https://smarthealth.cards/credential-modeling/)
+See: [Modeling W3C Verifiable Credentials in FHIR](https://spec.smarthealth.cards/credential-modeling/)
 
 The __Fhir Bundle__ above is inserted into a Verifiable Credential (VC) structure. 
 The issuer field `iss` is set to the value you enter into the __Issuer Signing Key__ text field above.  
@@ -102,7 +102,7 @@ The issuer field `iss` is set to the value you enter into the __Issuer Signing K
 Notice that the __vs.credentialSubject.fhirBundle__ contains the Fhir Bundle from above.  
 ```
 {
-    "iss": "https://smarthealth.cards/examples/issuer",
+    "iss": "https://spec.smarthealth.cards/examples/issuer",
     "nbr": 1617925250718,
     "vc": {
         "type": [
@@ -130,7 +130,7 @@ Notice that the __vs.credentialSubject.fhirBundle__ contains the Fhir Bundle fro
 <!-- label:minimizePayload side:left -->
 ## Minify Payload  
 
-See: [Health Cards are Small](https://smarthealth.cards/#health-cards-are-small)
+See: [Health Cards are Small](https://spec.smarthealth.cards/#health-cards-are-small)
 
 The Verfiable Credential (VC) above is minified, all extraneous white-space is removed.
 
@@ -144,7 +144,7 @@ The Verfiable Credential (VC) above is minified, all extraneous white-space is r
 <!-- label:deflatePayload side:left -->
 ## Deflate Payload  
 
-See: [Health Cards are Small](https://smarthealth.cards/#health-cards-are-small)
+See: [Health Cards are Small](https://spec.smarthealth.cards/#health-cards-are-small)
 
 The minified credential above is deflated (compressed) using the DEFLATE algorithm.  
 The deflated binary data is represented as Base64url below for display purposes.  
@@ -158,7 +158,7 @@ The deflated binary data is represented as Base64url below for display purposes.
 <!-- label:addHeader side:left -->
 ## Add JWS Header  
 
-See: [Health Cards are Small/JWS Header](https://smarthealth.cards/#health-cards-are-small)  
+See: [Health Cards are Small/JWS Header](https://spec.smarthealth.cards/#health-cards-are-small)  
 
 The JWS header is in the following form:  
 
@@ -185,7 +185,7 @@ __Note:__ Additional line-breaks at the periods '.' below have been added for di
 <!-- label:signPayload side:left -->
 ## Sign Payload  
 
-See: [Signing Health Cards](https://smarthealth.cards/#signing-health-cards)  
+See: [Signing Health Cards](https://spec.smarthealth.cards/#signing-health-cards)  
 
 The header and compressed payload are signed using the private key supplied in the __Issuer Signing Key__ field above.  
 
@@ -206,7 +206,7 @@ __Note:__ Additional line-breaks at the periods '.' below have been added for di
 <!-- label:smartHealthCard side:left -->
 ## SMART Health Card  
 
-See: [SMART Health Card](https://smarthealth.cards/#user-retrieves-health-cards)  
+See: [SMART Health Card](https://spec.smarthealth.cards/#user-retrieves-health-cards)  
 
 The SMART Health Card is formed by wrapping the JWS above in a `{ verifiableCredential[ <jws> [, <jws>, ...] }`  structure  
 &nbsp; 
@@ -219,7 +219,7 @@ The SMART Health Card is formed by wrapping the JWS above in a `{ verifiableCred
 <!-- label:numericEncode side:left -->
 ## Numeric Encoding  
 
-See: [Encoding Chunks as QR Codes](https://smarthealth.cards/#encoding-chunks-as-qr-codes)  
+See: [Encoding Chunks as QR Codes](https://spec.smarthealth.cards/#encoding-chunks-as-qr-codes)  
 
 Encoding the SMART Health Card as a Numerical Encoded QR-Code.  
 
@@ -233,7 +233,7 @@ Encoding the SMART Health Card as a Numerical Encoded QR-Code.
 <!-- label:qrCode side:left -->
 ## QR Encoding  
 
-See: [Creating a QR code (or a set of QR codes) from a Health Card JWS](https://smarthealth.cards/#creating-a-qr-code-or-a-set-of-qr-codes-from-a-health-card-jws)    
+See: [Creating a QR code (or a set of QR codes) from a Health Card JWS](https://spec.smarthealth.cards/#creating-a-qr-code-or-a-set-of-qr-codes-from-a-health-card-jws)    
 
 The Numeric encoded data is used to construct a QR-Code image.  
 
