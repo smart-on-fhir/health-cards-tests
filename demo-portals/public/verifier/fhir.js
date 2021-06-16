@@ -13,7 +13,7 @@ const secExtractFhirBundle = (() => {
         const jwsPayload = tryParse(jwsPayloadText);
         if (!jwsPayload) return;
 
-        const fhirBundle = jwsPayload.vc.credentialSubject.fhirBundle;
+        const fhirBundle = jwsPayload?.vc?.credentialSubject?.fhirBundle;
         if (!fhirBundle) return;
 
         await sec.setValue(JSON.stringify(fhirBundle, null, 2));

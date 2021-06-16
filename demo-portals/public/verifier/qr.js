@@ -64,15 +64,7 @@ const secScanQr = (() => {
         return order;
     }
 
-    class QrSection extends Section {
-        // override clear method to remove additional text fields from multi-part codes
-        clear() {
-            super.clear();
-            super.resetTextFields();
-        }
-    }
-
-    const sec = new QrSection('scanQr', "Scan QR Code");
+    const sec = new Section('scanQr', "Scan QR Code");
     sec.setDocs(verifierDocs.scanQRCode.l, verifierDocs.scanQRCode.r);
 
     sec.process = async function () {
@@ -109,6 +101,15 @@ const secScanQr = (() => {
         }
 
         return this.fields[0].value;
+    }
+
+    
+    //
+    // override the clear method to remove multi-part fields
+    //
+    sec.clear = async function() {
+        Section.prototype.clear.call(this);
+        this.resetTextFields();
     }
 
 

@@ -183,6 +183,7 @@ class Section {
         //  <textarea class='taError' id="taJWSPayloadError"></textarea>
         this.taError = document.createElement("TEXTAREA");
         this.taError.className = "taError";
+        this.taError.readOnly = true;
         this.taError.setAttribute("id", "ta" + id + "Error");
         this.taError.setAttribute("wrap", "off");
         div03.appendChild(this.taError);
@@ -238,6 +239,7 @@ class Section {
             this.fields[index].errors = [];
         } else {
             this.errors = [];
+            this.fields.forEach(f => f.errors = []);
         }
 
         this.displayErrors();
@@ -276,7 +278,7 @@ class Section {
         // expand the error TA and parent DIV elements
         element.style.height = "1px";
         element.style.maxHeight = height.max + 'px';
-        element.style.height = Math.max(element.scrollHeight, height.min) + 'px';
+        element.style.height = Math.max(element.scrollHeight, height.min) + 5 + 'px';
         element.parentElement.style.maxHeight = 'max-content';
     }
 
@@ -399,7 +401,7 @@ class Section {
         await this.process();
     }
 
-    
+
 
     //
     // Calls into the overridden validate function

@@ -1,18 +1,6 @@
-
-class HeaderSection extends Section {
-    // override clear method to populate the header field if valid key is present
-    async clear() {
-        super.clear();
-        if (secInitKey.valid()) {
-            const kid = await computeKid(secInitKey.getValue());
-            await this.setValue(JSON.stringify({ "zip": "DEF", "alg": "ES256", "kid": kid }), 0);
-        }
-    }
-}
-
 const secHeader = (() => {
 
-    const sec = new HeaderSection('addHeader', "Add JWS Header");
+    const sec = new Section('addHeader', "Add JWS Header");
     sec.setDocs(developerDocs.addHeader.l, developerDocs.addHeader.r);
     sec.addTextField("JWS Header");
     sec.addTextField("JWS Payload");
@@ -45,6 +33,17 @@ const secHeader = (() => {
         }
 
         this.valid() ? this.goNext() : this.next?.clear();
+    }
+
+    //
+    // override the clear method to populate the header field with 'kid' computed from the Key Section field
+    //
+    sec.clear = async function() {
+        Section.prototype.clear.call(this);
+        if (secInitKey.valid()) {
+            const kid = await computeKid(secInitKey.getValue());
+            await this.setValue(JSON.stringify({ "zip": "DEF", "alg": "ES256", "kid": kid }), 0);
+        }
     }
 
     return sec;

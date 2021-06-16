@@ -10,7 +10,7 @@ import { Config } from './config';
 import fs from 'fs';
 import http from 'http';
 import got from 'got';
-import { validate , ValidationProfiles} from 'health-cards-validation-sdk/js/src/api';
+import { validate, ValidationProfiles } from 'health-cards-validation-sdk/js/src/api';
 import * as issuer from './issuer';
 import { QRCodeSegment } from 'qrcode';
 
@@ -21,7 +21,7 @@ app.use(express.static('./public')) // issuer public key set
 app.use(express.static('./cards'))  // issued card files
 
 
-validate.profile  = ValidationProfiles.any;
+validate.profile = ValidationProfiles.any;
 
 
 app.post(Config.VALIDATE_FHIR_BUNDLE, async (req, res) => {
@@ -112,7 +112,7 @@ app.post(Config.SIGN_PAYLOAD, async (req, res) => {
 app.post(Config.NUMERIC_ENCODE, async (req, res) => {
     console.log('Received POST for', Config.NUMERIC_ENCODE, req.body);
     const jws = req.body.jws;
-    const segments = issuer.numeric(jws) as {data: string, mode: string}[][];
+    const segments = issuer.numeric(jws) as { data: string, mode: string }[][];
     const output = segments.map(s => s[0].data + s[1].data);
     res.send(output);
 
@@ -121,9 +121,15 @@ app.post(Config.NUMERIC_ENCODE, async (req, res) => {
 
 app.post(Config.GENERATE_QR_CODE, async (req, res) => {
     console.log('Received POST for', Config.GENERATE_QR_CODE, req.body);
-    const shc : string[] = req.body.shc;
-    const output = await issuer.qr(issuer.shcToSegments(shc));
-    res.send(output)
+    const shc: string[] = req.body.shc;
+    const segments = issuer.shcToSegments(shc);
+    let output : string[];
+    try {
+        output = await issuer.qr(segments);
+    } catch {
+        output = [];
+    }
+    res.send(output);
 });
 
 

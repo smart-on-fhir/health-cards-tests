@@ -42,7 +42,7 @@ const secCreateCredential = (() => {
 
         switch (field.index) {
             case 0: // issuer
-                this.setErrors(/^https:\/\//.test(text) ? [] : [`Issuer shall use https://`]);
+                this.setErrors(/^https:\/\//.test(text) ? [] : [`Issuer shall use https://`], 0);
                 break;
 
             case 1: // payload

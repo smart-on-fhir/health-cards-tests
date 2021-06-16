@@ -3,6 +3,7 @@ const secVerifySignature = (() => {
     const sec = new Section('verifySignature', "Verify Signature");
     sec.setDocs(verifierDocs.verifySignature.l, verifierDocs.verifySignature.r);
     sec.addTextField("Validation Result");
+    sec.fields[0].textArea.readOnly = true;
 
     sec.process = async function() {
 
@@ -11,6 +12,8 @@ const secVerifySignature = (() => {
 
         let signature = secDecodeJWS.getValue(2 /*signature*/);
         if (!signature) return;
+
+        if(!secDecodeJWS.fields[2].valid()) return sec.setErrors(["JWS/Signature not valid"]);;
 
         data.pop(); // removes the signature segment leaving header.payload
         data = data.join('.');
