@@ -12,6 +12,7 @@ import http from 'http';
 import got from 'got';
 import { validate , ValidationProfiles} from 'health-cards-validation-sdk/js/src/api';
 import * as issuer from './issuer';
+import { QRCodeSegment } from 'qrcode';
 
 
 const app = express();
@@ -113,7 +114,7 @@ app.post(Config.NUMERIC_ENCODE, async (req, res) => {
     const jws = req.body.jws;
     const segments = issuer.numeric(jws) as {data: string, mode: string}[][];
     const output = segments.map(s => s[0].data + s[1].data);
-    res.send(output.join('\n\n'));
+    res.send(output);
 
 });
 

@@ -7,20 +7,118 @@
 //  TextArea (collapsable error textarea toggled by content)
 //
 
-class section {
+
+class Field {
+
+    section;
+    textArea;
+    name;
+    errors = [];
+    height = { min: 60, max: 400 };
+    options = { color: { default: "#FFF", update: '#d6fcd7' }, delay: { update: 500, bounce: 500 } };
+
+    constructor(section, name, placeholder) {
+
+        this.section = section;
+        this.name = name;
+        this.textArea = document.createElement("TEXTAREA");
+        this.textArea.setAttribute("placeholder", placeholder);
+
+        const div = document.createElement("DIV");
+        div.appendChild(this.textArea);
+        section.content.appendChild(div);
+
+        let timer;
+
+        this.textArea.addEventListener('input', () => {
+
+            // this will prevent typing from triggering a server round-trip for every key-stroke
+            if (timer) clearTimeout(timer);
+
+            timer = setTimeout(this.update.bind(this), this.options.delay.bounce, timer);
+
+        });
+    }
+
+    async update(timer) {
+
+        timer = undefined;
+
+        // Special handling if field is made empty
+        // remove errors and clear the remaining sections
+        if (this.textArea.value.trim() === '') {
+            this.textArea.value = '';
+            this.section.fields.length > 1 ?
+                this.section.clearErrors(this.index) :
+                this.section.clearErrors()
+            this.section.next?.clear();
+            return;
+        }
+
+        await this.section.validate(this);
+    }
+
+
+    set placeholder(text) {
+        this.textArea.setAttribute("placeholder", text);
+    }
+
+    get index() {
+        return this.section.fields.findIndex(e => e === this);
+    }
+
+    get value() {
+        return this.textArea.value.trim();
+    }
+
+    set value(text) {
+        this.textArea.value = text || '';
+        this.textArea.style.height = "1px";
+        this.textArea.style.height = Math.min(Math.max(this.height.min, this.textArea.scrollHeight), this.height.max) + "px";
+        if (this.textArea === '') this.errors = [];
+        this.textArea.style.background = this.options.color.update;
+        setTimeout(() => {
+            this.textArea.style.background = this.options.color.default;
+        }, this.options.delay.update);
+    }
+
+    get errors() {
+        return this.errors;
+    }
+
+    set errors(errorArray) {
+        this.this.errors = errorArray || [];
+    }
+
+    valid() {
+        return this.value.length && !this.errors.some(err => err.level > 2);
+    }
+
+    delete() {
+        this.section.content.removeChild(this.textArea.parentElement);
+        this.textArea.parentElement.remove();
+        this.textArea.remove();
+        this.section.fields.splice(this.index, 1);
+    }
+
+}
+
+
+
+class Section {
 
     taError;
     button = undefined;
     doc0;
     doc1;
     fields = [];
-    values = {};
     id;
     content;
-    validators = {};
     next = undefined;
+    errors = [];
 
-    constructor(id, buttonText, textPlaceHolder, fieldId = "ta" + id) {
+
+    constructor(id, buttonText) {
 
         this.id = id;
 
@@ -33,6 +131,8 @@ class section {
             this.button.setAttribute("type", "button");
             this.button.value = buttonText || "Button";
             div0.appendChild(this.button);
+            //this.button.onclick = async () => await this.process();
+            this.button.onclick = this.process.bind(this);
         }
 
         //<span class="info collapsible"
@@ -70,16 +170,6 @@ class section {
         var content0 = document.createElement("DIV");
         this.content.appendChild(content0);
 
-        // <textarea type='text' id="taJWSPayload" placeholder="JWS Payload"></textarea>
-        const ta0 = document.createElement("TEXTAREA");
-        ta0.setAttribute("id", fieldId);
-        ta0.setAttribute("placeholder", textPlaceHolder || id);
-        ta0.defaultHeight = "55px";
-        content0.appendChild(ta0);
-        this.fields.push(ta0);
-        this.values[fieldId] = ta0;
-        this.validators[fieldId] = [];
-
         // <span class="error collapsible"></span>
         const span1 = document.createElement("SPAN");
         span1.className = "error collapsible";
@@ -94,12 +184,13 @@ class section {
         this.taError = document.createElement("TEXTAREA");
         this.taError.className = "taError";
         this.taError.setAttribute("id", "ta" + id + "Error");
+        this.taError.setAttribute("wrap", "off");
         div03.appendChild(this.taError);
 
         this.span = span0;
 
         this.span.addEventListener("click", () => {
-            this.span.classList.toggle("active");
+            //this.span.classList.toggle("active");
             var content = this.span.nextElementSibling;
             if (content.style.maxHeight) {
                 content.style.maxHeight = null;
@@ -109,72 +200,84 @@ class section {
         });
 
         return;
-
     }
 
-    //
-    //
-    //
-    addValidator(validator, id) {
-        this.validators[id].push(validator);
-    }
-
-
-    errors = {};
 
     //
     // Sets text in the collapsable Error field. Field will collapse when empty
+    // Label allows errors to be put into groups
     //
-    setError(message, label = 'default') {
-        if (message) {
-            this.errors[label] = message;
-        } else {
-            delete this.errors[label];
+    setErrors(errors, index = -1) {
+
+        // convert strings to error objects
+        for (let i = 0; i < errors.length; i++) {
+            if (typeof (errors[i]) === 'string') {
+                errors[i] = { message: errors[i], code: 100, level: 3 };
+            }
         }
+
+        if (index >= 0) {
+            this.fields[index].errors = errors;
+        } else {
+            this.errors = errors;
+        }
+
         this.displayErrors();
+
+        return errors.length > 0;
     }
+
 
     //
     // Sets text in the collapsable Error field. Field will collapse when empty
+    // Specify label to clear only errors of that group. Use no label to clear everything
     //
-    clearError(label) {
+    clearErrors(index = -1) {
 
-        const element = this.taError;
-
-        if (label) {
-            delete this.errors[label];
+        if (index >= 0) {
+            this.fields[index].errors = [];
         } else {
-            this.errors = {};
+            this.errors = [];
         }
 
         this.displayErrors();
     }
+
 
     displayErrors() {
 
-        const element = this.taError;
-
         const allErrors = [];
-        for (const label in this.errors) {
-            allErrors.push(this.errors[label]);
-        }
+        const errorLabels = ["Debug", "Info", "Warning", "Error", "Fatal"];
+
+        const element = this.taError;
+        let errors = false;
+
+        const height = { min: 60, max: 400 };
+
+        this.fields.forEach(f => f.errors.forEach(e => {
+            allErrors.push(`· ${e.message} (${errorLabels[e.level]})`);
+            errors = errors || e.level > 2;
+        }));
+
+        this.errors.forEach(e => {
+            allErrors.push(`· ${e.message} (${errorLabels[e.level]})`)
+            errors = errors || e.level > 2;
+        });
 
         if (allErrors.length === 0) {
             element.value = "";
-            element.classList.remove("active");
             element.parentElement.style.maxHeight = null;
             return;
         }
 
         element.value = allErrors.join('\n');
-        element.classList.toggle("active");
+        element.style.background = errors ? '#e097a2' : '#f7ca6b';
 
-        element.parentElement.style.maxHeight = "1px";
-        element.parentElement.style.maxHeight = element.scrollHeight + "px";
-
-        setTimeout(() => {
-            //element.style.background = '#FFFFFF';
-        }, 500);
+        // expand the error TA and parent DIV elements
+        element.style.height = "1px";
+        element.style.maxHeight = height.max + 'px';
+        element.style.height = Math.max(element.scrollHeight, height.min) + 'px';
+        element.parentElement.style.maxHeight = 'max-content';
     }
 
 
@@ -210,98 +313,99 @@ class section {
 
     }
 
+
     //
     // Adds additional text fields below the default text field
     // The new field can be accessed by this.fields[i] or this.values[id]
     //
-    addTextField(id, placeholder) {
-
-        const ta = document.createElement("TEXTAREA");
-        ta.setAttribute("id", id);
-        placeholder && ta.setAttribute("placeholder", placeholder);
-
-        const div = document.createElement("DIV");
-        div.appendChild(ta);
-
-
-        //const parent = this.fields[0].parentElement;
-        this.fields.push(ta);
-        this.values[id] = ta;
-        this.validators[id] = []
-
-        this.content.appendChild(div);
+    addTextField(placeholder, name) {
+        this.fields.push(new Field(this, name, placeholder));
     }
+
+
+
+    //
+    // Reset to single TA
+    //
+    resetTextFields() {
+        for (let i = 1; i < this.fields.length;) {
+            this.fields[1].delete();
+        }
+    }
+
 
     //
     // Gets the value of a field by id or the first field
     //
-    getValue(id) {
-        return id ? this.values[id].value : this.fields[0].value;
+    getValue(index = 0) {
+        return this.fields[index].value;
     }
 
 
     //
     // Sets the value of a field by id or the first field
     //
-    setValue(value, id, color = '#E6F4F1') {
+    async setValue(value, index = 0) {
 
-        const element = id ? this.values[id] : this.fields[0];
-        element.value = value;
+        const field = this.fields[index];
 
-        element.style.height = "1px";
-        element.style.height = Math.min((25 + element.scrollHeight), 400) + "px";
-        element.style.background = color;
+        if (!field) throw new Error(`setValue() cannot lookup field[${index}].`);
 
-        // Dispatch the 'input' event to trigger validation
-        element.dispatchEvent(new Event('input'));
+        field.value = value;
 
-        setTimeout(() => {
-            element.style.background = "#FFF";
-        }, 500);
+        await field.update();
+
     }
+
 
     //
     // Clear all fields
     //
     clear() {
-        this.clearError();
-        for (let i = 0; i < this.fields.length; i++) {
-            const element = this.fields[i];
-            element.value = "";
-            element.style.height = element.defaultHeight || "60px";
-        }
+        this.clearErrors();
+        this.fields.forEach(f => f.value = undefined);
+        if (this.next) this.next.clear();
     }
 
 
-    sideBySide(id, placeholder) {
-
-        this.addTextField(id, placeholder);
-
-        this.content.style = "display: flex; max-height: null;";
-
-        this.content.childNodes[0].style = "width: 50%; padding-right: 5px;";
-        this.content.childNodes[1].style = "flex-grow: 1; padding-left: 5px;";
-
-    }
-
-
+    //
+    // returns true if each field has data, but there are no errors.
+    //
     valid() {
-        this.fields.forEach(ta => {
-            if(!ta.value) return false;
-        });
-        if(Object.keys(this.errors).length) return false;
+        if (this.fields.some(field => !field.valid())) return false;
+
+        if (this.errors.some(err => err.level > 2)) return false;
+
         return true;
     }
 
 
+    //
+    // Triggers the button on the next section if .next is assigned
+    // 
     goNext() {
-        if(!this.next) return;
-        setTimeout(() => {
-            this.next.button.onclick();
+        if (!this.next) return;
+
+        setTimeout(async () => {
+            await this.next.process(); //.button.onclick();
         }, 0);
     }
 
+
+    //
+    // Calls into the overridden process function
+    // 
+    async process() {
+        await this.process();
+    }
+
+    
+
+    //
+    // Calls into the overridden validate function
+    // 
+    async validate() {
+        await this.validate();
+    }
+
 }
-
-
-

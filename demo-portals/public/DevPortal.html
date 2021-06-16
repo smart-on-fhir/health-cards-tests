@@ -25,6 +25,14 @@
     <script src='section.js'></script>
 
 
+    <!-- various utility functions -->
+    <script src='utils.js'></script>
+
+
+    <!-- validation -->
+    <script src='validate.js'></script>
+
+
     <div>
 
         <div style='padding: 3%'>
@@ -37,8 +45,7 @@
 
             <p>
 
-
-                <!--
+            <!--
                 Initial FHIR-Bundle and Signing-Key
             -->
             <div style="display: flex; max-height: null;">
@@ -46,212 +53,48 @@
                     <div id="initFhir" class="section"></div>
                 </div>
                 <div style="width: 50%; padding-left: 5px;">
-                    <div id="initKey" class="section"></div>
+                    <div id="initKeys" class="section"></div>
                 </div>
             </div>
-            <script>
-
-                //
-                // Try JSON.Parse
-                //
-                function tryParseJSON(text) {
-
-                    try {
-                        return JSON.parse(text);
-                    } catch {
-                        return '';
-                    }
-                }
 
 
-                const secInitFhir = new section('initFhir', "", "Paste FHIR Bundle JSON here:");
-                secInitFhir.setDocs(developerDocs.initFhir.l, null);
-                secInitFhir.fields[0].rows = 10;
-                secInitFhir.fields[0].defaultHeight = secInitFhir.fields[0].clientHeight + "px";
+            <script src='developer/fhir.js'></script>
+            <script src='developer/keys.js'></script>
 
 
-                const secInitKey = new section('initKey', "", "Paste private ES256 JWK Key here:");
-                secInitKey.setDocs(developerDocs.initKey.l, null);
-                secInitKey.fields[0].rows = 10;
-                secInitKey.fields[0].defaultHeight = secInitKey.fields[0].clientHeight + "px";
-
-
-                // Update the JWS header if the private key is edited
-                function createJWSHeader() {
-                    const key = tryParseJSON(secInitKey.getValue());
-                    if (!key) return;
-                    secAddHeader.setValue(formJWSHeader(key, 'taJWSHeader'));
-
-                    if (secInitFhir.valid() && secInitKey.valid()) { secInitKey.goNext(); }
-                }
-                // Force an Input event to update after programmatic update
-                secInitKey.fields[0].addEventListener("input", createJWSHeader);
-
-
-            </script>
-
-
-            <!-- 
-                Create Credential 
-            -->
             <div id="createCredential" class="section"></div>
-            <script>
-                const secCreateCredential = new section('createCredential', "Create Credential", "Credential");
-                secCreateCredential.setDocs(developerDocs.createCredential.l, developerDocs.createCredential.r);
-                secCreateCredential.button.onclick = async () => {
-                    const fhirBundle = tryParseJSON(secInitFhir.getValue());
-                    if (!fhirBundle) return;
-                    const issuer = document.getElementById('textIssuer').value;
-                    const result = await restCall('/create-vc', { fhir: fhirBundle, issuer: issuer });
-                    secCreateCredential.setValue(JSON.stringify(result, null, 2));
-                    if (secCreateCredential.valid()) { secCreateCredential.goNext(); }
-                };
-                secInitKey.next = secCreateCredential;
-            </script>
+            <script src='developer/credential.js'></script>
+            <script>secInitKey.next = secCreateCredential</script>
+            <script>secInitFhir.next = secCreateCredential</script>
 
-
-            <!-- 
-                Minify Payload 
-            -->
             <div id="minimizePayload" class="section"></div>
-            <script>
-                const secMinimizePayload = new section('minimizePayload', "Minify Payload", "Payload");
-                secMinimizePayload.setDocs(developerDocs.minimizePayload.l, developerDocs.minimizePayload.r);
-                secMinimizePayload.button.onclick = async () => {
-                    const credential = tryParseJSON(secCreateCredential.getValue());
-                    if (!credential) return;
-                    secMinimizePayload.setValue(JSON.stringify(credential));
-                    if (secMinimizePayload.valid()) { secMinimizePayload.goNext(); }
-                };
-                secCreateCredential.next = secMinimizePayload;
-            </script>
+            <script src='developer/minify.js'></script>
+            <script>secCreateCredential.next = secMinimizePayload</script>
 
-
-            <!-- 
-                Deflate Payload 
-            -->
             <div id="deflatePayload" class="section"></div>
-            <script>
-                const secDeflatePayload = new section('deflatePayload', "Deflate Payload", "Payload");
-                secDeflatePayload.setDocs(developerDocs.deflatePayload.l, developerDocs.deflatePayload.r);
-                secDeflatePayload.button.onclick = async () => {
-                    const minimizedCredential = tryParseJSON(secMinimizePayload.getValue());
-                    if (!minimizedCredential) return;
-                    const url = '/deflate-payload';
-                    const result = await restCall(url, { vc: minimizedCredential }, 'POST', "arraybuffer");
-                    secDeflatePayload.setValue(arrayBufferToBase64url(result));
-                    if (secDeflatePayload.valid()) { secDeflatePayload.goNext(); }
-                };
-                secMinimizePayload.next = secDeflatePayload;
-            </script>
+            <script src='developer/deflate.js'></script>
+            <script>secMinimizePayload.next = secDeflatePayload</script>
 
-
-            <!-- 
-                Add JWS Header 
-            -->
             <div id="addHeader" class="section"></div>
-            <script>
-                const secAddHeader = new section('addHeader', "Add JWS Header", "Header", "taJWSHeader");
-                secAddHeader.setDocs(developerDocs.addHeader.l, developerDocs.addHeader.r);
-                secAddHeader.addTextField("taJWSPayload", "JWS Payload");
-                secAddHeader.button.onclick = async () => {
-                    const payload = secDeflatePayload.getValue();
-                    if (!payload) return;
-                    // stringify(parse(...)) removes whitespace possibly introduced by editing on page
-                    const textHeader = tryParseJSON(secAddHeader.getValue('taJWSHeader'));
-                    if (!textHeader) return;
-                    const b64urlHeader = toBase64Url(btoa(JSON.stringify(textHeader)));
-                    secAddHeader.setValue([b64urlHeader, payload].join('\n.\n'), "taJWSPayload");
-                    if (secAddHeader.valid()) { secAddHeader.goNext(); }
-                };
-                secDeflatePayload.next = secAddHeader;
-            </script>
+            <script src='developer/header.js'></script>
+            <script>secDeflatePayload.next = secHeader</script>
 
-
-            <!-- 
-                Sign Payload 
-            -->
             <div id="signPayload" class="section"></div>
-            <script>
-                const secSignPayload = new section('signPayload', "Sign Payload", "Signed Payload");
-                secSignPayload.setDocs(developerDocs.signPayload.l, developerDocs.signPayload.r);
-                secSignPayload.button.onclick = async () => {
-                    const payload = secDeflatePayload.getValue();
-                    if (!payload) return;
-                    const key = tryParseJSON(secInitKey.getValue());
-                    if (!key) return;
-                    const url = '/sign-payload';
-                    const result = await restCall(url, { payload: payload, key: key }, 'POST', 'text');
-                    secSignPayload.setValue(result.split('.').join('\n.\n'));
-                    if (secSignPayload.valid()) { secSignPayload.goNext(); }
-                };
-                secAddHeader.next = secSignPayload;
-            </script>
+            <script src='developer/sign.js'></script>
+            <script>secHeader.next = secSignPayload</script>
 
-
-            <!-- 
-                SMART Health Card 
-            -->
             <div id="smartHealthCard" class="section"></div>
-            <script>
-                const secSmartHealthCard = new section('smartHealthCard', "SMART Health Card", "SMART Health Card");
-                secSmartHealthCard.setDocs(developerDocs.smartHealthCard.l, developerDocs.smartHealthCard.r);
-                secSmartHealthCard.button.onclick = async () => {
-                    const vcText = secSignPayload.getValue().replace(/\n/g, '');
-                    if (!vcText) return;
-                    const url = '/smart-health-card';
-                    const result = await restCall(url, { jws: vcText });
-                    secSmartHealthCard.setValue(JSON.stringify(result, null, 2));
-                    if (secSmartHealthCard.valid()) { secSmartHealthCard.goNext(); }
-                };
-                secSignPayload.next = secSmartHealthCard;
-            </script>
+            <script src='developer/healthcard.js'></script>
+            <script>secSignPayload.next = secSmartHealthCard</script>
 
-
-            <!-- 
-                Numeric Encode 
-            -->
             <div id="numericEncode" class="section"></div>
-            <script>
-                const secNumericEncode = new section('numericEncode', "Numeric Encode", "Numeric Encoding");
-                secNumericEncode.setDocs(developerDocs.numericEncode.l, developerDocs.numericEncode.r);
-                secNumericEncode.button.onclick = async () => {
-                    const jws = secSignPayload.getValue().replace(/\n/g, '');
-                    if (!jws) return;
-                    const url = '/numeric-encode';
-                    const result = await restCall(url, { jws: jws }, 'POST', 'text');
-                    secNumericEncode.setValue(result);
-                    if (secNumericEncode.valid()) { secNumericEncode.goNext(); }
-                };
-                secSmartHealthCard.next = secNumericEncode; //{button: document.getElementById('buttonQRCode')};
-            </script>
+            <script src='developer/numeric.js'></script>
+            <script>secSmartHealthCard.next = secNumericEncode</script>
 
-
-            <!-- 
-                QR Encode 
-            -->
-            <div class="section">
-                <input type="button" id='buttonQRCode' value="Generate QR Code" />
-                <span class="info collapsible">?</span>
-                <div id="docsQRCode" class="docs"></div>
-                <div id="qrContainer"></div>
-            </div>
-            <script>
-                document.getElementById('buttonQRCode').onclick = async function () {
-                    const shc = secNumericEncode.getValue().match(/shc:\/(\d+\/\d+\/)?\d+/g) || [];
-                    const url = '/generate-qr-code';
-                    const result = await restCall(url, { shc: shc }, 'POST'/*, 'image/png'*/);
-                    const container = document.getElementById('qrContainer');
-                    container.innerHTML = ''; // clear previous images
-                    for (let i = 0; i < result.length; i++) {
-                        container.appendChild(document.createElement('img')).src = result[i];
-                    }
-                };
-                secNumericEncode.next = { button: document.getElementById('buttonQRCode') };
-            </script>
-
-
-
+            <div id="qrContainer" class="section"></div>
+            <script src='developer/qr.js'></script>
+            <div id="qrContainer1" style="height: 300px;"></div>
+            <script>secNumericEncode.next = secQR</script>
 
         </div>
 
@@ -264,150 +107,16 @@
     <div class="footer">
         <input type="button" id='buttonClear' value="Clear" />
     </div>
+
     <script>
+
         document.getElementById('buttonClear').onclick = clear;
         function clear() {
-            secInitFhir.clear();
+            // The order matters here.  
+            // Clearing initFhir first will result in the JWS-header field not clearing.
+            // Because JWS-Header clear() will re-populate unless initKey is empty
             secInitKey.clear();
-            secCreateCredential.clear();
-            secMinimizePayload.clear();
-            secDeflatePayload.clear();
-            secAddHeader.clear();
-            secSignPayload.clear();
-            secSmartHealthCard.clear();
-            secNumericEncode.clear();
-            document.getElementById('qrContainer').innerHTML = '';
-        }
-    </script>
-
-
-    <script>
-
-        //
-        // Initialize and Attach Validation Functions to 
-        // These make rest calls validate a particular artifact
-        // 
-        validate(secNumericEncode.fields[0], '/validate-qr-numeric', secNumericEncode);
-        validate(secInitFhir.fields[0], '/validate-fhir-bundle', secInitFhir);
-        validate(secSignPayload.fields[0], '/validate-jws', secSignPayload);
-        validate(secMinimizePayload.fields[0], '/validate-jws-payload', secMinimizePayload);
-        validate(secCreateCredential.fields[0], '/validate-jws-payload', secCreateCredential);
-
-
-        //
-        // Validation Calls
-        // Returns a function for validating an artifact using a rest-api call
-        // Wraps the rest call and error assignment.
-        // Also, wires the validated textarea to auto-validate on any updates
-        //
-        function validate(element, url, section) {
-
-            const errorLabels = ["Debug", "Info", "Warning", "Error", "Fatal"];
-
-            async function validator() {
-                const text = element.value.replace(/\n/g, '');
-
-                // no need to display errors for empty data
-                if (text.trim() === "") {
-                    section.clearError();
-                    return;
-                }
-
-                const validation = await restCall(url, { data: text }, 'POST');
-
-                if (validation.errors.length) {
-                    const message = validation.errors.map(e => `· ${e.message} (${errorLabels[e.level]})`).join('\n');
-                    section.setError(message, element.id);
-                } else {
-                    section.clearError(element.id);
-                }
-            }
-
-            element.addEventListener("input", validator);
-
-            return validator;
-        }
-
-
-        // 
-        // Validate Key
-        //
-        async function validatePrivateKey(evt) {
-
-            const key = tryParseJSON(evt.target.value);
-            if (!key) {
-                if (evt.target.value === "") { secInitKey.clearError() } else { secInitKey.setError("Key is not valid JSON") };
-                return;
-            }
-            secInitKey.clearError();
-
-            const required = ["kid", "x", "y", "d", "use", "alg", "crv", "kty"];
-            const b64url = /^[0-9a-zA-Z_-]+$/;
-            const values = [b64url, b64url, b64url, b64url, /^sig$/, /^ES256$/, /^P-256$/, /^EC$/];
-            const errors = [];
-            Object.keys(key).forEach(field => required.includes(field) || errors.push("Key contains extra field + " + field));
-            required.forEach((field, i) => {
-                key[field] || errors.push("Key missing required field " + field);
-                values[i].test(key[field]) || errors.push(field + " contains unexpected value. Expect (" + values[i].toString() + ")");
-            });
-
-            secInitKey.setError(errors.join('\n'));
-        }
-        secInitKey.fields[0].addEventListener('input', validatePrivateKey);
-
-
-        //
-        // Calls the Rest API on the server.
-        // Caller will specify when return type is other than JSON
-        //
-        async function restCall(url, data, method = 'POST', responseType = 'json') {
-
-            const xhr = new XMLHttpRequest();
-
-            return new Promise(function (resolve, reject) {
-
-                xhr.open(method, url);
-
-                if (data instanceof Object) {
-                    xhr.setRequestHeader("Content-Type", "application/json");
-                    data = JSON.stringify(data);
-                }
-                else if (typeof data === 'string') {
-                    xhr.setRequestHeader("Content-Type", "text/plain");
-                }
-
-                xhr.responseType = responseType;
-
-                xhr.onreadystatechange = function () {
-                    if (xhr.readyState === 4) {
-                        resolve(xhr.response);
-                    }
-                };
-
-                xhr.onerror = function (err) {
-                    reject(err);
-                }
-
-                method === 'POST' ? xhr.send(data) : xhr.send();
-
-            });
-
-        }
-
-
-        //
-        // Converts data om an ArrayBuffer to a base64-url encoded string
-        //
-        function arrayBufferToBase64url(arrayBuffer) {
-            return toBase64Url(btoa(String.fromCharCode(...new Uint8Array(arrayBuffer))));
-        }
-
-
-        //
-        // Converts standard base64 to base64-url
-        //
-        function toBase64Url(base64Text) {
-            return base64Text.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+            secInitFhir.clear();
         }
 
 
@@ -418,28 +127,7 @@
         async function downloadFhirBundleSample() {
             const sampleUrl = 'https://spec.smarthealth.cards/examples/example-00-a-fhirBundle.json'
             const result = await restCall(sampleUrl, "", 'GET', 'text');
-            secInitFhir.setValue(result);
-            secInitFhir.fields[0].dispatchEvent(new Event('input'));
-        }
-
-
-        //
-        // Computes the 'kid' of a JWK key using SHA-256
-        //
-        async function computeKid(keyJwk) {
-
-            // Kid computation requires properties in alphabetical order
-            keyJwk = { "crv": "P-256", "kty": "EC", "x": keyJwk.x, "y": keyJwk.y, };
-
-            const keyBytes = new Uint8Array(JSON.stringify(keyJwk).split('').map(c => c.charCodeAt(0)));
-
-            return window.crypto.subtle.digest({ name: "SHA-256", }, keyBytes)
-                .then(function (hash) {
-                    return arrayBufferToBase64url(hash);
-                })
-                .catch(function (err) {
-                    console.error(err);
-                });
+            await secInitFhir.setValue(result);
         }
 
 
@@ -451,59 +139,17 @@
             const result = await restCall(sampleUrl, "", 'GET', 'text');
             // select the first key from the sample JWK set
             const key = JSON.stringify(JSON.parse(result).keys[0], null, 2);
-            secInitKey.setValue(key);
-            secInitKey.fields[0].dispatchEvent(new Event('input'));
+            await secInitKey.setValue(key);
             document.getElementById('textIssuer').value = 'https://spec.smarthealth.cards/examples/issuer';
+            await secCreateCredential.setValue('https://spec.smarthealth.cards/examples/issuer', 0);
         }
 
 
-        //
-        // Generates a new ES256 key with 'kid' and writes it to the Signing-Key textarea element
-        //
-        async function generateKeyPair() {
-
-            var key;
-
-            return window.crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256", }, true, ["sign"])
-                .then(function (keyPair) {
-                    return Promise.all([window.crypto.subtle.exportKey('jwk', keyPair.publicKey), window.crypto.subtle.exportKey('jwk', keyPair.privateKey)]);
-                })
-                .then(async function (exportedKeys) {
-
-                    const [publicKey, privateKey] = exportedKeys;
-                    const kid = await computeKid(publicKey);
-                    const newKeys = {
-                        "kty": "EC",
-                        "kid": kid,
-                        "use": "sig", "alg": "ES256", "crv": "P-256", "x": privateKey.x, "y": privateKey.y, "d": privateKey.d
-                    }
-
-                    secInitKey.setValue(JSON.stringify(newKeys, null, 2));
-                    secInitKey.fields[0].dispatchEvent(new Event('input'));
-
-                    delete newKeys.d;
-                    const result = await restCall('/upload-public-key', { pk: { keys: [newKeys] } }, 'POST');
-
-                    document.getElementById('textIssuer').value = document.location.origin + "/issuer";
-
-                })
-                .catch(function (err) {
-                    console.error(err);
-                });
-
-        }
-
-
-        //
-        // Creates a JWS header by populating the 'kid' field from the user's private key
-        //
-        function formJWSHeader(key) {
-            try {
-                return JSON.stringify({ "zip": "DEF", "alg": "ES256", "kid": key.kid });
-            } catch {
-                return '';
-            }
-        }
+        /* uncomment to pre-populate fields*/
+        (async () => {
+            //await downloadFhirBundleSample();
+            //await downloadIssuerKeySample();
+        })();
 
 
     </script>

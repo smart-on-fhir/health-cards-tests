@@ -164,7 +164,7 @@ The JWS header is in the following form:
 
     {"zip":"DEF","alg":"ES256","kid":"<<key thumbprint>>"}  
 
-\`"kid"\` is equal to the base64url-encoded SHA-256 JWK Thumbprint of the key (see [RFC7638](https://tools.ietf.org/html/rfc7638))
+`"kid"` is equal to the base64url-encoded SHA-256 JWK Thumbprint of the key (see [RFC7638](https://tools.ietf.org/html/rfc7638))
 
 
 The header is then base64url-encoded:

@@ -56,21 +56,6 @@ function partitionJws(jws: string): string[] {
   return jws.match(new RegExp(`.{1,${Math.ceil(jws.length / Math.ceil(jws.length / MAX_CHUNK_SIZE))}}`, 'g')) || [];
 }
 
-// function toNumericQr(jws: string, chunkIndex: number, totalChunks: number): QRCodeSegment[] {
-//   const SMALLEST_B64_CHAR_CODE = 45; // "-" === 45
-//   return [
-//     { data: 'shc:/' + ((totalChunks > 1) ? `${chunkIndex + 1}/${totalChunks}/` : ``), mode: 'byte' },
-//     {
-//       data: jws
-//         .split('')
-//         .map(c => c.charCodeAt(0) - SMALLEST_B64_CHAR_CODE)
-//         .flatMap(c => [Math.floor(c / 10), c % 10])
-//         .join(''),
-//       mode: 'numeric',
-//     },
-//   ];
-// }
-
 export function numeric(jws: string): QRCodeSegment[][] {
   return partitionJws(jws).map((subJws, chunkIndex, arr) => {
     const SMALLEST_B64_CHAR_CODE = 45; // "-" === 45
@@ -88,11 +73,6 @@ export function numeric(jws: string): QRCodeSegment[][] {
     ];
   });
 }
-
-
-// export function numeric(jws: string): QRCodeSegment[][] {
-//   return partitionJws(jws).map((c, i, a) => toNumericQr(c, i, a.length));
-// }
 
 export function qr(segments: QRCodeSegment[][]): Promise<string[]> {
   return Promise.all(segments.map(segment => QrCode.toDataURL(segment, { errorCorrectionLevel: 'low' })));
