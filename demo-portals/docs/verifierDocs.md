@@ -142,6 +142,14 @@ See: [Protocol Details](https://spec.smarthealth.cards/#protocol-details) for mo
 ## Extract FHIR Bundle  
 
 After signature verification, the FHIR Bundle is extracted from the JWS payload field and formatted for display.    
+<br/>
+
+Select optional FHIR validation profile:  
+
+<select id='profile-select' onchange="profileSelected()">
+    <option value='any'>default</option>
+    <option value='usa-covid19-immunization'>usa-covid19-immunization</option>
+</select>
 
 <br><br>
 <!-- label:extractFhirBundle side:right-->

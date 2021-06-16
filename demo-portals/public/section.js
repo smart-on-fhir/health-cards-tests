@@ -407,7 +407,7 @@ class Section {
     // Calls into the overridden validate function
     // 
     async validate() {
-        await this.validate();
+        await this.validate(this.fields[0]);
     }
 
 }

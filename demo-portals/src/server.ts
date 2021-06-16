@@ -12,7 +12,6 @@ import http from 'http';
 import got from 'got';
 import { validate, ValidationProfiles } from 'health-cards-validation-sdk/js/src/api';
 import * as issuer from './issuer';
-import { QRCodeSegment } from 'qrcode';
 
 
 const app = express();
@@ -26,8 +25,10 @@ validate.profile = ValidationProfiles.any;
 
 app.post(Config.VALIDATE_FHIR_BUNDLE, async (req, res) => {
     console.log('Received POST for', Config.VALIDATE_FHIR_BUNDLE, req.body);
-    const fhirJson = req.body.data;
-    const errors = await validate.fhirbundle(fhirJson);
+    const fhir = req.body.data;
+    validate.profile = ValidationProfiles[fhir.profile || 'any'];
+    const errors = await validate.fhirbundle(fhir.data);
+    validate.profile = ValidationProfiles.any;
     res.type('json');
     res.send({ success: errors.length === 0, errors: errors });
 });

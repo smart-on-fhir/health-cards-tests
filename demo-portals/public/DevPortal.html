@@ -45,7 +45,7 @@
 
             <p>
 
-            <!--
+                <!--
                 Initial FHIR-Bundle and Signing-Key
             -->
             <div style="display: flex; max-height: null;">
@@ -142,6 +142,15 @@
             await secInitKey.setValue(key);
             document.getElementById('textIssuer').value = 'https://spec.smarthealth.cards/examples/issuer';
             await secCreateCredential.setValue('https://spec.smarthealth.cards/examples/issuer', 0);
+        }
+
+
+        //
+        // User selected profile for FHIR validation
+        //
+        function profileSelected(event) {
+            // force validation with selected profile
+            secInitFhir.setValue(secInitFhir.getValue());
         }
 
 

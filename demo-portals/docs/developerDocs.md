@@ -22,12 +22,21 @@ The __FHIR Bundle__ is expected in the following form:
 
 Download a sample __FHIR Bundle__ from [https://spec.smarthealth.cards/examples/example-00-a-fhirBundle.json](https://spec.smarthealth.cards/examples/example-00-a-fhirBundle.json)  
 
-
 <input type="button" id='buttonDownloadSample' value="Download Sample" onclick="downloadFhirBundleSample()" />  
+<br/>
+
+Select optional FHIR validation profile:  
+
+<select id='profile-select' onchange="profileSelected()">
+    <option value='any'>default</option>
+    <option value='usa-covid19-immunization'>usa-covid19-immunization</option>
+</select>
+
+
 
 <br/><br/> 
 __Paste your FHIR Bundle in the text box below:__
-<br/> 
+<br/><br/> 
 
 <!-- label:initFhir side:right-->
 <!-- separator --> <br><hr><br>

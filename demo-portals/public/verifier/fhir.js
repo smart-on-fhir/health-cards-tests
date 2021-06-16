@@ -23,7 +23,8 @@ const secExtractFhirBundle = (() => {
     };
 
     sec.validate = async function (field) {
-        this.setErrors(await validate.fhirBundle(field.value));
+        const profile = document.getElementById('profile-select').value;
+        this.setErrors(await validate.fhirBundle(field.value, profile));
     }
 
     return sec;

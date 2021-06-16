@@ -4,6 +4,7 @@ const secInitKey = (() => {
     sec.setDocs(developerDocs.initKey.l, null);
     sec.addTextField("Paste private ES256 JWK Key here :");
     sec.fields[0].height.min = 400;
+    sec.fields[0].value = ''; // triggers re-size
 
     sec.process = async function () {
     };

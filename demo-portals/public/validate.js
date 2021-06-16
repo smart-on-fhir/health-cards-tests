@@ -10,12 +10,12 @@ const validate = (function () {
         return /^[0-9a-zA-Z-_]+$/.test(text) ? [] : [error('Not valid Base64Url encoding')];
     }
 
-    validate.fhirBundle = async function (text) {
+    validate.fhirBundle = async function (text, profile = 'any') {
 
         const obj = tryParse(text);
         if (!obj) return [error('Cannot parse FHIR Bundle as JSON')];
 
-        const result = await restCall('/validate-fhir-bundle', { data: text }, 'POST');
+        const result = await restCall('/validate-fhir-bundle', { data: { data: text, profile: profile } }, 'POST');
 
         return result.errors;
     }

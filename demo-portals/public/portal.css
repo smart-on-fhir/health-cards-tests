@@ -1,3 +1,6 @@
+body {
+  padding-bottom: 50px;
+}
 div {
   border-color: gray;
   border-style: unset;
@@ -15,7 +18,7 @@ label {
 input[type="button"] {
   background-color: #6b7987;
   border-radius: 3px;
-  border-width: 1px;
+  border: 1px solid black;
   color: white;
   display: inline-block;
   font-size: 16px;
@@ -34,10 +37,8 @@ img {
 textarea,
 article,
 input[type="text"] {
-  border-color: black;
   border-radius: 3px;
-  border-style: solid;
-  border-width: 1px;
+  border: 1px solid black;
   box-sizing: border-box;
   height: 100%;
   margin-bottom: 5px;
@@ -118,8 +119,27 @@ article {
 #span-issuer-label {
   font-family: Arial, Helvetica, sans-serif;
   top: 15px;
-  margin-left: 10px;;
+  margin-left: 10px;
   color: white;
   font-size: 16px;
   position: absolute;
+}
+
+#profile-select {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  padding: 10px;
+  border-radius: 3px;
+  border: solid 1px black;
+  background-color: #6b7987;
+  color: white;
+  display: inline-block;
+  text-decoration: none;
+  width: 300px;
+  text-align-last:center;
+}
+
+option {
+  background-color: white;
+  color: #3A4856;
 }
