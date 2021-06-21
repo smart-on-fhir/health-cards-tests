@@ -3,7 +3,6 @@ const QrScanner = function (vidId) {
     const video = document.getElementById(vidId);
     const canvasElement = document.createElement("canvas");
     const canvas = canvasElement.getContext("2d");
-    const result = undefined;
     const promise = {};
     let vidStream;
 
@@ -19,7 +18,7 @@ const QrScanner = function (vidId) {
             }
         });
         vidStream = undefined;
-        promise.resolve({ data: undefined, version: undefined });
+        promise.resolve({ data: undefined, version: undefined, state : "stopped" });
         promise.resolve = promise.reject = undefined;
     }
 
@@ -59,7 +58,7 @@ const QrScanner = function (vidId) {
             });
 
             if (code) {
-                promise.resolve({ data: code.data, version: code.version });
+                promise.resolve({ data: code.data, version: code.version, state : "complete" });
                 stop();
                 return;
             }

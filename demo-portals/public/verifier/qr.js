@@ -129,6 +129,9 @@ const secScanQr = (() => {
             let label = 'Parts : ';
             const scanResult = await qrScanner.scan();
 
+            // if the scanner was closed by the user
+            if (scanResult?.state === 'stopped') break;
+
             // sometimes the scanner returns without data, try again
             if (!scanResult.data) continue;
 
