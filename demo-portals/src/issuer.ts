@@ -13,14 +13,22 @@ import issuerPrivateKey from '../private/issuer.jwks.private.json';
 const MAX_SINGLE_JWS_SIZE = 1195;
 const MAX_CHUNK_SIZE = 1191;
 
-
+const cdcCovidCvxCodes = ["207", "208", "210", "211", "212"];
+interface VaccineCode { "coding": { code: string }[] }
 
 export function credential(fhirBundle: FhirBundle, issuer: string, types: string[]): HealthCard {
+
+  const hasImmunization = fhirBundle?.entry?.some(entry => entry?.resource?.resourceType === 'Immunization');
+  const hasCovidCode = fhirBundle?.entry?.some(entry => cdcCovidCvxCodes.includes((entry?.resource?.vaccineCode as VaccineCode)?.coding?.[0]?.code));
+
+  if (hasImmunization) types.push("https://smarthealth.cards#immunization");
+  if (hasImmunization && hasCovidCode) types.push("https://smarthealth.cards#covid19");
+
   return {
     iss: issuer,
     nbf: new Date().getTime() / 1000,
     vc: {
-      type: ['VerifiableCredential', 'https://smarthealth.cards#health-card', ...types],
+      type: ['https://smarthealth.cards#health-card', ...types],
       credentialSubject: { fhirVersion: '4.0.1', fhirBundle },
     }
   };
