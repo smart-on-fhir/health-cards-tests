@@ -13,16 +13,30 @@ import issuerPrivateKey from '../private/issuer.jwks.private.json';
 const MAX_SINGLE_JWS_SIZE = 1195;
 const MAX_CHUNK_SIZE = 1191;
 
-const cdcCovidCvxCodes = ["207", "208", "210", "211", "212"];
+// CDC covid vaccine codes (https://www.cdc.gov/vaccines/programs/iis/COVID-19-related-codes.html)
+export const cdcCovidCvxCodes = ["207", "208", "210", "211", "212"];
+
+// LOINC covid test codes (https://vsac.nlm.nih.gov/valueset/2.16.840.1.113762.1.4.1114.9/expansion)
+export const loincCovidTestCodes = ["50548-7", "68993-5", "82159-5", "94306-8", "94307-6", "94308-4", "94309-2", "94500-6", "94502-2", "94503-0", "94504-8", "94507-1", "94508-9", "94531-1", "94533-7", "94534-5", "94547-7", "94558-4", "94559-2", "94562-6", "94563-4", "94564-2", "94565-9", "94640-0", "94661-6", "94756-4", "94757-2", "94758-0", "94759-8", "94760-6", "94761-4", "94762-2", "94764-8", "94845-5", "95209-3", "95406-5", "95409-9", "95416-4", "95423-0", "95424-8", "95425-5", "95542-7", "95608-6", "95609-4"];
+
 interface VaccineCode { "coding": { code: string }[] }
 
 export function credential(fhirBundle: FhirBundle, issuer: string, types: string[]): HealthCard {
 
   const hasImmunization = fhirBundle?.entry?.some(entry => entry?.resource?.resourceType === 'Immunization');
-  const hasCovidCode = fhirBundle?.entry?.some(entry => cdcCovidCvxCodes.includes((entry?.resource?.vaccineCode as VaccineCode)?.coding?.[0]?.code));
+
+  const hasCovidImmunization = fhirBundle?.entry?.some(entry =>
+    entry.resource.resourceType === 'Immunization' &&
+    (cdcCovidCvxCodes.includes((entry?.resource?.vaccineCode as VaccineCode)?.coding[0]?.code)));
+
+  const hasCovidObservation = fhirBundle?.entry?.some(entry =>
+    entry.resource.resourceType === 'Observation' &&
+    (loincCovidTestCodes.includes((entry?.resource?.code as VaccineCode)?.coding[0]?.code))
+  );
 
   if (hasImmunization) types.push("https://smarthealth.cards#immunization");
-  if (hasImmunization && hasCovidCode) types.push("https://smarthealth.cards#covid19");
+  if (hasCovidImmunization || hasCovidObservation) types.push("https://smarthealth.cards#covid19");
+  if (hasCovidObservation) types.push("https://smarthealth.cards#laboratory");
 
   return {
     iss: issuer,
