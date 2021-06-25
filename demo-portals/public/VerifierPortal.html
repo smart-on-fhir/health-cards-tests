@@ -127,8 +127,8 @@
         //
         const qrScanner = QrScanner('vid');
         function closeVideo() {
-            document.getElementById('CenterDIV').style.display = 'none';
-            qrScanner.stop();
+            // close the scan window if .stop() returns true (Actually stopped something)
+            qrScanner.stop() && (document.getElementById('CenterDIV').style.display = 'none');
         }
         document.getElementById('buttonCloseVideo').onclick = closeVideo;
 

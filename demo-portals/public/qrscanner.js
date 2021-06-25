@@ -12,6 +12,9 @@ const QrScanner = function (vidId) {
     video.parentElement.appendChild(overlay);
 
     function stop() {
+        // the scanner may not have started yet
+        if(!vidStream) return false;
+
         vidStream.getTracks().forEach(function (track) {
             if (track.readyState == 'live' && track.kind === 'video') {
                 track.stop();
@@ -20,6 +23,8 @@ const QrScanner = function (vidId) {
         vidStream = undefined;
         promise.resolve({ data: undefined, version: undefined, state : "stopped" });
         promise.resolve = promise.reject = undefined;
+        
+        return true;
     }
 
     function scan() {
