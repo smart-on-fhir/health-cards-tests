@@ -10,7 +10,7 @@ To Scan your QR code, try to align the QR code within the square overlay.  As ca
 
 Download a sample __Numeric QR Code__ from [https://spec.smarthealth.cards/examples/example-00-f-qr-code-numeric-value-0.txt](https://spec.smarthealth.cards/examples/example-00-f-qr-code-numeric-value-0.txt)  
 
-<input type="button" id='buttonDownloadSample' value="Download Sample" onclick="downloadNumericQRSample()" /> 
+<input type="button" id='buttonDownloadSample' value="Download Sample" onclick="downloadNumericQRSample()" />&nbsp;<input type="button" id='buttonDownloadSample' value="Download Multi-Part Sample" onclick="downloadMultiQRSample()" /> 
 
 <br><br>
 <!-- label:scanQRCode side:right-->
@@ -129,6 +129,8 @@ Signature verification results in a __true__ or __false__ value.
 
 See: [Protocol Details](https://spec.smarthealth.cards/#protocol-details) for more information on signatures.
 
+>__Note__ : For verification, the signature value is taken from the 'Decode Compact JWS / Signature' section and not the 'Decode Numeric Encoding' section.
+
 <br><br>
 <!-- label:verifySignature side:right-->
 <!-- separator --> <br><hr><br>
@@ -140,6 +142,14 @@ See: [Protocol Details](https://spec.smarthealth.cards/#protocol-details) for mo
 ## Extract FHIR Bundle  
 
 After signature verification, the FHIR Bundle is extracted from the JWS payload field and formatted for display.    
+<br/>
+
+Select optional FHIR validation profile:  
+
+<select id='profile-select' onchange="profileSelected()">
+    <option value='any'>default</option>
+    <option value='usa-covid19-immunization'>usa-covid19-immunization</option>
+</select>
 
 <br><br>
 <!-- label:extractFhirBundle side:right-->

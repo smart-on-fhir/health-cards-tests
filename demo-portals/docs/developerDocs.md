@@ -22,12 +22,21 @@ The __FHIR Bundle__ is expected in the following form:
 
 Download a sample __FHIR Bundle__ from [https://spec.smarthealth.cards/examples/example-00-a-fhirBundle.json](https://spec.smarthealth.cards/examples/example-00-a-fhirBundle.json)  
 
-
 <input type="button" id='buttonDownloadSample' value="Download Sample" onclick="downloadFhirBundleSample()" />  
+<br/>
+
+Select optional FHIR validation profile:  
+
+<select id='profile-select' onchange="profileSelected()">
+    <option value='any'>default</option>
+    <option value='usa-covid19-immunization'>usa-covid19-immunization</option>
+</select>
+
+
 
 <br/><br/> 
 __Paste your FHIR Bundle in the text box below:__
-<br/> 
+<br/><br/> 
 
 <!-- label:initFhir side:right-->
 <!-- separator --> <br><hr><br>
@@ -164,7 +173,7 @@ The JWS header is in the following form:
 
     {"zip":"DEF","alg":"ES256","kid":"<<key thumbprint>>"}  
 
-\`"kid"\` is equal to the base64url-encoded SHA-256 JWK Thumbprint of the key (see [RFC7638](https://tools.ietf.org/html/rfc7638))
+`"kid"` is equal to the base64url-encoded SHA-256 JWK Thumbprint of the key (see [RFC7638](https://tools.ietf.org/html/rfc7638))
 
 
 The header is then base64url-encoded:
