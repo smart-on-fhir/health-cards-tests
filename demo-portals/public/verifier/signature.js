@@ -5,7 +5,7 @@ const secVerifySignature = (() => {
     sec.addTextField("Validation Result");
     sec.fields[0].textArea.readOnly = true;
 
-    sec.process = async function() {
+    sec.process = async function () {
 
         let data = secDecodeNumeric.getValue().replace(/\s*\.\s*/g, '.').split('.');
         if (!data) return;
@@ -13,7 +13,7 @@ const secVerifySignature = (() => {
         let signature = secDecodeJWS.getValue(2 /*signature*/);
         if (!signature) return;
 
-        if(!secDecodeJWS.fields[2].valid()) return sec.setErrors(["JWS/Signature not valid"]);;
+        if (!secDecodeJWS.fields[2].valid()) return sec.setErrors(["JWS/Signature not valid"]);;
 
         data.pop(); // removes the signature segment leaving header.payload
         data = data.join('.');
@@ -41,7 +41,7 @@ const secVerifySignature = (() => {
             .then(
                 async function (validationResult) {
                     validationResult ? sec.clearErrors() : sec.setErrors(["Signature Verification Failed"]);
-                    await sec.setValue(validationResult.toString());                    
+                    await sec.setValue(validationResult.toString());
                 },
                 function (err) { /* catch */
                     if (err === null) return; /* error already handled */
@@ -51,12 +51,12 @@ const secVerifySignature = (() => {
 
     };
 
-    sec.validate = async function(field) {
+    sec.validate = async function (field) {
         sec.valid() ? sec.goNext() : sec.next?.clear();
     }
 
 
-    // 
+    //
     // Select the first key in the key collection where 'kid' equals the 'kid' in the Jws-Header
     //
     function selectKey() {
@@ -81,6 +81,7 @@ const secVerifySignature = (() => {
 
         for (let i = 0; i < keySet.keys.length; i++) {
             const key = keySet.keys[i];
+            delete key["alg"];
             if (key.kid.toUpperCase() === jwsHeader.kid.toUpperCase()) {
                 return key;
             }
