@@ -20,6 +20,12 @@ const secExtractFhirBundle = (() => {
 
         sec.valid() ? sec.goNext() : sec.next?.clear();
 
+        // console.log(fhirBundle)
+        // document.getElementById('fhirDataExtract').innerHTML = JSON.stringify(fhirBundle, null, 2);
+        document.getElementById('fhirDataExtract').value = fhirBundle;
+        window.validateCode('fhirDataExtract');
+
+
     };
 
     sec.validate = async function (field) {

@@ -59,6 +59,17 @@
 
             <br /><br />
 
+            <hr>
+            <div id="summary">
+                <div>Verified real? <span id="summaryVerify"></span></div>
+                <div>Issued by: <span id="summaryIss"></span></div>
+                <div>Personal Details <span id="summaryDetails"></span></div>
+            </div>
+            <hr>
+
+            <div id="fhirDataExtract" oninput="console.log('goin')"></div>
+            <div id="verificationDataExtract"></div>
+            <div id="keyDataExtract" oninput="console.log('goin')" onchange="console.log('updated')"></div>
 
             <div id="scanQr" class="section"></div>
             <script src='verifier/qr.js'></script>
@@ -128,9 +139,95 @@
         const qrScanner = QrScanner('vid');
         function closeVideo() {
             // close the scan window if .stop() returns true (Actually stopped something)
-            qrScanner.stop() && (document.getElementById('CenterDIV').style.display = 'none');
+            // This should work, not tested on mobile/with working camera
+            document.getElementById('CenterDIV').style.display = 'none';
+            qrScanner.stop()
+            //qrScanner.stop() && (document.getElementById('CenterDIV').style.display = 'none');
         }
         document.getElementById('buttonCloseVideo').onclick = closeVideo;
+
+        function meep() {
+            console.log("meeped");
+        }
+
+        function validateCode(elementId) {
+            let element = document.getElementById(elementId);
+            console.log(element.value);
+            //summaryVerify
+
+            if (elementId === "verificationDataExtract") {
+                let summaryVerify = document.getElementById("summaryVerify");
+                summaryVerify.innerHTML = element.value.toString().toUpperCase();
+
+            } else if (elementId === "keyDataExtract") {
+                let summaryIss = document.getElementById("summaryIss");
+                summaryIss.innerHTML = element.value.toString();
+
+            } else if (elementId === "fhirDataExtract") {
+                let summaryDetails = document.getElementById("summaryDetails");
+                let fhir = element.value;
+
+                let fhirData = toHealthCardData(fhir);
+                console.log(fhirData);
+                summaryDetails.innerHTML = JSON.stringify(fhirData);
+
+                let patientData = fhirData.patientData;
+                let name = `${patientData.firstName} ${patientData.lastName}`;
+                let dob = patientData.dob;
+                let immunizations = ""
+
+                patientData.immunizations.forEach(function (vaccine, index, arr) {
+                    console.log(`Index: ${index}, Name: ${vaccine.code}`);
+                    immunizations += `<br>Shot ${index + 1}, Date: ${vaccine.date}, Code: ${codeToVaccine(vaccine.code)} ${vaccine.code}`;
+                });
+
+                let issuer = fhirData.issuer;
+
+                let formattedString = `<br>Name: ${name}, DOB: ${dob}, ${immunizations} <br>From: ${issuer}`;
+
+                summaryDetails.innerHTML = formattedString;
+
+                //patientData.toString();
+                // let name =
+                // summaryDetails.innerHTML = element.value.toString();
+
+                // fhir.entry[0].resource.name[0]       NAME
+                // fhir.entry[1].resource.resourceType  TYPE
+                // fhir.entry[1].resource.status        Complete or not
+                // fhir.entry[1].resource.vaccineCode.coding[0].code    Vax Code
+                // fhir.entry[1].resource.occurrenceDateTime            Vax date
+                // fhir.entry[1].resource.performer[0].actor.display    Vax site
+
+            }
+        }
+
+        function toHealthCardData(fhirBundle) {
+            // we expect the first resource to be the patient
+            var patientEntry = fhirBundle.entry[0];
+            var immunizationEntries = fhirBundle.entry.slice(1);
+            var immunizations = immunizationEntries.map(function (ie) { return { 'code': ie.resource.vaccineCode.coding[0].code, 'lot': ie.resource.lotNumber, 'date': ie.resource.occurrenceDateTime }; });
+            return {
+                issuer: immunizationEntries[0].resource.performer[0].actor.display,
+                patientData: {
+                    firstName: (patientEntry.resource.name[0].given instanceof Array) ? patientEntry.resource.name[0].given.join(' ') : patientEntry.resource.name[0].given,
+                    lastName: patientEntry.resource.name[0].family,
+                    dob: patientEntry.resource.birthDate,
+                    immunizations: immunizations
+                }
+            };
+        };
+
+        function codeToVaccine(code) {
+            switch (code) {
+                case "207": return "Moderna";
+                case "208": return "Pfizer";
+                case "210": return "AstraZeneca";
+                case "211": return "Novavax";
+                case "212": return "Janssen";
+                default: return "unknown";
+            }
+        }
+
 
 
         //
@@ -144,6 +241,8 @@
         // Downloads a numeric QR sample from the smarthealth.cards page to use as a sample
         // The examples may change, so downloading is preferable to hard-coding a sample
         //
+
+        /*
         async function downloadNumericQRSample() {
             secScanQr.clear();
             const sampleUrl = 'https://spec.smarthealth.cards/examples/example-00-f-qr-code-numeric-value-0.txt';
@@ -173,6 +272,7 @@
             sec.addTextField("Multipart QR 3");
             await sec.setValue(result, 2);
         }
+        */
 
 
         //

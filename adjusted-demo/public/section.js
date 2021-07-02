@@ -15,7 +15,7 @@ class Field {
     name;
     errors = [];
     height = { min: 60, max: 400 };
-    options = { color: { default: "#FFF", update: '#d6fcd7' }, delay: { update: 500, bounce: 500 } };
+    options = { color: { default: "#FFF", update: '#d6fcd7' }, delay: { update: 100, bounce: 100 } };
 
     constructor(section, name, placeholder) {
 
@@ -348,15 +348,12 @@ class Section {
     // Sets the value of a field by id or the first field
     //
     async setValue(value, index = 0) {
-
         const field = this.fields[index];
 
         if (!field) throw new Error(`setValue() cannot lookup field[${index}].`);
 
         field.value = value;
-
         await field.update();
-
     }
 
 

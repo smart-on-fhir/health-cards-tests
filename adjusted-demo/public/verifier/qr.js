@@ -1,7 +1,7 @@
 const secScanQr = (() => {
 
     const sec = new Section('scanQr', "Scan QR Code");
-    sec.addTextField("Numeric QR Data (Scan QR code or paste Numeric here:)", "QR 1");
+    sec.addTextField("Numeric QR Data (Scan QR code or paste Numeric here)", "QR 1");
     sec.setDocs(verifierDocs.scanQRCode.l, verifierDocs.scanQRCode.r);
 
     sec.process = async function () {

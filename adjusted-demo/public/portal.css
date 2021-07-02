@@ -91,7 +91,7 @@ article {
   margin: 0 auto;
   padding: 20px;
   transition: 200ms -webkit-transform;
-  webkit-box-orient: vertical;
+  -webkit-box-orient: vertical;
   width: 600px;
 }
 .info {
