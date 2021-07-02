@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verifier Portal</title>
+
+    <base target="_blank">
+
+    <link rel="stylesheet" href="portal.css">
+    <link rel="stylesheet" href="github-markdown.css">
+
+    <script src="jsQR.js"></script>
+    <script src="qrscanner.js"></script>
+
+</head>
+
+<body style="background-color: #3A4856;">
+
+
+    <!-- Html for expandible docs sections -->
+    <script src='verifierDocs.js'></script>
+
+
+    <!-- section custom control -->
+    <script src='section.js'></script>
+
+
+    <!-- various utility functions -->
+    <script src='utils.js'></script>
+
+
+    <!-- validation -->
+    <script src='validate.js'></script>
+
+
+    <div>
+
+        <div style='padding: 3%'>
+
+            <div style="font-family: Arial, Helvetica, sans-serif;color: white;">
+
+                <hr />
+                <h2>Verifier Portal</h2>
+                <p>
+                    The Verifier Portal takes as input, a QR-Code image of a SMART Health Card.
+                </p>
+                <p>
+                    After the image is scanned, it is decoded, in a series of stages, into a FHIR Bundle.
+                </p>
+                <p>
+                    Each step in the process does some amount of validation. Subsequent steps may not succeed without
+                    successful processing of the previous step.
+                </p>
+            </div>
+
+
+            <br /><br />
+
+
+            <div id="scanQr" class="section"></div>
+            <script src='verifier/qr.js'></script>
+
+
+            <div id="decodeNumeric" class="section"></div>
+            <script src='verifier/numeric.js'></script>
+            <script>secScanQr.next = secDecodeNumeric</script>
+
+
+            <div id="decodeJWS" class="section"></div>
+            <script src='verifier/jws.js'></script>
+            <script>secDecodeNumeric.next = secDecodeJWS;</script>
+
+
+            <div id="extractPublicKey" class="section"></div>
+            <script src='verifier/extractKey.js'></script>
+            <script>secDecodeJWS.next = secExtractPublicKey;</script>
+
+
+            <div id="downloadKey" class="section"></div>
+            <script src='verifier/downloadKey.js'></script>
+            <script>secExtractPublicKey.next = secDownloadKey;</script>
+
+
+            <div id="verifySignature" class="section"></div>
+            <script src='verifier/signature.js'></script>
+            <script>secDownloadKey.next = secVerifySignature</script>
+
+
+            <div id="extractFhirBundle" class="section"></div>
+            <script src='verifier/fhir.js'></script>
+            <script>secVerifySignature.next = secExtractFhirBundle;</script>
+
+
+        </div>
+
+    </div>
+
+
+    <div class="footer">
+        <input type="button" id='buttonClear' value="Clear" />
+    </div>
+
+
+    <div id="CenterDIV">
+
+        <div class="divFloat" style="text-align: center;">
+
+            <div id="container" style="position:relative;">
+                <video id='vid'></video>
+                <label id='multipart' style="position:absolute; top: 10px; left: 10px"></label>
+            </div>
+
+            <input type="button" id='buttonCloseVideo' value="Close" />
+
+        </div>
+    </div>
+
+
+    <script>
+
+
+        //
+        // Scanner
+        //
+        const qrScanner = QrScanner('vid');
+        function closeVideo() {
+            // close the scan window if .stop() returns true (Actually stopped something)
+            qrScanner.stop() && (document.getElementById('CenterDIV').style.display = 'none');
+        }
+        document.getElementById('buttonCloseVideo').onclick = closeVideo;
+
+
+        //
+        // Clears all the fields including errors
+        // The section.clear() calls chain so we only need to call the topmost clear()
+        //
+        document.getElementById('buttonClear').onclick = () => secScanQr.clear();
+
+
+        //
+        // Downloads a numeric QR sample from the smarthealth.cards page to use as a sample
+        // The examples may change, so downloading is preferable to hard-coding a sample
+        //
+        async function downloadNumericQRSample() {
+            secScanQr.clear();
+            const sampleUrl = 'https://spec.smarthealth.cards/examples/example-00-f-qr-code-numeric-value-0.txt';
+            const result = await restCall(sampleUrl, "", 'GET', 'text');
+            await secScanQr.setValue(result);
+        }
+
+
+        //
+        // Downloads a numeric multi-part QR sample from the smarthealth.cards page to use as a sample
+        // The examples may change, so downloading is preferable to hard-coding a sample
+        //
+        async function downloadMultiQRSample() {
+
+            const sec = secScanQr;
+
+            let result = await restCall('https://spec.smarthealth.cards/examples/example-02-f-qr-code-numeric-value-0.txt', "", 'GET', 'text');
+            sec.clear();
+            await sec.setValue(result);
+
+            result = await restCall('https://spec.smarthealth.cards/examples/example-02-f-qr-code-numeric-value-1.txt', "", 'GET', 'text');
+            sec.addTextField("Multipart QR 2");
+            await sec.setValue(result, 1);
+
+            result = await restCall('https://spec.smarthealth.cards/examples/example-02-f-qr-code-numeric-value-2.txt', "", 'GET', 'text');
+
+            sec.addTextField("Multipart QR 3");
+            await sec.setValue(result, 2);
+        }
+        
+
+        //
+        // User selected profile for FHIR validation
+        //
+        function profileSelected(event) {
+            // force validation with selected profile
+            secExtractFhirBundle.setValue(secExtractFhirBundle.getValue());
+        }
+
+
+    </script>
+
+
+</body>
+
+</html>

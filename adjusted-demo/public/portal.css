@@ -1,0 +1,145 @@
+body {
+  padding-bottom: 50px;
+}
+div {
+  border-color: gray;
+  border-style: unset;
+  border-width: 0px;
+}
+label {
+  color: white;
+  display: inline-block;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  padding: 0px 0px;
+  text-align: center;
+  text-decoration: none;
+}
+input[type="button"] {
+  background-color: #6b7987;
+  border-radius: 3px;
+  border: 1px solid black;
+  color: white;
+  display: inline-block;
+  font-size: 16px;
+  margin-bottom: 5px;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  width: 300px;
+}
+img {
+  border: 1px solid black;
+  height: 300px;
+  width: 300px;
+  margin-right: 5px;
+}
+textarea,
+article,
+input[type="text"] {
+  border-radius: 3px;
+  border: 1px solid black;
+  box-sizing: border-box;
+  height: 100%;
+  margin-bottom: 5px;
+  padding: 10px;
+  resize: vertical;
+  transition: background-color 0.5s ease;
+  width: 100%;
+}
+.taError {
+  overflow-x: auto;
+  overflow-wrap: normal;
+}
+article {
+  background-color: #f1f1e6be;
+}
+.collapsible:hover {
+  background-color: #555;
+}
+.content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.2s ease-out;
+}
+.footer {
+  bottom: 0;
+  color: white;
+  left: 0;
+  position: fixed;
+  text-align: center;
+  width: 100%;
+}
+#CenterDIV {
+  background-color: rgba(255, 255, 255, 0.75);
+  display: none;
+  height: 100%;
+  left: 0;
+  padding-top: 100px;
+  position: fixed;
+  top: 0;
+  width: 100%;
+}
+.divFloat {
+  background-color: #fff;
+  border: solid 1px #999;
+  border-radius: 3px;
+  box-shadow: 0 4px 23px 5px rgba(0, 0, 0, 0.2), 0 2px 6px rgba(0, 0, 0, 0.15);
+  color: #000;
+  display: block;
+  height: auto;
+  margin: 0 auto;
+  padding: 20px;
+  transition: 200ms -webkit-transform;
+  webkit-box-orient: vertical;
+  width: 600px;
+}
+.info {
+  color: #acbdcf;
+  cursor: pointer;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: bold;
+}
+.section {
+  padding-bottom: 100px;
+}
+.issues {
+  visibility: hidden;
+}
+
+.unscannedPart {
+  color: #acbdcf;
+}
+
+.scannedPart {
+  color: aqua;
+  font-weight: bold;
+}
+
+#span-issuer-label {
+  font-family: Arial, Helvetica, sans-serif;
+  top: 15px;
+  margin-left: 10px;
+  color: white;
+  font-size: 16px;
+  position: absolute;
+}
+
+#profile-select {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  padding: 10px;
+  border-radius: 3px;
+  border: solid 1px black;
+  background-color: #6b7987;
+  color: white;
+  display: inline-block;
+  text-decoration: none;
+  width: 300px;
+  text-align-last:center;
+}
+
+option {
+  background-color: white;
+  color: #3A4856;
+}
