@@ -21,9 +21,9 @@ const QrScanner = function (vidId) {
             }
         });
         vidStream = undefined;
-        promise.resolve({ data: undefined, version: undefined, state : "stopped" });
+        promise.resolve({ data: undefined, version: undefined, state: "stopped" });
         promise.resolve = promise.reject = undefined;
-        
+
         return true;
     }
 
@@ -56,14 +56,14 @@ const QrScanner = function (vidId) {
             overlay.style.top = Math.ceil((vidContainer.clientHeight) - parseInt(overlay.style.height)) / 2 + "px";
             overlay.style.left = Math.ceil(vidContainer.clientWidth - parseInt(overlay.style.width)) / 2 + "px";
             overlay.hidden = false;
-            
+
             const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
             const code = jsQR(imageData.data, imageData.width, imageData.height, {
                 inversionAttempts: "dontInvert",
             });
 
             if (code) {
-                promise.resolve({ data: code.data, version: code.version, state : "complete" });
+                promise.resolve({ data: code.data, version: code.version, state: "complete" });
                 stop();
                 return;
             }

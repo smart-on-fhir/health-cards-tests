@@ -65,9 +65,10 @@
     },
     "include": [
         "src/**/*.ts",
-        "tests/**/*.ts"
-, "src/init.js"    ],
+        "tests/**/*.ts",
+        "src/init.js"
+    ],
     "exclude": [
         "node_modules"
     ]
-  }
+}

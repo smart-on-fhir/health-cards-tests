@@ -1,16 +1,16 @@
 <!-- label:scanQRCode side:left -->
-__Requirements for Scanner:__  
-The QR Scanner requires that your browser has access to a camera.  
+__Requirements for Scanner:__
+The QR Scanner requires that your browser has access to a camera.
 
-When accessing the portal from a remote server, the browser will require a __HTTPS__ connection to a access the camera.   
+When accessing the portal from a remote server, the browser will require a __HTTPS__ connection to a access the camera.
 
-When using `localhost`, __HTTP__ is sufficient.  
+When using `localhost`, __HTTP__ is sufficient.
 
 To Scan your QR code, try to align the QR code within the square overlay.  As camera resolutions may differ, you may have experiment with finding the best alignment. Make sure the QR-code is flat.
 
-Download a sample __Numeric QR Code__ from [https://spec.smarthealth.cards/examples/example-00-f-qr-code-numeric-value-0.txt](https://spec.smarthealth.cards/examples/example-00-f-qr-code-numeric-value-0.txt)  
+Download a sample __Numeric QR Code__ from [https://spec.smarthealth.cards/examples/example-00-f-qr-code-numeric-value-0.txt](https://spec.smarthealth.cards/examples/example-00-f-qr-code-numeric-value-0.txt)
 
-<input type="button" id='buttonDownloadSample' value="Download Sample" onclick="downloadNumericQRSample()" />&nbsp;<input type="button" id='buttonDownloadSample' value="Download Multi-Part Sample" onclick="downloadMultiQRSample()" /> 
+<input type="button" id='buttonDownloadSample' value="Download Sample" onclick="downloadNumericQRSample()" />&nbsp;<input type="button" id='buttonDownloadSample' value="Download Multi-Part Sample" onclick="downloadMultiQRSample()" />
 
 <br><br>
 <!-- label:scanQRCode side:right-->
@@ -20,13 +20,13 @@ Download a sample __Numeric QR Code__ from [https://spec.smarthealth.cards/examp
 
 
 <!-- label:decodeNumeric side:left -->
-## Decode Numeric Encoding  
+## Decode Numeric Encoding
 
 Converts the `shc:/567629095243206...` encoded data to the compact JWS format __base64url__.__base64url__.__base64url__
 
 See: [Health Cards are encoded as Compact Serialization JSON Web Signatures (JWS)](https://spec.smarthealth.cards/#health-cards-are-encoded-as-compact-serialization-json-web-signatures-jws)
 
->__Note:__ Additional line-breaks at the periods '.' below have been added for display purposes only.  
+>__Note:__ Additional line-breaks at the periods '.' below have been added for display purposes only.
 
 <br><br>
 <!-- label:decodeNumeric side:right -->
@@ -36,11 +36,11 @@ See: [Health Cards are encoded as Compact Serialization JSON Web Signatures (JWS
 
 
 <!-- label:decodeJWS side:left -->
-## Decode Compact JWS  
+## Decode Compact JWS
 
-Decodes the period-separated base64url segments of the compact JWS string.  
+Decodes the period-separated base64url segments of the compact JWS string.
 
-#### JWS Header  
+#### JWS Header
 The header is decoded into a JSON string.
 
 #### JWS Payload
@@ -57,13 +57,13 @@ The signature is a 64-byte ES256 signature. It remains in its base64url form her
 
 
 <!-- label:extractPublicKey side:left -->
-## Extract Public Key URL  
+## Extract Public Key URL
 
 Extracts the public key url from the iss field in the JWS payload field above.
 
 `/.well-known/jwks.json` is appended to the end of the iss url.
 
->__Note__ : you may enter an alternate url here to use in the following steps.  
+>__Note__ : you may enter an alternate url here to use in the following steps.
 
 See: [Protocol Details](https://spec.smarthealth.cards/#protocol-details) for more information on `/.well-known/jwks.json`
 
@@ -75,17 +75,17 @@ See: [Protocol Details](https://spec.smarthealth.cards/#protocol-details) for mo
 
 
 <!-- label:downloadKey side:left -->
-## Download Public Key(s)  
+## Download Public Key(s)
 
-Using the Public Key Url above, a key-set is downloaded as JSON.  
+Using the Public Key Url above, a key-set is downloaded as JSON.
 
-The public key `kid` field must match the `kid` field in the JWS header.  
+The public key `kid` field must match the `kid` field in the JWS header.
 
 >__Note__ : you may enter an alternate key-set here to use in the remaining steps.
 
 <br><br>
 <!-- label:downloadKey side:right-->
-Sample keys in a Key-Set.  x5c entries are truncated for display.    
+Sample keys in a Key-Set.  x5c entries are truncated for display.
 
 	{
 		"keys": [
@@ -113,7 +113,7 @@ Sample keys in a Key-Set.  x5c entries are truncated for display.
 				"y": "jKcqirFw4G9v9gWTDCqAjvcCRQpbIK76bWqKBtseFzQ"
 			}
 		]
-	}  
+	}
 <br>
 <!-- separator --> <br><hr><br>
 
@@ -121,11 +121,11 @@ Sample keys in a Key-Set.  x5c entries are truncated for display.
 
 
 <!-- label:verifySignature side:left -->
-## Verify Signature  
+## Verify Signature
 
-The signature field of the compact JWS is verified against the header and payload using the public key.  
+The signature field of the compact JWS is verified against the header and payload using the public key.
 
-Signature verification results in a __true__ or __false__ value.  
+Signature verification results in a __true__ or __false__ value.
 
 See: [Protocol Details](https://spec.smarthealth.cards/#protocol-details) for more information on signatures.
 
@@ -139,12 +139,12 @@ See: [Protocol Details](https://spec.smarthealth.cards/#protocol-details) for mo
 
 
 <!-- label:extractFhirBundle side:left -->
-## Extract FHIR Bundle  
+## Extract FHIR Bundle
 
-After signature verification, the FHIR Bundle is extracted from the JWS payload field and formatted for display.    
+After signature verification, the FHIR Bundle is extracted from the JWS payload field and formatted for display.
 <br/>
 
-Select optional FHIR validation profile:  
+Select optional FHIR validation profile:
 
 <select id='profile-select' onchange="profileSelected()">
     <option value='any'>default</option>
@@ -154,6 +154,3 @@ Select optional FHIR validation profile:
 <br><br>
 <!-- label:extractFhirBundle side:right-->
 <!-- separator --> <br><hr><br>
-
-
-

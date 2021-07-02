@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------
 // Simple test server for SMART Health Card operations
-// This code is for illustration purposes only, it shouldn't be used in 
+// This code is for illustration purposes only, it shouldn't be used in
 // productions. See the IMPLEMENTERS NOTE comments for things
 // that would need to be implemented in a real-life system
 // ----------------------------------------------------------------------
@@ -124,7 +124,7 @@ app.post(Config.GENERATE_QR_CODE, async (req, res) => {
     console.log('Received POST for', Config.GENERATE_QR_CODE, req.body);
     const shc: string[] = req.body.shc;
     const segments = issuer.shcToSegments(shc);
-    let output : string[];
+    let output: string[];
     try {
         output = await issuer.qr(segments);
     } catch {

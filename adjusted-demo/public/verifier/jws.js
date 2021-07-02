@@ -54,7 +54,3 @@ const secDecodeJWS = (() => {
     return sec;
 
 })();
-
-
-
-

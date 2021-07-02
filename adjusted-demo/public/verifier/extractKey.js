@@ -22,7 +22,7 @@ const secExtractPublicKey = (() => {
 
     };
 
-    sec.validate = async function(field) {
+    sec.validate = async function (field) {
         this.setErrors(/^https:\/\//.test(field.value) ? [] : [`Issuer shall use https://`]);
         sec.valid() ? sec.goNext() : sec.next?.clear();
     }
@@ -30,4 +30,3 @@ const secExtractPublicKey = (() => {
     return sec;
 
 })();
-

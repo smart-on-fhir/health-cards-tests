@@ -36,4 +36,4 @@ This project demonstrates the issuance and validation of cards specified in the 
 
     The demo stands up an endpoint illustrating the SMART Health Card operations listening on port 8080:
     - [developer](https://localhost:8080/DevPortal.html) portal for constructing SMART Health Cards from FHIR data.
-    - [verifier](https://localhost:8080/VerifierPortal.html) for validating SMART Health Cards and extracting embedded FHIR data.  
+    - [verifier](https://localhost:8080/VerifierPortal.html) for validating SMART Health Cards and extracting embedded FHIR data.

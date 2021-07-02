@@ -4,7 +4,7 @@ const secDecodeNumeric = (() => {
     sec.setDocs(verifierDocs.decodeNumeric.l, verifierDocs.decodeNumeric.r);
     sec.addTextField("Compact JSON Web Signature (JWS)");
 
-    sec.process = async function() {
+    sec.process = async function () {
 
         const numericEncoded = secScanQr.getValue();
 
@@ -23,7 +23,7 @@ const secDecodeNumeric = (() => {
 
     };
 
-    sec.validate = async function(field) {
+    sec.validate = async function (field) {
         const jws = field.value.replace(/\s*\.\s*/g, '.');
         this.setErrors(validate.jws(jws));
         this.valid() ? this.goNext() : this.next?.clear();
@@ -32,4 +32,3 @@ const secDecodeNumeric = (() => {
     return sec;
 
 })();
-

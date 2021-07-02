@@ -20,7 +20,7 @@ const secDownloadKey = (() => {
 
     };
 
-    sec.validate = async function(field) {
+    sec.validate = async function (field) {
         const keySet = field.value;
         sec.setErrors((await restCall('/validate-key-set', { data: keySet }, 'POST')).errors);
         sec.valid() ? sec.goNext() : sec.next?.clear();
@@ -29,4 +29,3 @@ const secDownloadKey = (() => {
     return sec;
 
 })();
-

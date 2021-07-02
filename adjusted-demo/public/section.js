@@ -384,7 +384,7 @@ class Section {
 
     //
     // Triggers the button on the next section if .next is assigned
-    // 
+    //
     goNext() {
         if (!this.next) return;
 
@@ -396,7 +396,7 @@ class Section {
 
     //
     // Calls into the overridden process function
-    // 
+    //
     async process() {
         await this.process();
     }
@@ -405,7 +405,7 @@ class Section {
 
     //
     // Calls into the overridden validate function
-    // 
+    //
     async validate() {
         await this.validate(this.fields[0]);
     }

@@ -34,11 +34,11 @@ const secScanQr = (() => {
         }
         return this.fields[0].value;
     }
-    
+
     //
     // override the clear method to remove multi-part fields
     //
-    sec.clear = async function() {
+    sec.clear = async function () {
         Section.prototype.clear.call(this);
         this.resetTextFields();
     }
@@ -112,7 +112,7 @@ const secScanQr = (() => {
         return scannedParts;
     }
 
-    
+
     //
     // Parses single and multi-part QR code data into objects containing the part-number, part-count, numeric-data
     //   Note: Single part QR codes will have an 'undefined' 'parts' property.
@@ -152,7 +152,7 @@ const secScanQr = (() => {
     // Collects and parses all the shc TextAreas and determines if each of the n parts is defined.
     // Additionally the parts are ordered 1..n
     //   Note: if one of the fields cannot be parsed, 'undefined' is returned
-    // 
+    //
     function hasAllParts(section) {
 
         const partsArray = collectParts(section);
