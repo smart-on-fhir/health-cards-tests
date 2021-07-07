@@ -13,7 +13,7 @@ const QrScanner = function (vidId) {
 
     function stop() {
         // the scanner may not have started yet
-        if(!vidStream) return false;
+        if (!vidStream) return false;
 
         vidStream.getTracks().forEach(function (track) {
             if (track.readyState == 'live' && track.kind === 'video') {
