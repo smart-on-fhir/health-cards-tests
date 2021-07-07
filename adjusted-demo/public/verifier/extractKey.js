@@ -19,7 +19,7 @@ const secExtractPublicKey = (() => {
         }
 
         // document.getElementById('keyDataExtract').innerHTML = (jwsPayload.iss + '/.well-known/jwks.json');
-        document.getElementById('keyDataExtract').value = (jwsPayload.iss + '/.well-known/jwks.json');
+        document.getElementById('keyDataExtract').value = (jwsPayload.iss);
         window.validateCode('keyDataExtract');
         await sec.setValue(jwsPayload.iss + '/.well-known/jwks.json');
 

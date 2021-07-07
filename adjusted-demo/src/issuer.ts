@@ -2,12 +2,12 @@ import jose, { JWK } from 'node-jose';
 import pako from 'pako';
 import QrCode, { QRCodeSegment } from 'qrcode';
 import { Config } from './config';
-import { generatePDFCard, generatePDFCardFromQRFile } from './pdf';
+// import { generatePDFCard, generatePDFCardFromQRFile } from './pdf';
 
 // IMPLEMENTERS NOTE: this is a sample only private key, application should take care
 // of protecting the issuing signing keys. See, e.g.,
 // https://cheatsheetseries.owasp.org/cheatsheets/Key_Management_Cheat_Sheet.html
-import issuerPrivateKey from '../private/issuer.jwks.private.json';
+// import issuerPrivateKey from '../private/issuer.jwks.private.json';
 
 
 const MAX_SINGLE_JWS_SIZE = 1195;

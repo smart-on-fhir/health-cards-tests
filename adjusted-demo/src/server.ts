@@ -7,7 +7,7 @@
 
 import express from 'express';
 import { Config } from './config';
-import fs from 'fs';
+// import fs from 'fs';
 import http from 'http';
 import got from 'got';
 import { validate, ValidationProfiles } from 'health-cards-validation-sdk/js/src/api';
@@ -70,20 +70,20 @@ app.post(Config.VALIDATE_KEYSET, async (req, res) => {
 });
 
 
-app.post(Config.CREATE_VC, async (req, res) => {
-    console.log('Received POST for', Config.CREATE_VC, req.body);
-    const result = issuer.credential(req.body.fhir, req.body.issuer, []);
-    res.type('json');
-    res.send(result);
-});
+// app.post(Config.CREATE_VC, async (req, res) => {
+//     console.log('Received POST for', Config.CREATE_VC, req.body);
+//     const result = issuer.credential(req.body.fhir, req.body.issuer, []);
+//     res.type('json');
+//     res.send(result);
+// });
 
 
-app.post(Config.DEFLATE_PAYLOAD, async (req, res) => {
-    console.log('Received POST for', Config.DEFLATE_PAYLOAD, req.body);
-    const payload = JSON.stringify(req.body.vc);
-    const result = issuer.deflate(payload);
-    res.send(Buffer.from(result as Uint8Array));
-});
+// app.post(Config.DEFLATE_PAYLOAD, async (req, res) => {
+//     console.log('Received POST for', Config.DEFLATE_PAYLOAD, req.body);
+//     const payload = JSON.stringify(req.body.vc);
+//     const result = issuer.deflate(payload);
+//     res.send(Buffer.from(result as Uint8Array));
+// });
 
 app.post(Config.INFLATE_PAYLOAD, async (req, res) => {
     console.log('Received POST for', Config.INFLATE_PAYLOAD, req.body);
@@ -93,45 +93,45 @@ app.post(Config.INFLATE_PAYLOAD, async (req, res) => {
 });
 
 
-app.post(Config.SMART_HEALTH_CARD, async (req, res) => {
-    console.log('Received POST for', Config.SMART_HEALTH_CARD, req.body);
-    const jws = req.body.jws;
-    const result = issuer.healthCard(jws);
-    res.send(result);
-});
+// app.post(Config.SMART_HEALTH_CARD, async (req, res) => {
+//     console.log('Received POST for', Config.SMART_HEALTH_CARD, req.body);
+//     const jws = req.body.jws;
+//     const result = issuer.healthCard(jws);
+//     res.send(result);
+// });
 
 
-app.post(Config.SIGN_PAYLOAD, async (req, res) => {
-    console.log('Received POST for', Config.SIGN_PAYLOAD, req.body);
-    const payloadJson = Buffer.from(req.body.payload, 'base64');
-    const result = await issuer.sign(payloadJson, req.body.key);
-    res.type('text');
-    res.send(result);
-});
+// app.post(Config.SIGN_PAYLOAD, async (req, res) => {
+//     console.log('Received POST for', Config.SIGN_PAYLOAD, req.body);
+//     const payloadJson = Buffer.from(req.body.payload, 'base64');
+//     const result = await issuer.sign(payloadJson, req.body.key);
+//     res.type('text');
+//     res.send(result);
+// });
 
 
-app.post(Config.NUMERIC_ENCODE, async (req, res) => {
-    console.log('Received POST for', Config.NUMERIC_ENCODE, req.body);
-    const jws = req.body.jws;
-    const segments = issuer.numeric(jws) as { data: string, mode: string }[][];
-    const output = segments.map(s => s[0].data + s[1].data);
-    res.send(output);
+// app.post(Config.NUMERIC_ENCODE, async (req, res) => {
+//     console.log('Received POST for', Config.NUMERIC_ENCODE, req.body);
+//     const jws = req.body.jws;
+//     const segments = issuer.numeric(jws) as { data: string, mode: string }[][];
+//     const output = segments.map(s => s[0].data + s[1].data);
+//     res.send(output);
 
-});
+// });
 
 
-app.post(Config.GENERATE_QR_CODE, async (req, res) => {
-    console.log('Received POST for', Config.GENERATE_QR_CODE, req.body);
-    const shc: string[] = req.body.shc;
-    const segments = issuer.shcToSegments(shc);
-    let output: string[];
-    try {
-        output = await issuer.qr(segments);
-    } catch {
-        output = [];
-    }
-    res.send(output);
-});
+// app.post(Config.GENERATE_QR_CODE, async (req, res) => {
+//     console.log('Received POST for', Config.GENERATE_QR_CODE, req.body);
+//     const shc: string[] = req.body.shc;
+//     const segments = issuer.shcToSegments(shc);
+//     let output: string[];
+//     try {
+//         output = await issuer.qr(segments);
+//     } catch {
+//         output = [];
+//     }
+//     res.send(output);
+// });
 
 
 app.post(Config.DOWNLOAD_PUBLIC_KEY, async (req, res) => {
@@ -163,12 +163,12 @@ app.post(Config.DOWNLOAD_PUBLIC_KEY, async (req, res) => {
 });
 
 
-app.post(Config.UPLOAD_PUBLIC_KEY, async (req, res) => {
-    console.log('Received POST for', Config.UPLOAD_PUBLIC_KEY, req.body);
-    const publicKey = JSON.stringify(req.body.pk);
-    fs.writeFileSync('./public/issuer/.well-known/jwks.json', publicKey);
-    res.send();
-});
+// app.post(Config.UPLOAD_PUBLIC_KEY, async (req, res) => {
+//     console.log('Received POST for', Config.UPLOAD_PUBLIC_KEY, req.body);
+//     const publicKey = JSON.stringify(req.body.pk);
+//     fs.writeFileSync('./public/issuer/.well-known/jwks.json', publicKey);
+//     res.send();
+// });
 
 
 http.createServer(app).listen(Config.SERVICE_PORT, () => {
