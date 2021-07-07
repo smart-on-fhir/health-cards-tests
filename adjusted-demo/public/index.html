@@ -5,34 +5,238 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portals</title>
+    <title>Verifier Portal</title>
+
     <base target="_blank">
+
     <link rel="stylesheet" href="portal.css">
+    <link rel="stylesheet" href="github-markdown.css">
+
+    <script src="jsQR.js"></script>
+    <script src="qrscanner.js"></script>
+
 </head>
 
 <body style="background-color: #3A4856;">
-    <div>
-        <div style='padding: 3%'>
-            <div style="font-family: Arial, Helvetica, sans-serif;color: white;">
 
-                <hr />
+
+    <!-- Html for expandible docs sections -->
+    <script src='verifierDocs.js'></script>
+
+
+    <!-- section custom control -->
+    <script src='section.js'></script>
+
+
+    <!-- various utility functions -->
+    <script src='utils.js'></script>
+
+
+    <!-- validation -->
+    <script src='validate.js'></script>
+
+
+    <div>
+
+        <div style='padding: 3%'>
+
+            <div style="font-family: Arial, Helvetica, sans-serif; color: white;">
+
                 <h2>Verifier Portal</h2>
                 <p>
                     The Verifier Portal takes as input, a QR-Code image of a SMART Health Card.
                 </p>
                 <p>
-                    After the image is scanned, it is decoded, in stages, into a FHIR Bundle.
+                    After the image is scanned, it is decoded, in a series of stages, into a FHIR Bundle.
                 </p>
                 <p>
-                    Each step in the process does some amount of validation.
+                    Each step in the process does some amount of validation. Subsequent steps may not succeed without
+                    successful processing of the previous step.
                 </p>
 
-                <input id="buttonVerifierPortal" type="button" value="Go to Verifier Portal"
-                    onClick="parent.location='VerifierPortal.html'" />
+                <hr><br />
+                <div id="summary">
+                    <div>Verified real? <strong><span id="summaryVerify"></span></strong></div>
+                    <div>Issued by: <span id="summaryIss"></span></div><br />
+                    <div>Personal Details <span id="summaryDetails"></span></div>
+                </div>
+
             </div>
+            <br />
+            <hr><br />
+
+            <div id="fhirDataExtract"></div>
+            <div id="verificationDataExtract"></div>
+            <div id="keyDataExtract"></div>
+
+            <div id="scanQr" class="section"></div>
+            <script src='verifier/qr.js'></script>
+
+
+            <div id="decodeNumeric" class="section"></div>
+            <script src='verifier/numeric.js'></script>
+            <script>secScanQr.next = secDecodeNumeric</script>
+
+
+            <div id="decodeJWS" class="section"></div>
+            <script src='verifier/jws.js'></script>
+            <script>secDecodeNumeric.next = secDecodeJWS;</script>
+
+
+            <div id="extractPublicKey" class="section"></div>
+            <script src='verifier/extractKey.js'></script>
+            <script>secDecodeJWS.next = secExtractPublicKey;</script>
+
+
+            <div id="downloadKey" class="section"></div>
+            <script src='verifier/downloadKey.js'></script>
+            <script>secExtractPublicKey.next = secDownloadKey;</script>
+
+
+            <div id="verifySignature" class="section"></div>
+            <script src='verifier/signature.js'></script>
+            <script>secDownloadKey.next = secVerifySignature</script>
+
+
+            <div id="extractFhirBundle" class="section"></div>
+            <script src='verifier/fhir.js'></script>
+            <script>secVerifySignature.next = secExtractFhirBundle;</script>
+
+
+        </div>
+
+    </div>
+
+
+    <div class="footer">
+        <input type="button" id='buttonClear' value="Clear" />
+    </div>
+
+
+    <div id="CenterDIV">
+
+        <div class="divFloat" style="text-align: center;">
+
+            <div id="container" style="position:relative;">
+                <video id='vid'></video>
+                <label id='multipart' style="position:absolute; top: 10px; left: 10px"></label>
+            </div>
+
+            <input type="button" id='buttonCloseVideo' value="Close" />
 
         </div>
     </div>
+
+
+    <script>
+
+
+        //
+        // Scanner
+        //
+        const qrScanner = QrScanner('vid');
+        function closeVideo() {
+            // close the scan window if .stop() returns true (Actually stopped something)
+            // This should work, not tested on mobile/with working camera
+            document.getElementById('CenterDIV').style.display = 'none';
+            qrScanner.stop()
+            //qrScanner.stop() && (document.getElementById('CenterDIV').style.display = 'none');
+        }
+        document.getElementById('buttonCloseVideo').onclick = closeVideo;
+
+
+        function validateCode(elementId) {
+            let element = document.getElementById(elementId);
+            console.log(element.value);
+
+            if (elementId === "verificationDataExtract") {
+                let summaryVerify = document.getElementById("summaryVerify");
+                summaryVerify.innerHTML = element.value.toString().toUpperCase();
+
+            } else if (elementId === "keyDataExtract") {
+                let summaryIss = document.getElementById("summaryIss");
+                summaryIss.innerHTML = element.value.toString();
+
+            } else if (elementId === "fhirDataExtract") {
+                let summaryDetails = document.getElementById("summaryDetails");
+                let fhir = element.value;
+
+                let fhirData = toHealthCardData(fhir);
+                console.log(fhirData);
+                summaryDetails.innerHTML = JSON.stringify(fhirData);
+
+                let patientData = fhirData.patientData;
+                let name = `${patientData.firstName} ${patientData.lastName}`;
+                let dob = patientData.dob;
+                let immunizations = ""
+
+                patientData.immunizations.forEach(function (vaccine, index, arr) {
+                    // console.log(`Index: ${index}, Name: ${vaccine.code}`);
+                    immunizations += `<br>Shot ${index + 1}, Date: ${vaccine.date}, Code: ${codeToVaccine(vaccine.code)} ${vaccine.code}`;
+                });
+
+                let issuer = fhirData.issuer;
+
+                let formattedString = `<br>Name: ${name}, DOB: ${dob}, ${immunizations} <br>From: ${issuer}`;
+
+                summaryDetails.innerHTML = formattedString;
+            }
+        }
+
+        function toHealthCardData(fhirBundle) {
+            // we expect the first resource to be the patient
+            var patientEntry = fhirBundle.entry[0];
+            var immunizationEntries = fhirBundle.entry.slice(1);
+            var immunizations = immunizationEntries.map(function (ie) {
+                return {
+                    'code': ie.resource.vaccineCode.coding[0].code,
+                    'lot': ie.resource.lotNumber,
+                    'date': ie.resource.occurrenceDateTime
+                };
+            });
+            return {
+                issuer: immunizationEntries[0].resource.performer[0].actor.display,
+                patientData: {
+                    firstName: (patientEntry.resource.name[0].given instanceof Array)
+                        ? patientEntry.resource.name[0].given.join(' ')
+                        : patientEntry.resource.name[0].given,
+                    lastName: patientEntry.resource.name[0].family,
+                    dob: patientEntry.resource.birthDate,
+                    immunizations: immunizations
+                }
+            };
+        };
+
+        function codeToVaccine(code) {
+            switch (code) {
+                case "207": return "Moderna";
+                case "208": return "Pfizer";
+                case "210": return "AstraZeneca";
+                case "211": return "Novavax";
+                case "212": return "Janssen";
+                default: return "unknown";
+            }
+        }
+
+
+        //
+        // Clears all the fields including errors
+        // The section.clear() calls chain so we only need to call the topmost clear()
+        //
+        document.getElementById('buttonClear').onclick = () => secScanQr.clear();
+
+        //
+        // User selected profile for FHIR validation
+        //
+        function profileSelected(event) {
+            // force validation with selected profile
+            secExtractFhirBundle.setValue(secExtractFhirBundle.getValue());
+        }
+
+
+    </script>
+
+
 </body>
 
 </html>
