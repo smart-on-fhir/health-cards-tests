@@ -81,6 +81,12 @@ const secVerifySignature = (() => {
 
         for (let i = 0; i < keySet.keys.length; i++) {
             const key = keySet.keys[i];
+
+            // Firefox bug. Throws error when key possesses the [alg:'ES256'] property:
+            //   · Error importing key. name:'DataError' message:'Data provided to an operation does not meet requirements' code:'0' (Error)
+            // Removing the 'alg' property as it is optional.
+            delete key['alg'];
+
             if (key.kid.toUpperCase() === jwsHeader.kid.toUpperCase()) {
                 return key;
             }
