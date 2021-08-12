@@ -8,35 +8,107 @@
 //
 
 
+class ComboBox {
+
+    input;
+    select;
+
+    constructor(options /*[[value, label],[value, label]]*/) {
+
+        const divMain = document.createElement("DIV");
+        const divSelect = document.createElement("DIV");
+        this.input = document.createElement("input");
+        this.input.type = 'text';
+        this.select = document.createElement("select");
+        this.select.className = 'combo';
+
+        options.forEach(item => {
+            const option = document.createElement("option");
+            [option.value, option.label] = item;
+            this.select.appendChild(option);
+        });
+
+        divMain.appendChild(this.input);
+        divMain.appendChild(divSelect);
+        divSelect.appendChild(this.select);
+
+        this.input.addEventListener('click', this.showSelect, false);
+        this.input.addEventListener('blur', this.hideSelect, false);
+        this.input.addEventListener('keydown', this.hideSelect, false);
+        this.select.addEventListener('change', this.selectChange, false);
+        this.select.addEventListener('blur', this.hideSelect, false);
+
+        this.select.style = `overflow-y: auto; z-index: 2; display: none; position: absolute; width : 100%;`;
+        this.select.setAttribute('size', options.length + 0);
+    }
+
+    showSelect = (evt) => {
+        this.select.style.display = 'block';
+        this.input.addEventListener('mouseover', this.focus, false);
+        this.select.addEventListener('mouseover', this.focus, false);
+        if (this.select.value !== this.input.value) this.select.selectedIndex = -1;
+        this.select.style.width = '1px';
+        this.select.style.width = this.select.scrollWidth + 30 + 'px';
+    }
+
+    hideSelect = (evt) => {
+        // don't hide the select if when switching focus between input|select
+        if (evt.relatedTarget === this.input || evt.relatedTarget === this.select) return;
+        this.select.style.display = 'none';
+        this.input.removeEventListener('mouseover', this.focus, false);
+        this.select.removeEventListener('mouseover', this.focus, false);
+    }
+
+    focus = (evt) => {
+        evt.target.focus();
+    }
+
+    selectChange = (evt) => {
+        this.input.value = this.select.value;
+
+        // force the input event to fire as if keys were pressed
+        this.input.dispatchEvent(new Event('input'));
+
+        // close (hide) the select, clear the mouseover listeners, return focus to the input
+        this.select.style.display = 'none';
+        this.input.removeEventListener('mouseover', this.focus, false);
+        this.select.removeEventListener('mouseover', this.focus, false);
+        this.input.focus();
+    }
+
+}
+
 class Field {
 
     section;
     textArea;
-    name;
     errors = [];
     height = { min: 60, max: 400 };
-    options = { color: { default: "#FFF", update: '#d6fcd7' }, delay: { update: 500, bounce: 500 } };
+    options = { color: { default: "#FFF", update: '#d6fcd7' }, delay: { update: 500, bounce: 500 }, emptyIsValid: false };
 
-    constructor(section, name, placeholder) {
+    constructor(section, placeholder, element) {
 
         this.section = section;
-        this.name = name;
-        this.textArea = document.createElement("TEXTAREA");
-        this.textArea.setAttribute("placeholder", placeholder);
-
-        const div = document.createElement("DIV");
-        div.appendChild(this.textArea);
-        section.content.appendChild(div);
 
         let timer;
+        let div;
+
+        if (element) {
+            this.textArea = element;
+            div = element.parentElement;
+        } else {
+            this.textArea = document.createElement("TEXTAREA");
+            div = document.createElement("DIV");
+            div.appendChild(this.textArea);
+        }
+
+        this.textArea.setAttribute("placeholder", placeholder);
+        section.content.appendChild(div);
 
         this.textArea.addEventListener('input', () => {
-
             // this will prevent typing from triggering a server round-trip for every key-stroke
             if (timer) clearTimeout(timer);
-
             timer = setTimeout(this.update.bind(this), this.options.delay.bounce, timer);
-
         });
     }
 
@@ -51,13 +123,12 @@ class Field {
             this.section.fields.length > 1 ?
                 this.section.clearErrors(this.index) :
                 this.section.clearErrors()
-            this.section.next?.clear();
-            return;
+            await this.section.next?.clear();
+            if (this.options.emptyIsValid === false) return;
         }
 
         await this.section.validate(this);
     }
-
 
     set placeholder(text) {
         this.textArea.setAttribute("placeholder", text);
@@ -102,8 +173,6 @@ class Field {
     }
 
 }
-
-
 
 class Section {
 
@@ -320,10 +389,22 @@ class Section {
     // Adds additional text fields below the default text field
     // The new field can be accessed by this.fields[i] or this.values[id]
     //
-    addTextField(placeholder, name) {
-        this.fields.push(new Field(this, name, placeholder));
+    addTextField(placeholder) {
+        const field = new Field(this, placeholder);
+        field.value = '';  // forces initial sizing of element
+        this.fields.push(field);
     }
 
+
+    //
+    // Adds combo box
+    //
+    addComboBox(placeholder, items) {
+        const combo = new ComboBox(items);
+        const field = new Field(this, placeholder, combo.input);
+        field.value = '';
+        this.fields.push(field);
+    }
 
 
     //
@@ -363,10 +444,10 @@ class Section {
     //
     // Clear all fields
     //
-    clear() {
+    async clear() {
         this.clearErrors();
         this.fields.forEach(f => f.value = undefined);
-        if (this.next) this.next.clear();
+        if (this.next) await this.next.clear();
     }
 
 
@@ -385,12 +466,15 @@ class Section {
     //
     // Triggers the button on the next section if .next is assigned
     // 
-    goNext() {
+    async goNext() {
         if (!this.next) return;
 
-        setTimeout(async () => {
-            await this.next.process(); //.button.onclick();
-        }, 0);
+        return new Promise((resolve) => {
+            setTimeout(async () => {
+                await this.next.process(); //.button.onclick();
+                resolve();
+            }, 0);
+        });
     }
 
 

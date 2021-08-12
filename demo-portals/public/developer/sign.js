@@ -18,7 +18,7 @@ const secSignPayload = (() => {
 
     sec.validate = async function (field) {
         this.setErrors(validate.jws(field.value));
-        sec.valid() ? sec.goNext() : sec.next?.clear();
+        sec.valid() ? await sec.goNext() : sec.next?.clear();
     }
 
     return sec;

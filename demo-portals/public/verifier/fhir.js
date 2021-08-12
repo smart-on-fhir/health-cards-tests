@@ -18,7 +18,7 @@ const secExtractFhirBundle = (() => {
 
         await sec.setValue(JSON.stringify(fhirBundle, null, 2));
 
-        sec.valid() ? sec.goNext() : sec.next?.clear();
+        sec.valid() ? await sec.goNext() : sec.next?.clear();
 
     };
 

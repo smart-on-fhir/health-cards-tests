@@ -12,7 +12,7 @@ const secInitFhir = (() => {
     sec.validate = async function (field) {
         const profile = document.getElementById('profile-select').value;
         this.setErrors(await validate.fhirBundle(field.value, profile));
-        (sec.valid() && secInitKey.valid()) ? sec.goNext() : sec.next?.clear();
+        (sec.valid() && secInitKey.valid()) ? await sec.goNext() : sec.next?.clear();
     }
 
     return sec;

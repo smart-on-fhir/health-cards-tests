@@ -7,7 +7,7 @@ const secDownloadKey = (() => {
     sec.process = async () => {
 
         const previousControl = secExtractPublicKey;
-        const publicKeyUrl = previousControl.getValue();
+        const publicKeyUrl = previousControl.getValue(1);
 
         if (!publicKeyUrl) return;
 
@@ -23,7 +23,7 @@ const secDownloadKey = (() => {
     sec.validate = async function(field) {
         const keySet = field.value;
         sec.setErrors((await restCall('/validate-key-set', { data: keySet }, 'POST')).errors);
-        sec.valid() ? sec.goNext() : sec.next?.clear();
+        return sec.valid() ? await sec.goNext() : sec.next?.clear();
     }
 
     return sec;

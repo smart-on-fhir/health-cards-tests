@@ -105,6 +105,17 @@ See: [Modeling W3C Verifiable Credentials in FHIR](https://spec.smarthealth.card
 
 The __Fhir Bundle__ above is inserted into a Verifiable Credential (VC) structure. 
 The issuer field `iss` is set to the value you enter into the __Issuer Signing Key__ text field above.  
+
+### Trusted Issuers Directory
+
+A trusted issuers directory can be specified by either selecting a known directory name from the list or by typing a URL pointing to a directory using the same format as the [VCI directory](https://raw.githubusercontent.com/the-commons-project/vci-directory/main/vci-issuers.json). 
+
+The known directory names are:
+ - `VCI`, corresponding to the VCI directory, and
+ - `test`, a directory containing test issuers, including the one for the SMART Health Card specification examples.
+
+>__Note__ : leave the Trusted Issuer Directory field empty to skip directory validation
+
 &nbsp;  
 
 <!-- label:createCredential side:right-->

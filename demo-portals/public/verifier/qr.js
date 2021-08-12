@@ -20,7 +20,7 @@ const secScanQr = (() => {
 
     sec.validate = async function (field) {
         this.setErrors(await validate.numeric(this.fields.map(f => f.value)));
-        this.valid() ? this.goNext() : this.next.clear();
+        return this.valid() ? this.goNext() : this.next.clear();
     };
 
     //
