@@ -2,7 +2,7 @@ const secExtractPublicKey = (() => {
 
     const sec = new Section('extractPublicKey', "Extract Public Key URL");
     sec.setDocs(verifierDocs.extractPublicKey.l, verifierDocs.extractPublicKey.r);
-    sec.addComboBox("Trusted Issuer Directory (leave empty to skip trusted directory check)", [['VCI', 'VCI directory'], ['test', 'Test directory (test issuers, including the one for the SMART Health Card specification examples)']]);
+    sec.addComboBox("Trusted Issuer Directory (leave empty to skip trusted directory check)", [['', '-- none --  (no issuer validation)'], ['VCI', 'VCI directory'], ['test', 'Test directory (test issuers, including the one for the SMART Health Card specification examples)']]);
     sec.addTextField("Issuer Key URL");
 
     sec.process = async () => {

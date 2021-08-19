@@ -2,7 +2,7 @@ const secCreateCredential = (() => {
     const sec = new Section('createCredential', 'Create Credential');
     sec.setDocs(developerDocs.createCredential.l, developerDocs.createCredential.r);
     sec.addTextField("Issuer URL");
-    sec.addComboBox("Trusted Issuer Directory (leave empty to skip trusted directory check)", [['VCI', 'VCI directory'], ['test', 'Test directory (test issuers, including the one for the SMART Health Card specification examples)']]);
+    sec.addComboBox("Trusted Issuer Directory (leave empty to skip trusted directory check)", [['', '-- none --  (no issuer validation)'], ['VCI', 'VCI directory'], ['test', 'Test directory (test issuers, including the one for the SMART Health Card specification examples)']]);
     sec.addTextField("Credential");
 
 
@@ -38,6 +38,8 @@ const secCreateCredential = (() => {
             return;
         }
 
+        sec.fields[1].options.emptyIsValid = true;
+
         // override the valid() method on the 'trusted directory field'
         sec.fields[1].valid = function () {
             return !this.errors.some(err => err.level > 2);
@@ -51,21 +53,22 @@ const secCreateCredential = (() => {
     sec.validate = async function (field) {
 
         const text = field.value;
-        if (!text) { this.clearErrors(field.index); this.next?.clear(); return }
 
         switch (field.index) {
             case 0: // issuer
+                if (!text) { this.clearErrors(field.index); this.next?.clear(); return }
                 this.setErrors(/^https:\/\//.test(text) ? [] : [`Issuer shall use https://`], 0);
                 break;
 
             case 1: // trusted issuer
                 const directory = this.getValue(1);
                 const url = this.getValue(0);
-                if (!url) return;
+                if (!url) break;
                 directory && this.setErrors(await validate.checkTrustedDirectory(url, directory), 1);
                 break;
 
             case 2: // payload
+                if (!text) { this.clearErrors(field.index); this.next?.clear(); return }
                 this.setErrors(await validate.jwsPayload(text), 2);
                 break;
 
