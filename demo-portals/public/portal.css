@@ -1,11 +1,13 @@
 body {
   padding-bottom: 50px;
 }
+
 div {
   border-color: gray;
   border-style: unset;
   border-width: 0px;
 }
+
 label {
   color: white;
   display: inline-block;
@@ -15,6 +17,7 @@ label {
   text-align: center;
   text-decoration: none;
 }
+
 input[type="button"] {
   background-color: #6b7987;
   border-radius: 3px;
@@ -28,14 +31,17 @@ input[type="button"] {
   text-decoration: none;
   width: 300px;
 }
+
 img {
   border: 1px solid black;
   height: 300px;
   width: 300px;
   margin-right: 5px;
 }
+
 textarea,
 article,
+select.combo,
 input[type="text"] {
   border-radius: 3px;
   border: 1px solid black;
@@ -46,22 +52,40 @@ input[type="text"] {
   resize: vertical;
   transition: background-color 0.5s ease;
   width: 100%;
+  display: block;
 }
+
+select.combo {
+  resize: unset;
+  height: unset;
+  color: white;
+  background-color: #6b7987;
+  filter: drop-shadow(6px 6px 6px #404040);
+}
+
+option {
+  padding: 5px;
+}
+
 .taError {
   overflow-x: auto;
   overflow-wrap: normal;
 }
+
 article {
   background-color: #f1f1e6be;
 }
+
 .collapsible:hover {
   background-color: #555;
 }
+
 .content {
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.2s ease-out;
 }
+
 .footer {
   bottom: 0;
   color: white;
@@ -70,6 +94,7 @@ article {
   text-align: center;
   width: 100%;
 }
+
 #CenterDIV {
   background-color: rgba(255, 255, 255, 0.75);
   display: none;
@@ -80,6 +105,7 @@ article {
   top: 0;
   width: 100%;
 }
+
 .divFloat {
   background-color: #fff;
   border: solid 1px #999;
@@ -94,15 +120,18 @@ article {
   webkit-box-orient: vertical;
   width: 600px;
 }
+
 .info {
   color: #acbdcf;
   cursor: pointer;
   font-family: Arial, Helvetica, sans-serif;
   font-weight: bold;
 }
+
 .section {
   padding-bottom: 100px;
 }
+
 .issues {
   visibility: hidden;
 }
@@ -136,10 +165,5 @@ article {
   display: inline-block;
   text-decoration: none;
   width: 300px;
-  text-align-last:center;
-}
-
-option {
-  background-color: white;
-  color: #3A4856;
+  text-align-last: center;
 }

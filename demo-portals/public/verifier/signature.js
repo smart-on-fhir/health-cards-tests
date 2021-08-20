@@ -52,7 +52,7 @@ const secVerifySignature = (() => {
     };
 
     sec.validate = async function(field) {
-        sec.valid() ? sec.goNext() : sec.next?.clear();
+        return sec.valid() ? await sec.goNext() : sec.next?.clear();
     }
 
 

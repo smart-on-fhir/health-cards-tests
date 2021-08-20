@@ -148,7 +148,11 @@
             secScanQr.clear();
             const sampleUrl = 'https://spec.smarthealth.cards/examples/example-00-f-qr-code-numeric-value-0.txt';
             const result = await restCall(sampleUrl, "", 'GET', 'text');
-            await secScanQr.setValue(result);
+            secScanQr.setValue(result)
+                .then(async () => {
+                    secExtractPublicKey.setValue('test');
+                });
+
         }
 
 

@@ -26,7 +26,7 @@ const secDecodeNumeric = (() => {
     sec.validate = async function(field) {
         const jws = field.value.replace(/\s*\.\s*/g, '.');
         this.setErrors(validate.jws(jws));
-        this.valid() ? this.goNext() : this.next?.clear();
+        return this.valid() ? this.goNext() : this.next?.clear();
     }
 
     return sec;

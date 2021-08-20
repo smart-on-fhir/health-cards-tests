@@ -20,15 +20,11 @@ app.use(express.static('./public')) // issuer public key set
 app.use(express.static('./cards'))  // issued card files
 
 
-validate.profile = ValidationProfiles.any;
-
-
 app.post(Config.VALIDATE_FHIR_BUNDLE, async (req, res) => {
     console.log('Received POST for', Config.VALIDATE_FHIR_BUNDLE, req.body);
-    const fhir = req.body.data;
-    validate.profile = ValidationProfiles[fhir.profile || 'any'];
-    const errors = await validate.fhirbundle(fhir.data);
-    validate.profile = ValidationProfiles.any;
+    const fhir = req.body.fhir;
+    const profile = ValidationProfiles[req.body.profile || 'any'];
+    const errors = await validate.fhirbundle(fhir, { profile: profile });
     res.type('json');
     res.send({ success: errors.length === 0, errors: errors });
 });
@@ -45,8 +41,9 @@ app.post(Config.VALIDATE_QR_NUMERIC, async (req, res) => {
 
 app.post(Config.VALIDATE_JWS, async (req, res) => {
     console.log('Received POST for', Config.VALIDATE_JWS, req.body);
-    const jws = req.body.data;
-    const errors = await validate.jws(jws);
+    const jws = req.body.payload;
+    const directory = req.body.directory || '';
+    const errors = await validate.jws(jws, { directory: directory });
     res.type('json');
     res.send({ success: errors.length === 0, errors: errors });
 });
@@ -54,7 +51,7 @@ app.post(Config.VALIDATE_JWS, async (req, res) => {
 
 app.post(Config.VALIDATE_PAYLOAD, async (req, res) => {
     console.log('Received POST for', Config.VALIDATE_PAYLOAD, req.body);
-    const payload = req.body.data;
+    const payload = req.body.payload;
     const errors = await validate.jwspayload(payload);
     res.type('json');
     res.send({ success: errors.length === 0, errors: errors });
@@ -116,7 +113,6 @@ app.post(Config.NUMERIC_ENCODE, async (req, res) => {
     const segments = issuer.numeric(jws) as { data: string, mode: string }[][];
     const output = segments.map(s => s[0].data + s[1].data);
     res.send(output);
-
 });
 
 
@@ -124,7 +120,7 @@ app.post(Config.GENERATE_QR_CODE, async (req, res) => {
     console.log('Received POST for', Config.GENERATE_QR_CODE, req.body);
     const shc: string[] = req.body.shc;
     const segments = issuer.shcToSegments(shc);
-    let output : string[];
+    let output: string[];
     try {
         output = await issuer.qr(segments);
     } catch {
@@ -168,6 +164,16 @@ app.post(Config.UPLOAD_PUBLIC_KEY, async (req, res) => {
     const publicKey = JSON.stringify(req.body.pk);
     fs.writeFileSync('./public/issuer/.well-known/jwks.json', publicKey);
     res.send();
+});
+
+
+app.post(Config.CHECK_TRUSTED_DIRECTORY, async (req, res) => {
+    console.log('Received POST for', Config.CHECK_TRUSTED_DIRECTORY, req.body);
+    const url = req.body.url;
+    const directory = req.body.directory;
+    const errors = directory ? await validate.checkTrustedDirectory(url, { directory }) : [];
+    res.type('json');
+    res.send({ success: errors.length === 0, errors: errors });
 });
 
 

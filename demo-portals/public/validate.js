@@ -15,7 +15,7 @@ const validate = (function () {
         const obj = tryParse(text);
         if (!obj) return [error('Cannot parse FHIR Bundle as JSON')];
 
-        const result = await restCall('/validate-fhir-bundle', { data: { data: text, profile: profile } }, 'POST');
+        const result = await restCall('/validate-fhir-bundle', { fhir: text, profile: profile }, 'POST');
 
         return result.errors;
     }
@@ -98,7 +98,7 @@ const validate = (function () {
         const payload = tryParse(text);
         if (!payload) return [error('Cannot parse Credential as JSON')];
 
-        return (await restCall('/validate-jws-payload', { data: text }, 'POST')).errors;
+        return (await restCall('/validate-jws-payload', { payload: text }, 'POST')).errors;
     }
 
     validate.jwsSignature = function (text) {
@@ -129,6 +129,10 @@ const validate = (function () {
 
     validate.numeric = async function (textArray) {
         return (await restCall('/validate-qr-numeric', { data: textArray }, 'POST')).errors;
+    }
+
+    validate.checkTrustedDirectory = async function (url, directory) {
+        return (await restCall('/check-trusted-directory', { url: url, directory: directory }, 'POST')).errors;
     }
 
     return validate;

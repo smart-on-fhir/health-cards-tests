@@ -69,6 +69,17 @@ See: [Protocol Details](https://spec.smarthealth.cards/#protocol-details) for mo
 
 <br><br>
 <!-- label:extractPublicKey side:right-->
+
+### Trusted Issuers Directory
+
+A trusted issuers directory can be specified by either selecting a known directory name from the list or by typing a URL pointing to a directory using the same format as the [VCI directory](https://raw.githubusercontent.com/the-commons-project/vci-directory/main/vci-issuers.json). 
+
+The known directory names are:
+ - `VCI`, corresponding to the VCI directory, and
+ - `test`, a directory containing test issuers, including the one for the SMART Health Card specification examples.
+
+>__Note__ : leave the Trusted Issuer Directory field empty to skip directory validation
+
 <!-- separator --> <br><hr><br>
 
 

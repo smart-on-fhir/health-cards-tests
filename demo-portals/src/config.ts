@@ -17,6 +17,7 @@ export const Config = {
     GENERATE_QR_CODE:                       '/generate-qr-code',
     DOWNLOAD_PUBLIC_KEY:                    '/download-public-key',
     UPLOAD_PUBLIC_KEY:                      '/upload-public-key',
+    CHECK_TRUSTED_DIRECTORY:                '/check-trusted-directory',
 
     SERVER_BASE : process.env.SERVER_BASE || 'http://localhost:' + (process.env.HOST_PORT || 8080) + '/',
     SERVICE_PORT: process.env.HOST_PORT || 8080
