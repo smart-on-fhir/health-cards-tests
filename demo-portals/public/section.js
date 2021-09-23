@@ -139,7 +139,7 @@ class Field {
     }
 
     get value() {
-        return this.textArea.value.trim();
+        return this.textArea.value;
     }
 
     set value(text) {
@@ -393,6 +393,7 @@ class Section {
         const field = new Field(this, placeholder);
         field.value = '';  // forces initial sizing of element
         this.fields.push(field);
+        return field;
     }
 
 

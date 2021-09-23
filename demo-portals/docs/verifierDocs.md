@@ -6,14 +6,25 @@ When accessing the portal from a remote server, the browser will require a __HTT
 
 When using `localhost`, __HTTP__ is sufficient.  
 
-To Scan your QR code, try to align the QR code within the square overlay.  As camera resolutions may differ, you may have experiment with finding the best alignment. Make sure the QR-code is flat.
+To Scan your QR code, try to align the QR code within the square overlay.  As camera resolutions may differ, you may have to experiment with finding the best alignment. Make sure the QR-code is flat.
 
 Download a sample __Numeric QR Code__ from [https://spec.smarthealth.cards/examples/example-00-f-qr-code-numeric-value-0.txt](https://spec.smarthealth.cards/examples/example-00-f-qr-code-numeric-value-0.txt)  
 
-<input type="button" id='buttonDownloadSample' value="Download Sample" onclick="downloadNumericQRSample()" />&nbsp;<input type="button" id='buttonDownloadSample' value="Download Multi-Part Sample" onclick="downloadMultiQRSample()" /> 
-
+<input type="button" id='buttonDownloadSample' value="Download Sample" onclick="downloadNumericQRSample()" />
 <br><br>
 <!-- label:scanQRCode side:right-->
+### Multipart Codes
+
+__Scanning__: When scanning, the scanner will detect if the QR code uses multiple parts and will create a new field for each required part.
+
+__Manual Entry__: When typing or pasting numeric data, the shc header will be inspected and new fields for each part will be created as need.
+
+For example, if you type `shc:/1/2/...`, the validator will detect that you have 2-parts and add an additional numeric field.
+
+>__Note:__ All parts of a multipart code must be supplied to continue validation. The parts are concatenated to create a single JWS string before later verfications can be performed.  When a part is missing, the JWS will be invalid.  
+
+<input type="button" id='buttonDownloadSample' value="Download Multi-Part Sample" onclick="downloadMultiQRSample()" /> 
+
 <!-- separator --> <br><hr><br>
 
 

@@ -16,7 +16,7 @@ This project demonstrates the issuance and validation of cards specified in the 
 2. Get the source, for example using git:
 
                 git clone -b sample-service https://github.com/microsoft/health-cards-tests
-                cd health-cards-tests/demo
+                cd health-cards-tests/demo-portals
 
 3. Build the npm package:
 
