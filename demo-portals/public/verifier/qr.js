@@ -19,7 +19,29 @@ const secScanQr = (() => {
     }
 
     sec.validate = async function (field) {
-        this.setErrors(await validate.numeric(this.fields.map(f => f.value)));
+
+        const regExpParts = /^shc:\/\d+\/(\d+)\//;
+        let maxParts = 1;
+
+        for (let i = 0; i < this.fields.length; i++) {
+            maxParts = Math.max(parseInt(this.fields[i].value.match(regExpParts)?.[1] || 1), maxParts);
+        }
+
+        const currentParts = this.fields.length;
+        const newParts = maxParts - currentParts;
+
+        // adds new fields when we don't have enough
+        for (let i = 0; i < newParts; i++) {
+            this.addTextField(`Multipart QR ${currentParts + 1 + i}`).options.emptyIsValid = false;            
+        }
+
+        // removes extra fields (and data) when we have too many (newParts will be negative)
+        for (let i = 0; i > newParts; i--) {
+            this.fields[currentParts - 1 + i].delete();
+        }
+
+        this.setErrors(await validate.numeric(this.fields.map(f => f.value).filter(v => !!v)));
+
         return this.valid() ? this.goNext() : this.next.clear();
     };
 
