@@ -82,6 +82,12 @@ const secScanQr = (() => {
             let label = 'Parts : ';
             const scanResult = await qrScanner.scan();
 
+            // if the scanner returns an error
+            if (scanResult?.error) {
+                alert(`Camera Error '${scanResult.error}'`);
+                break;
+            };
+
             // if the scanner was closed by the user
             if (scanResult?.state === 'stopped') break;
 
