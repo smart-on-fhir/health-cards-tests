@@ -6,6 +6,8 @@ const secDecodeNumeric = (() => {
 
     sec.process = async function() {
 
+        if(this.disabled) return;
+
         const numericEncoded = secScanQr.getValue();
 
         if (!numericEncoded) return;
@@ -32,4 +34,3 @@ const secDecodeNumeric = (() => {
     return sec;
 
 })();
-

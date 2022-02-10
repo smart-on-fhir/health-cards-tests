@@ -31,7 +31,7 @@ const secCreateCredential = (() => {
         if (!issuer) issuer = document.getElementById('textIssuer').value;
 
         // set the issuer field if we now have a key
-        if (issuer) this.setValue(issuer);
+        if (issuer) this.setValue(issuer, undefined, false);
 
         if (!issuer && this.getValue(2)) {
             this.setErrors([`Missing Issuer Key URL`]);

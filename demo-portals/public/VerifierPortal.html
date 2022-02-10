@@ -150,7 +150,7 @@
             const result = await restCall(sampleUrl, "", 'GET', 'text');
             secScanQr.setValue(result)
                 .then(async () => {
-                    secExtractPublicKey.setValue('test');
+                    secExtractPublicKey.setValue('test', undefined, false);
                 });
 
         }

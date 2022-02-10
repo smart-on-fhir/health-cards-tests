@@ -10,7 +10,7 @@ import { Config } from './config';
 import fs from 'fs';
 import http from 'http';
 import got from 'got';
-import { validate, ValidationProfiles } from 'health-cards-validation-sdk/js/src/api';
+import { validate, ValidationProfiles, Validators, IOptions } from 'health-cards-validation-sdk/js/src/api';
 import * as issuer from './issuer';
 
 
@@ -23,8 +23,22 @@ app.use(express.static('./cards'))  // issued card files
 app.post(Config.VALIDATE_FHIR_BUNDLE, async (req, res) => {
     console.log('Received POST for', Config.VALIDATE_FHIR_BUNDLE, req.body);
     const fhir = req.body.fhir;
-    const profile = ValidationProfiles[req.body.profile || 'any'];
-    const errors = await validate.fhirbundle(fhir, { profile: profile });
+
+    let options: Partial<IOptions> = { cascade: false };
+    switch (req.body.profile) {
+
+        case 'profile:any':
+            break;
+
+        case 'profile:usa-covid19-immunization':
+            options = { ...{ profile: ValidationProfiles['usa-covid19-immunization'] } };
+            break;
+
+        case 'validator:fhirvalidator':
+            options = { ...{ validator: Validators.fhirvalidator } };
+    }
+
+    const errors = await validate.fhirbundle(fhir, options);
     res.type('json');
     res.send({ success: errors.length === 0, errors: errors });
 });
@@ -33,7 +47,7 @@ app.post(Config.VALIDATE_FHIR_BUNDLE, async (req, res) => {
 app.post(Config.VALIDATE_QR_NUMERIC, async (req, res) => {
     console.log('Received POST for', Config.VALIDATE_QR_NUMERIC, req.body);
     const shc = req.body.data;
-    const errors = await validate.qrnumeric(shc);
+    const errors = await validate.qrnumeric(shc, { cascade: false });
     res.type('json');
     res.send({ success: errors.length === 0, errors: errors });
 });
@@ -42,8 +56,8 @@ app.post(Config.VALIDATE_QR_NUMERIC, async (req, res) => {
 app.post(Config.VALIDATE_JWS, async (req, res) => {
     console.log('Received POST for', Config.VALIDATE_JWS, req.body);
     const jws = req.body.payload;
-    const directory = req.body.directory || '';
-    const errors = await validate.jws(jws, { directory: directory });
+    const issuerDirectory = req.body.directory || '';
+    const errors = await validate.jws(jws, { issuerDirectory, cascade: false });
     res.type('json');
     res.send({ success: errors.length === 0, errors: errors });
 });
@@ -52,7 +66,7 @@ app.post(Config.VALIDATE_JWS, async (req, res) => {
 app.post(Config.VALIDATE_PAYLOAD, async (req, res) => {
     console.log('Received POST for', Config.VALIDATE_PAYLOAD, req.body);
     const payload = req.body.payload;
-    const errors = await validate.jwspayload(payload);
+    const errors = await validate.jwspayload(payload, { cascade: false });
     res.type('json');
     res.send({ success: errors.length === 0, errors: errors });
 });
@@ -85,7 +99,12 @@ app.post(Config.DEFLATE_PAYLOAD, async (req, res) => {
 app.post(Config.INFLATE_PAYLOAD, async (req, res) => {
     console.log('Received POST for', Config.INFLATE_PAYLOAD, req.body);
     const payload = JSON.stringify(req.body.payload);
-    const result = issuer.inflate(payload);
+    let result;
+    try {
+        result = issuer.inflate(payload);
+    } catch {
+        result = undefined;
+    }
     res.send(result);
 });
 
@@ -170,8 +189,8 @@ app.post(Config.UPLOAD_PUBLIC_KEY, async (req, res) => {
 app.post(Config.CHECK_TRUSTED_DIRECTORY, async (req, res) => {
     console.log('Received POST for', Config.CHECK_TRUSTED_DIRECTORY, req.body);
     const url = req.body.url;
-    const directory = req.body.directory;
-    const errors = directory ? await validate.checkTrustedDirectory(url, { directory }) : [];
+    const issuerDirectory = req.body.directory;
+    const errors = issuerDirectory ? await validate.checkTrustedDirectory(url, { issuerDirectory, cascade: false }) : [];
     res.type('json');
     res.send({ success: errors.length === 0, errors: errors });
 });

@@ -169,8 +169,9 @@ After signature verification, the FHIR Bundle is extracted from the JWS payload 
 Select optional FHIR validation profile:  
 
 <select id='profile-select' onchange="profileSelected()">
-    <option value='any'>default</option>
-    <option value='usa-covid19-immunization'>usa-covid19-immunization</option>
+    <option value='profile:any'>default</option>
+    <option value='profile:usa-covid19-immunization'>Profile: usa-covid19-immunization</option>
+	<option value='validator:fhirvalidator'>Validator: HL7 FHIR Validator (slow)</option>
 </select>
 
 <br><br>

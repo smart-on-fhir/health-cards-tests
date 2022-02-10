@@ -6,6 +6,8 @@ const secScanQr = (() => {
 
     sec.process = async function () {
 
+        if(this.disabled) return;
+
         this.clear();
         const scannedParts = await scanQrCodes();
 
@@ -18,6 +20,7 @@ const secScanQr = (() => {
 
     }
 
+    // called whenever a field is updated
     sec.validate = async function (field) {
 
         const regExpParts = /^shc:\/\d+\/(\d+)\//;
@@ -40,7 +43,11 @@ const secScanQr = (() => {
             this.fields[currentParts - 1 + i].delete();
         }
 
+        this.next && (this.next.disabled = true);
+
         this.setErrors(await validate.numeric(this.fields.map(f => f.value).filter(v => !!v)));
+
+        this.next && (this.next.disabled = false);
 
         return this.valid() ? this.goNext() : this.next.clear();
     };

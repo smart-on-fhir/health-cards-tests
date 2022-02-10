@@ -7,6 +7,8 @@ const secExtractPublicKey = (() => {
 
     sec.process = async () => {
 
+        if(this.disabled) return;
+
         const jwsPayloadText = secDecodeJWS.getValue(1 /*jws-payload*/);;
         const jwsPayload = tryParse(jwsPayloadText);
 
@@ -26,7 +28,8 @@ const secExtractPublicKey = (() => {
             return !this.errors.some(err => err.level > 2);
         }
 
-        sec.setValue('', 0);
+        // defer validation since each 'setValue' will trigger a section.validate()
+        sec.setValue('', 0, false);
 
         await sec.setValue(jwsPayload.iss + '/.well-known/jwks.json', 1 /* url */);
 

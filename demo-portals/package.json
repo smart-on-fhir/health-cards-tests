@@ -5,15 +5,14 @@
     "main": "src/server.ts",
     "scripts": {
         "build": "tsc",
-        "deploy": "ts-node --files src/server.ts",
-        "issue": "ts-node src/cli.ts --task issue",
+        "deploy": "node js/src/server.js",
         "postinstall": "node src/init.js",
-        "build-docs": "ts-node --files src/buildDocs.ts",
+        "build-docs": "node js/src/buildDocs.js",
         "preinstall": "npx npm-force-resolutions"
     },
     "resolutions": {
         "ansi-regex": "5.0.1"
-      },
+    },
     "author": "",
     "license": "ISC",
     "dependencies": {
@@ -25,14 +24,13 @@
         "express": "^4.17.1",
         "github-markdown-css": "^4.0.0",
         "got": "^11.8.2",
-        "health-cards-validation-sdk": "git+https://github.com/smart-on-fhir/health-cards-validation-SDK.git#b132df9af074d07e59808467526d2af04978f2d2",
+        "health-cards-validation-sdk": "git+https://github.com/smart-on-fhir/health-cards-validation-SDK.git#fhir-validator-support",
         "jspdf": "^2.4.0",
         "jsqr": "^1.4.0",
         "node-jose": "^2.0.0",
         "pako": "^2.0.4",
         "qrcode": "^1.4.4",
         "showdown": "^1.9.0",
-        "ts-node": "^9.1.1",
         "typescript": "^4.3.5"
     }
 }

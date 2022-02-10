@@ -138,3 +138,6 @@ private/localhost.key
 
 # include packed validation packages
 !packages/*
+
+# HL7 FHIR Validator jar file
+validator_cli.jar
