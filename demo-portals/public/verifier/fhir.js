@@ -1,11 +1,13 @@
-const secExtractFhirBundle = (() => {
+class FhirSection extends Section {
 
-    const sec = new Section('extractFhirBundle', "Extract FHIR Bundle");
-    sec.setDocs(verifierDocs.extractFhirBundle.l, verifierDocs.extractFhirBundle.r);
-    sec.addTextField("FHIR Bundle");
+    constructor() {
+        super("extractFhirBundle", "Extract FHIR Bundle");
+        this.setDocs(verifierDocs.extractFhirBundle.l, verifierDocs.extractFhirBundle.r);
+        this.addTextField("FHIR Bundle");
+    }
 
-
-    sec.process = async function () {
+    async process() {
+        if (this.disabled) return;
 
         const jwsPayloadText = secDecodeJWS.getValue(1 /*payload*/);
         if (!jwsPayloadText) return;
@@ -16,17 +18,31 @@ const secExtractFhirBundle = (() => {
         const fhirBundle = jwsPayload?.vc?.credentialSubject?.fhirBundle;
         if (!fhirBundle) return;
 
-        await sec.setValue(JSON.stringify(fhirBundle, null, 2));
-
-        sec.valid() ? await sec.goNext() : sec.next?.clear();
-
-    };
-
-    sec.validate = async function (field) {
-        const profile = document.getElementById('profile-select').value;
-        this.setErrors(await validate.fhirBundle(field.value, profile));
+        await this.setValue(JSON.stringify(fhirBundle, null, 2));
     }
 
-    return sec;
+    async validate(field) {
+        const profile = document.getElementById('profile-select').value;
+        const slow = profile === 'validator:fhirvalidator';
 
-})();
+        this.disabled = true;
+
+        // display the progress meter 
+        slow && this.progress(true, 'HL7 FHIR Validator (slow)');
+
+        const errors = await validate.fhirBundle(field.value, profile);
+
+        slow && this.progress(true, 'HL7 FHIR Validator (complete)', 100);
+
+        // let the progress bar linger for another second at 100% before hidding it
+        slow && setTimeout(() => {
+            this.progress(false, '', 0);
+        }, 1000);
+
+        this.disabled = false;
+
+        this.setErrors(errors);
+    }
+}
+
+const secExtractFhirBundle = new FhirSection();

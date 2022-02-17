@@ -84,7 +84,7 @@ class Field {
     textArea;
     errors = [];
     height = { min: 60, max: 400 };
-    options = { color: { default: "#FFF", update: '#d6fcd7' }, delay: { update: 500, bounce: 500 }, emptyIsValid: false };
+    options = { color: { default: "#FFF", update: '#D6FCD7', disabled: '#ACBDCF' }, delay: { update: 500, bounce: 500 }, emptyIsValid: false };
 
     constructor(section, placeholder, element) {
 
@@ -143,13 +143,14 @@ class Field {
     }
 
     set value(text) {
+        if (this.disabled) return;
         this.textArea.value = text || '';
         this.textArea.style.height = "1px";
         this.textArea.style.height = Math.min(Math.max(this.height.min, this.textArea.scrollHeight), this.height.max) + "px";
         if (this.textArea === '') this.errors = [];
         this.textArea.style.background = this.options.color.update;
         setTimeout(() => {
-            this.textArea.style.background = this.options.color.default;
+            this.textArea.style.background = this.disabled ? this.options.color.disabled : this.options.color.default;
         }, this.options.delay.update);
     }
 
@@ -172,6 +173,64 @@ class Field {
         this.section.fields.splice(this.index, 1);
     }
 
+    set disabled(state) {
+        this.textArea.disabled = !!state;
+        this.textArea.style.background = !!state ? this.options.color.disabled : this.options.color.default;
+    }
+
+    get disabled() {
+        return this.textArea.disabled;
+    }
+
+}
+
+class Progress {
+
+    #container;
+    #progress;
+    #label;
+    #handle;
+
+    constructor(parent) {
+        this.#container = document.createElement("DIV");
+        this.#container.className = "progress";
+        this.#progress = document.createElement('PROGRESS');
+        this.#progress.max = 100;
+        this.#progress.min = 0;
+        this.#label = document.createElement('LABEL');
+        this.#container.appendChild(this.#label);
+        this.#container.appendChild(this.#progress);
+        parent.appendChild(this.#container);
+    }
+
+    set hidden(state) {
+        this.#container.hidden = !!state;
+    }
+
+    get hidden() {
+        this.#container.hidden;
+    }
+
+    set percent(value) {
+        if (value === undefined) {
+            this.#handle = setInterval(() => {
+                this.#progress.value =  this.#progress.value + Math.min(10, (100 - this.#progress.value) / 2);
+            }, 1000);
+        } else {
+            this.#handle && clearInterval(this.#handle);
+            this.#handle = undefined;
+            this.#progress.value = value;
+        }
+    }
+
+    get percent() {
+        return this.#progress.value;
+    }
+
+    set label(text) {
+        this.#label.textContent = text;
+    }
+
 }
 
 class Section {
@@ -185,13 +244,13 @@ class Section {
     content;
     next = undefined;
     errors = [];
+    #disabled = false;
+    #progress;
 
 
     constructor(id, buttonText) {
 
         this.id = id;
-
-        // <div class="section">
         const div0 = document.getElementById(id);
 
         if (buttonText) {
@@ -200,17 +259,14 @@ class Section {
             this.button.setAttribute("type", "button");
             this.button.value = buttonText || "Button";
             div0.appendChild(this.button);
-            //this.button.onclick = async () => await this.process();
             this.button.onclick = this.process.bind(this);
         }
 
-        //<span class="info collapsible"
         const span0 = document.createElement("SPAN");
         span0.className = "info collapsible";
         span0.innerHTML = "&nbsp;&nbsp;?&nbsp;&nbsp;";
         div0.appendChild(span0);
 
-        // <div id="docsDecodeJWS" class="docs"></div>
         const div01 = document.createElement("DIV");
         div01.setAttribute("class", "docs");
         div01.setAttribute("id", "docs" + id);
@@ -218,17 +274,16 @@ class Section {
         div01.className = "content";
         div0.appendChild(div01);
 
-        //const docHtml = converter.makeHtml(textDoc);
         var div010 = document.createElement('DIV');
         div010.style = "width: 50%;padding-right: 5px;";
         div01.appendChild(div010);
 
-        this.doc0 = document.createElement('article');
+        this.doc0 = document.createElement('ARTICLE');
         this.doc0.className = "markdown-body";
         this.doc0.innerHTML = "docHtml";
         div010.appendChild(this.doc0);
 
-        var div011 = document.createElement('div');
+        var div011 = document.createElement('DIV');
         div011.style = "flex-grow: 1;padding-left: 5px;";
         div01.appendChild(div011);
 
@@ -236,20 +291,21 @@ class Section {
         this.content = document.createElement("DIV");
         div0.appendChild(this.content);
 
-        var content0 = document.createElement("DIV");
-        this.content.appendChild(content0);
-
-        // <span class="error collapsible"></span>
         const span1 = document.createElement("SPAN");
         span1.className = "error collapsible";
         div0.appendChild(span1);
 
-        // <div id="docsDecodeJWS" class="docs"></div>
         const div03 = document.createElement("DIV");
         div03.className = "content";
         div0.appendChild(div03);
 
-        //  <textarea class='taError' id="taJWSPayloadError"></textarea>
+        const div04 = document.createElement("DIV");
+        div04.className = "progress";
+        div0.appendChild(div04);
+
+        this.#progress = new Progress(div04);
+        this.#progress.hidden = true;
+
         this.taError = document.createElement("TEXTAREA");
         this.taError.className = "taError";
         this.taError.readOnly = true;
@@ -274,11 +330,24 @@ class Section {
 
 
     //
+    // Enable/Disable the section and all children
+    //
+    set disabled(state) {
+        this.#disabled = !!state;
+        this.fields.forEach(field => field.disabled = !!state);
+        if (this.next) this.next.disabled = !!state;
+    }
+    get disabled() {
+        return this.#disabled;
+    }
+
+
+    //
     // Sets text in the collapsable Error field. Field will collapse when empty
     // Label allows errors to be put into groups
     //
     setErrors(errors, index = -1) {
-
+        if (this.#disabled) return;
         // convert strings to error objects
         for (let i = 0; i < errors.length; i++) {
             if (typeof (errors[i]) === 'string') {
@@ -303,7 +372,7 @@ class Section {
     // Specify label to clear only errors of that group. Use no label to clear everything
     //
     clearErrors(index = -1) {
-
+        if (this.#disabled) return;
         if (index >= 0) {
             this.fields[index].errors = [];
         } else {
@@ -357,9 +426,9 @@ class Section {
     // accepts text as markdown and converts it to formatted html
     //
     setDocs(markdownLeft, markdownRight) {
-
+        if (this.#disabled) return;
         if (markdownLeft && markdownLeft.trim().length) {
-            //doc0 parent style = "width: 50%;padding-right: 5px;";
+
             this.doc0.innerHTML = markdownLeft;
 
             if (markdownRight === null) {
@@ -390,6 +459,7 @@ class Section {
     // The new field can be accessed by this.fields[i] or this.values[id]
     //
     addTextField(placeholder) {
+        if (this.#disabled) return;
         const field = new Field(this, placeholder);
         field.value = '';  // forces initial sizing of element
         this.fields.push(field);
@@ -401,6 +471,7 @@ class Section {
     // Adds combo box
     //
     addComboBox(placeholder, items) {
+        if (this.#disabled) return;
         const combo = new ComboBox(items);
         const field = new Field(this, placeholder, combo.input);
         field.value = '';
@@ -412,6 +483,7 @@ class Section {
     // Reset to single TA
     //
     resetTextFields() {
+        if (this.#disabled) return;
         for (let i = 1; i < this.fields.length;) {
             this.fields[1].delete();
         }
@@ -429,16 +501,12 @@ class Section {
     //
     // Sets the value of a field by id or the first field
     //
-    async setValue(value, index = 0) {
-
+    async setValue(value, index = 0, validateAfterSet = true) {
+        if (this.#disabled) return;
         const field = this.fields[index];
-
         if (!field) throw new Error(`setValue() cannot lookup field[${index}].`);
-
         field.value = value;
-
-        await field.update();
-
+        if (validateAfterSet) await field.update();  // turns around and calls section.validate()
     }
 
 
@@ -446,6 +514,7 @@ class Section {
     // Clear all fields
     //
     async clear() {
+        if (this.#disabled) return;
         this.clearErrors();
         this.fields.forEach(f => f.value = undefined);
         if (this.next) await this.next.clear();
@@ -457,9 +526,7 @@ class Section {
     //
     valid() {
         if (this.fields.some(field => !field.valid())) return false;
-
         if (this.errors.some(err => err.level > 2)) return false;
-
         return true;
     }
 
@@ -468,11 +535,11 @@ class Section {
     // Triggers the button on the next section if .next is assigned
     // 
     async goNext() {
+        if (this.#disabled) return;
         if (!this.next) return;
-
         return new Promise((resolve) => {
             setTimeout(async () => {
-                await this.next.process(); //.button.onclick();
+                await this.next.process();
                 resolve();
             }, 0);
         });
@@ -483,9 +550,9 @@ class Section {
     // Calls into the overridden process function
     // 
     async process() {
+        if (this.#disabled) return;
         await this.process();
     }
-
 
 
     //
@@ -493,6 +560,16 @@ class Section {
     // 
     async validate() {
         await this.validate(this.fields[0]);
+    }
+
+
+    //
+    // Sets progress bar
+    // 
+    progress(enabled, label = '', percent = undefined) {
+        this.#progress.label = label;
+        this.#progress.percent = percent;
+        this.#progress.hidden = !enabled;
     }
 
 }

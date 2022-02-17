@@ -7,6 +7,8 @@ const secVerifySignature = (() => {
 
     sec.process = async function() {
 
+        if(this.disabled) return;
+
         let data = secDecodeNumeric.getValue().replace(/\s*\.\s*/g, '.').split('.');
         if (!data) return;
 

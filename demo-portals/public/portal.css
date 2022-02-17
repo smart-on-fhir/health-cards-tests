@@ -67,6 +67,10 @@ option {
   padding: 5px;
 }
 
+progress {
+  width: 100%;
+}
+
 .taError {
   overflow-x: auto;
   overflow-wrap: normal;

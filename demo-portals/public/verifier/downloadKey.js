@@ -6,6 +6,8 @@ const secDownloadKey = (() => {
 
     sec.process = async () => {
 
+        if(this.disabled) return;
+
         const previousControl = secExtractPublicKey;
         const publicKeyUrl = previousControl.getValue(1);
 
