@@ -75,7 +75,7 @@ app.post(Config.VALIDATE_PAYLOAD, async (req, res) => {
 app.post(Config.VALIDATE_KEYSET, async (req, res) => {
     console.log('Received POST for', Config.VALIDATE_KEYSET, req.body);
     const keyset = req.body.data;
-    const errors = await validate.keyset(keyset);
+    const errors = await validate.keyset(keyset, { ...{validationTime: "1653955200" /* 2022-05-31 */} });
     res.type('json');
     res.send({ success: errors.length === 0, errors: errors });
 });
