@@ -5,7 +5,7 @@ kind: Namespace
 metadata:
   name: siop
 ---
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   annotations:
@@ -20,24 +20,23 @@ spec:
   - host: demo-portals.smarthealth.cards
     http:
       paths:
-      - backend:
-          serviceName: demo-portals
-          servicePort: 80
-        path: /(.*)
-  - host: dev.c19.cards
-    http:
-      paths:
-      - backend:
-          serviceName: siop-dev
-          servicePort: 80
-        path: /(.*)
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: demo-portals
+            port:
+              number: 80
   - host: c19.cards
     http:
       paths:
-      - backend:
-          serviceName: siop
-          servicePort: 80
-        path: /(.*)
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: siop
+            port:
+              number: 80
   tls:
   - hosts:
     - c19.cards
@@ -88,47 +87,6 @@ spec:
         env:
         - name: SERVER_BASE
           value: "https://c19.cards/api"
----
-apiVersion: v1
-kind: Service
-metadata:
-  namespace: siop
-  name: siop-dev
-spec:
-  selector:
-    app: siop-dev
-  ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 8080
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  namespace: siop
-  name: siop-dev
-  labels:
-    app: siop-dev
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: siop-dev
-  template:
-    metadata:
-      labels:
-        app: siop-dev
-    spec:
-      volumes:
-      containers:
-      - name: ui-dev
-        image: argonautcontainerregistry.azurecr.io/siop:dev
-        imagePullPolicy: Always
-        ports:
-        - containerPort: 8080
-        env:
-        - name: SERVER_BASE
-          value: "https://dev.c19.cards/api"
 ---
 apiVersion: v1
 kind: Service
