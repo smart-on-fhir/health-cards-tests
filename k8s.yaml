@@ -40,7 +40,6 @@ spec:
   tls:
   - hosts:
     - c19.cards
-    - dev.c19.cards
     - demo-portals.smarthealth.cards
     secretName: tls-secret
 status:
