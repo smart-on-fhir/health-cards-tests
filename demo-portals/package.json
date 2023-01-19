@@ -1,17 +1,13 @@
 {
     "name": "shc-demo",
     "version": "0.2.0",
-    "description": "SMART Health Cards Demo",
+    "description": "SMART Health Demo Portals",
     "main": "src/server.ts",
     "scripts": {
         "build": "tsc",
         "deploy": "node js/src/server.js",
         "postinstall": "node src/init.js",
-        "build-docs": "node js/src/buildDocs.js",
-        "preinstall": "npx npm-force-resolutions"
-    },
-    "resolutions": {
-        "ansi-regex": "5.0.1"
+        "build-docs": "node js/src/buildDocs.js"
     },
     "author": "",
     "license": "ISC",
