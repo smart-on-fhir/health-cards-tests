@@ -10,7 +10,7 @@ import { Config } from './config';
 import fs from 'fs';
 import http from 'http';
 import got from 'got';
-import { validate, ValidationProfiles, Validators, IOptions } from 'health-cards-validation-sdk/js/src/api';
+import { validate, ValidationProfiles, Validators, IOptions } from 'health-cards-validation-sdk/js/src/api.js';
 import * as issuer from './issuer';
 
 
@@ -63,6 +63,15 @@ app.post(Config.VALIDATE_JWS, async (req, res) => {
 });
 
 
+app.post(Config.VALIDATE_JWE, async (req, res) => {
+    console.log('Received POST for', Config.VALIDATE_JWE, req.body);
+    const jwe = req.body.data;
+    const result = await validate.jwe(jwe, { cascade: false, decryptionKey: req.body?.key });
+    res.type('json');
+    res.send({ data: result.result, errors: result.errors });
+});
+
+
 app.post(Config.VALIDATE_PAYLOAD, async (req, res) => {
     console.log('Received POST for', Config.VALIDATE_PAYLOAD, req.body);
     const payload = req.body.payload;
@@ -75,9 +84,71 @@ app.post(Config.VALIDATE_PAYLOAD, async (req, res) => {
 app.post(Config.VALIDATE_KEYSET, async (req, res) => {
     console.log('Received POST for', Config.VALIDATE_KEYSET, req.body);
     const keyset = req.body.data;
-    const errors = await validate.keyset(keyset, { ...{validationTime: "1653955200" /* 2022-05-31 */} });
+    const errors = await validate.keyset(keyset, { ...{ validationTime: "1653955200" /* 2022-05-31 */ } });
     res.type('json');
     res.send({ success: errors.length === 0, errors: errors });
+});
+
+
+app.post(Config.VALIDATE_SHLINK, async (req, res) => {
+    console.log('Received POST for', Config.VALIDATE_SHLINK, req.body);
+    const shc = req.body.data;
+    const errors = await validate.shlink(shc, { cascade: false });
+    res.type('json');
+    res.send({ success: errors.length === 0, errors: errors });
+});
+
+
+app.post(Config.VALIDATE_SHL_PAYLOAD, async (req, res) => {
+    console.log('Received POST for', Config.VALIDATE_SHL_PAYLOAD, req.body);
+    const shc = req.body.data;
+    const errors = await validate.shlpayload(shc, { cascade: false });
+    res.type('json');
+    res.send({ success: errors.length === 0, errors: errors });
+});
+
+
+app.post(Config.VALIDATE_SHL_MANIFEST, async (req, res) => {
+    console.log('Received POST for', Config.VALIDATE_SHL_MANIFEST, req.body);
+    const shc = req.body.data;
+    const errors = await validate.shlmanifest(shc, { cascade: false });
+    res.type('json');
+    res.send({ success: errors.length === 0, errors: errors });
+});
+
+
+app.post(Config.DOWNLOAD_SHL_MANIFEST, async (req, res) => {
+    console.log('Received POST for', Config.DOWNLOAD_SHL_MANIFEST, req.body);
+    let result;
+    if (!req?.body?.url) {
+        result = { manifest: '', errors: [{ message: 'url missing', code: 100, level: 3 }] };
+    } else {
+        result = await validate.downloadManifest(req.body);
+    }
+    res.type('json');
+    res.send(result);
+});
+
+
+app.post(Config.VALIDATE_SHL_MANIFEST_FILE, async (req, res) => {
+    console.log("Received POST for", Config.VALIDATE_SHL_MANIFEST_FILE, req.body);
+    const fileText = req.body.data;
+    const errors = await validate.shlmanifestfile(fileText, { cascade: false });
+    res.type("json");
+    res.send({ success: errors.length === 0, errors: errors });
+});
+
+
+app.post(Config.DOWNLOAD_SHL_MANIFEST_FILE, async (req, res) => {
+    console.log('Received POST for', Config.DOWNLOAD_SHL_MANIFEST_FILE, req.body);
+    let result;
+    if (!req?.body?.location) {
+        result = { encryptedFile: '', errors: [{ message: 'manifest file location missing', code: 100, level: 3 }] };
+    } else {
+        result = await validate.downloadManifestFile(req.body);
+    }
+    res.type('json');
+    res.send(result);
 });
 
 
@@ -95,6 +166,7 @@ app.post(Config.DEFLATE_PAYLOAD, async (req, res) => {
     const result = issuer.deflate(payload);
     res.send(Buffer.from(result as Uint8Array));
 });
+
 
 app.post(Config.INFLATE_PAYLOAD, async (req, res) => {
     console.log('Received POST for', Config.INFLATE_PAYLOAD, req.body);
@@ -198,7 +270,10 @@ app.post(Config.CHECK_TRUSTED_DIRECTORY, async (req, res) => {
 
 http.createServer(app).listen(Config.SERVICE_PORT, () => {
     const url = Config.SERVER_BASE;
-    console.log("Service listening at " + url);
-    console.log("\nVerifierPortal:  " + url + 'VerifierPortal.html');
-    console.log("DevPortal:  " + url + 'DevPortal.html');
+    console.log([
+        `Service listening at                 ${url}`,
+        `SMART Health Cards Verifier Portal:  ${url}VerifierPortal.html`,
+        `SMART Health Cards Developer Portal: ${url}DevPortal.html`,
+        `SMART Health Links Verifier Portal:  ${url}SHLPortal.html`
+    ].join('\n'));
 });

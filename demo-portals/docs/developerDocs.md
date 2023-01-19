@@ -153,7 +153,7 @@ Notice that the __vs.credentialSubject.fhirBundle__ contains the Fhir Bundle fro
 
 See: [Health Cards are Small](https://spec.smarthealth.cards/#health-cards-are-small)
 
-The Verfiable Credential (VC) above is minified, all extraneous white-space is removed.
+The Verifiable Credential (VC) above is minified, all extraneous white-space is removed.
 
 &nbsp;  
 <!-- label:minimizePayload side:right-->

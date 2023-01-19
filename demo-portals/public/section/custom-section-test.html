@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>Custom-Section Test Page</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+
+    <script src="https://cdn.rawgit.com/showdownjs/showdown/1.9.1/dist/showdown.min.js"></script>
+
+
+    <script src='../section-field/section-field.js'></script>
+    <script src='./section.js'></script>
+
+    <style>
+        section-field {
+            /* 
+            background: rgb(215, 231, 240);
+ 
+            --label-background: rgb(80, 100, 80);
+            --notice-background: rgb(134, 162, 189); 
+
+            font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+            color: aqua;
+                        */
+        }
+    </style>
+
+</head>
+
+
+
+<body style="background-color: #AAA;">
+
+    <custom-section id="section" buttonlabel="Button!">
+        <doc>
+            # Hello
+            <br>
+        </doc>
+        <doc>
+            # There
+            <br>
+        </doc>
+        <section-field label placeholder="Header"></section-field>
+    </custom-section>
+
+
+    <script>
+        function handleButton(event) {
+            event.target.fields[1].value = "Hello";
+        }
+
+        const section = document.getElementById('section');
+
+        const field1 = section.addTextField('New Field');
+
+
+        field1.label = true;
+
+        field1.valid = () => {
+            if(field1.value === 'abc') return true;
+            field1.errors = ['not abc'];
+            return false;
+        }
+
+        section.docs = section.docs.concat(["#Dude\n```\ncode\n```\n<br>"]);
+
+        section.valid = async (field) => {
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    resolve(true);
+                }, 1000);
+            });
+        }
+
+        section.value = (sec) => {
+            return field1.value;
+        }
+
+        section.addEventListener('invalid', () => {
+            console.log('invalid');
+        });
+
+        section.addEventListener('valid',async () => {
+            const isValid = await section.valid
+            console.log('valid');
+        });
+
+
+    </script>
+
+</body>
+
+</html>

@@ -177,7 +177,7 @@
             sec.addTextField("Multipart QR 3");
             await sec.setValue(result, 2);
         }
-        
+
 
         //
         // User selected profile for FHIR validation
@@ -187,6 +187,18 @@
             secExtractFhirBundle.setValue(secExtractFhirBundle.getValue());
         }
 
+        //
+        // Allow JWS to be supplied by a query-string
+        //
+        if (window.location.search) {
+            const queries = window.location.search.replace('?', '').split('&').map(q => {
+                let [field, value] = q.split('=');
+                const pair = { field, value };
+                if (pair.field === 'jws') {
+                    secDecodeNumeric.setValue(pair.value)
+                }
+            });
+        }
 
     </script>
 

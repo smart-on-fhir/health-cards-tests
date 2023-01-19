@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHL Verifier Portal</title>
+
+    <base target="_blank">
+
+    <link rel="stylesheet" href="portal.css">
+    <link rel="stylesheet" href="github-markdown.css">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,300" rel="stylesheet" type="text/css">
+
+    <script src="jsQR.js"></script>
+    <script src="qrscanner.js"></script>
+
+    <style>
+
+    </style>
+
+
+</head>
+
+<body style="background-color: #3A4856;">
+
+    <!-- showdown converts Markdown text into Html and is loaded globally into window.showdown -->
+    <script src="https://cdn.rawgit.com/showdownjs/showdown/1.9.1/dist/showdown.min.js"></script>
+
+    <!-- custom controls. Section requires Section-Field -->
+    <script src='./section-field/section-field.js' type="module"></script>
+    <script src='./section/section.js' type="module"></script>
+
+
+    <div>
+
+        <div style='padding: 3%;'>
+            <div style="font-family: 'Open Sans';color: white;">
+                <hr />
+                <h2>SMART Health Link Verifier</h2>
+                <p>
+                    Decode a SMART Health Link into a SMART Health Card and highlight any issues encountered by the
+                    decoding process.
+                </p>
+            </div>
+        </div>
+
+
+        <div style='padding: 3%; display: flex; flex-direction: column; gap: 8em'>
+
+            <custom-section id='scanQr' title="SMART Health Link">
+                <section-field label placeholder="SMART Health Link">
+                    <input type="button" style="width: 150px" id="buttonScanQr" value="Scan QR" />
+                    <input type="button" style="width: 150px" id="sampleSHL" value="Sample" />
+                </section-field>
+                <doc>
+                    ## SMART Health Link
+
+                    Scan or paste a SMART Health Link here to start the decoding process.
+                    Press the __SHL Sample__ button to load as sample link.
+                    <br><br>
+                </doc>
+            </custom-section>
+            <script src='shl/qr.js' type="module"></script>
+
+
+            <custom-section id='decodeShlPayload' title="Decoded SMART Health Link">
+                <section-field label placeholder="Viewer"> </section-field>
+                <section-field label placeholder="SHL Payload"> </section-field>
+                <doc>
+                    ## Decode SHL
+
+                    Decodes the SMART Health link into a JSON string.
+
+                    <br><br>
+                </doc>
+                <doc>
+                    #### Viewer
+                    The optional viewer URL.
+
+                    #### Payload
+                    The decoded payload
+
+                    <br><br>
+                </doc>
+            </custom-section>
+            <script src='shl/payload.js' type="module"></script>
+
+
+            <custom-section id='manifest' title="Manifest Download Parameters">
+                <section-field label placeholder="url"> </section-field>
+                <section-field label placeholder="passcode" pattern="^[0-9]*$"> </section-field>
+                <section-field label placeholder="recipient (optional)"> </section-field>
+                <section-field label placeholder="embeddedLengthMax (optional)" pattern="^[0-9]*$" optional>
+                </section-field>
+                <doc>
+                    <!--
+                    ## Manifest Download Parameters
+
+                    Parameters submitted to the server to download the manifest:  
+                    &emsp;&emsp;**URL** _required_  
+                    &emsp;&emsp;**passcode** _required if **P** (password) flag is included in the payload **flags** property__  
+                    &emsp;&emsp;**recipient** _optional_  
+                    &emsp;&emsp;**embeddedLengthMax** _optional_  
+                    &emsp;&emsp;&emsp;&emsp;If the length of the data is less than _embeddedLengthMax_, the data will be included in the _embedded_ property  
+                    > Note: The download results are cached by this webpage, per unique set of parameters.  
+                    > If you want non-cached results, alter one of the fields like _recipient_ or refresh the page.
+
+                    <br><br>
+                    -->
+                </doc>
+            </custom-section>
+            <script src='shl/parameters.js' type="module"></script>
+
+
+            <custom-section id='manifest2' title="Manifest">
+                <section-field label placeholder="Manifest"> </section-field>
+                <doc>
+                    ## Manifest
+
+                    A list of files containing URLs to SMART Health Card records
+
+                    <br><br>
+                </doc>
+            </custom-section>
+            <script src='shl/manifest.js' type="module"></script>
+
+
+            <custom-section id='manifestFiles' title="Manifest Files">
+                <section-field label placeholder="File 1"> </section-field>
+                <doc>
+                    <!--
+                    ## Manifest Files (JWE)
+
+                    Each file entry from the above manifest 
+
+                    <br><br>
+                    -->
+                </doc>
+            </custom-section>
+            <script src='shl/files.js' type="module"></script>
+
+
+            <custom-section id='encryptedFiles' title="Encrypted Files (JWE)">
+                <section-field label placeholder="Decryption Key (from payload section)"> </section-field>
+                <section-field label placeholder="Encrypted File 1"> </section-field>
+                <doc>
+                    <!--
+                    ## Encrypted Files (JWE)
+
+                    Each file from the above manifest files from its URL
+                    These files are in JSON Web Encryption form (JWE)
+
+                    <br><br>
+                    -->
+                </doc>
+            </custom-section>
+            <script src='shl/encrypted.js' type="module"></script>
+
+
+            <custom-section id='jwe' title="Decrypted Files">
+                <section-field label placeholder="Decrypted File 1"> </section-field>
+                <doc>
+                    <!-- 
+                    ## Decrypted Files
+
+                    Each file above decrypted with the decryption key into a VerifiableCredential containing JWS encoded SMART Health Cards
+
+                    Press the **Validate** button to transfer the SMART Health Card data to the SMART Health Card Verifier page in a new tab.
+                    <br><br>
+                    -->
+                </doc>
+            </custom-section>
+            <script src='shl/jwe.js' type="module"></script>
+
+
+        </div>
+
+    </div>
+
+
+    <div class="footer">
+        <input type="button" id='buttonClear' value="Clear" />
+        <input type="button" id='buttonToggleLabel' value="Labels" />
+    </div>
+
+
+    <div id="CenterDIV">
+
+        <div class="divFloat" style="text-align: center;">
+
+            <div id="container" style="position:relative;">
+                <video id='vid'></video>
+                <label id='multipart' style="position:absolute; top: 10px; left: 10px"></label>
+            </div>
+
+            <input type="button" id='buttonCloseVideo' value="Close" />
+
+        </div>
+    </div>
+
+
+    <script>
+
+        const sample = 'https://demo.vaxx.link/viewer#shlink:/eyJ1cmwiOiJodHRwczovL3Rlc3QtbGluay81cWxRRVYxeGp1YjU2Y0Y0Q3JWTjJCOUtuTnlHeFl4RUtlT1kwY2pvMmg0IiwiZmxhZyI6IlAiLCJrZXkiOiJxTEJzOUxFZFhkVkQxNllWOHNOMHk0dEJxbmlIWUR1VEhFRVI5TURIWWhRIiwibGFiZWwiOiIiLCJleHAiOjE4OTcxNzEyMDB9';
+        let labels = true;
+
+        document.getElementById('buttonToggleLabel').onclick = () => {
+            labels = !labels;
+            document.querySelector('section-field').labels(labels);
+        }
+
+        document.getElementById('sampleSHL').onclick = () => {
+            const section = document.querySelector('#scanQr');
+            section.fields[0].value = sample;
+
+            // set the passcode after waiting 1-second
+            setTimeout(() => {
+                // we have to delay a second because when we set the link above
+                // the section.clear() cascades to the subsequent sections.
+                // if we don't delay a bit, our passcode would just be cleared.
+                // An alternative would be some property to prevent auto-clearing a field
+                const section = document.querySelector('#manifest');
+                section.fields[1].value = '1234'; // password field
+            }, 1000);
+        }
+
+        //
+        // Scanner
+        //
+        const qrScanner = QrScanner('vid');
+        document.getElementById('buttonScanQr').onclick = async () => {
+            const link = await scanQrCodes();
+            const section = document.querySelector('#scanQr');
+            if (!link) {
+                section.fields[0].errors = ['Scan failed'];
+                return;
+            }
+            section.fields[0].value = link;
+        }
+        document.getElementById('buttonCloseVideo').onclick = () => {
+            // close the scan window if .stop() returns true (Actually stopped something)
+            qrScanner.stop() && (document.getElementById('CenterDIV').style.display = 'none');
+        }
+
+
+        //
+        // Clears all the fields including errors
+        // The section.clear() calls chain so we only need to call the topmost clear()
+        //
+        document.getElementById('buttonClear').onclick = () => {
+            [...document.getElementsByTagName('custom-section')].forEach(sec => {
+                sec.clear();
+            });
+        }
+
+
+        //
+        // Opens the scanner UI and scans single and multi-part qr codes
+        //
+        async function scanQrCodes() {
+
+            // reveal the qr scanner ui
+            const qrScanDiv = document.getElementById('CenterDIV');
+            qrScanDiv.style.display = 'block';
+
+            let scanResult;
+
+            while (true) {
+
+                //let label = 'Parts : ';
+                scanResult = await qrScanner.scan();
+
+                // if the scanner returns an error
+                if (scanResult?.error) {
+                    alert(`Camera Error '${scanResult.error}'`);
+                    break;
+                };
+
+                // if the scanner was closed by the user
+                if (scanResult?.state === 'stopped') break;
+
+                // sometimes the scanner returns without data, try again
+                if (scanResult.data) break;
+            }
+
+            // close the scanner ui
+            qrScanDiv.style.display = 'none';
+
+            return scanResult.data;
+        }
+
+
+    </script>
+
+
+</body>
+
+</html>
