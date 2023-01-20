@@ -82,10 +82,8 @@ sec.initialize = async function () {
         f.label = true;
     }
 
-    for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const result = await utils.restCall('/download-shl-manifest-file', file, {cache: false});
-
+    (await Promise.all(files.map(f => utils.restCall('/download-shl-manifest-file', f, {cache: false}))))
+    .forEach((result, i) => {
         if(result.errors.length) {
             sec.fields[i + 1].value = "Download failed."
             sec.fields[i + 1].errors = result.errors;
@@ -93,7 +91,7 @@ sec.initialize = async function () {
             sec.fields[i + 1].valid = isJWE;
             sec.fields[i + 1].value = result.encryptedFile;
         }
-    }
+    });
 
 };
 

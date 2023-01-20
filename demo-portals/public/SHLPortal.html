@@ -40,14 +40,14 @@
                 <hr />
                 <h2>SMART Health Link Verifier</h2>
                 <p>
-                    Decode a SMART Health Link into a SMART Health Card and highlight any issues encountered by the
+                    Decode a SMART Health Link into a SMART Health Card(s) and highlight any issues encountered by the
                     decoding process.
                 </p>
             </div>
         </div>
 
 
-        <div style='padding: 3%; display: flex; flex-direction: column; gap: 8em'>
+        <div id="section-container" style='padding: 3%; display: flex; flex-direction: column; gap: 6em; box-sizing: border-box'>
 
             <custom-section id='scanQr' title="SMART Health Link">
                 <section-field label placeholder="SMART Health Link">
@@ -57,8 +57,8 @@
                 <doc>
                     ## SMART Health Link
 
-                    Scan or paste a SMART Health Link here to start the decoding process.
-                    Press the __SHL Sample__ button to load as sample link.
+                    Scan a QR code or paste a [SMART Health Link](https://docs.smarthealthit.org/smart-health-links/) here to begin the decoding process.  
+                    Press the __Sample__ button to load a sample link.
                     <br><br>
                 </doc>
             </custom-section>
@@ -69,18 +69,24 @@
                 <section-field label placeholder="Viewer"> </section-field>
                 <section-field label placeholder="SHL Payload"> </section-field>
                 <doc>
-                    ## Decode SHL
+                    ## Decoded SMART Health Link
 
-                    Decodes the SMART Health link into a JSON string.
+                    Decodes the __SMART Health Link__ into a JSON payload string.
 
-                    <br><br>
-                </doc>
-                <doc>
-                    #### Viewer
+                    #### Viewer  
                     The optional viewer URL.
 
-                    #### Payload
-                    The decoded payload
+                    #### Payload  
+                    The decoded [Payload](https://docs.smarthealthit.org/smart-health-links/spec#construct-a-shlink-payload). It should appear similar to this:
+                    ```js
+                    {
+                        "url": "https://ehr.example.org/qr/Y9xwkUdtmN9wwoJoN3ffJIhX2UGvCL1JnlPVNL3kDWM/m",
+                        "flag": "LP",
+                        "key": "rxTgYlOaKJPFtcEd0qcceN8wEU4p94SqAwIWQe6uX7Q",
+                        "label": "Back-to-school immunizations for Oliver Brown",  
+                        "exp": 1897171200
+                    }
+                    ```
 
                     <br><br>
                 </doc>
@@ -88,24 +94,21 @@
             <script src='shl/payload.js' type="module"></script>
 
 
-            <custom-section id='manifest' title="Manifest Download Parameters">
+            <custom-section id='manifest' title="Manifest Request Parameters">
                 <section-field label placeholder="url"> </section-field>
                 <section-field label placeholder="passcode" pattern="^[0-9]*$"> </section-field>
-                <section-field label placeholder="recipient (optional)"> </section-field>
+                <section-field label placeholder="recipient"> </section-field>
                 <section-field label placeholder="embeddedLengthMax (optional)" pattern="^[0-9]*$" optional>
                 </section-field>
                 <doc>
                     <!--
-                    ## Manifest Download Parameters
+                    ## [Manifest Request Parameters](https://docs.smarthealthit.org/smart-health-links/spec/#shlink-manifest-request)
 
                     Parameters submitted to the server to download the manifest:  
-                    &emsp;&emsp;**URL** _required_  
-                    &emsp;&emsp;**passcode** _required if **P** (password) flag is included in the payload **flags** property__  
-                    &emsp;&emsp;**recipient** _optional_  
-                    &emsp;&emsp;**embeddedLengthMax** _optional_  
-                    &emsp;&emsp;&emsp;&emsp;If the length of the data is less than _embeddedLengthMax_, the data will be included in the _embedded_ property  
-                    > Note: The download results are cached by this webpage, per unique set of parameters.  
-                    > If you want non-cached results, alter one of the fields like _recipient_ or refresh the page.
+                    &emsp;**URL** (_required_) : Manifest URL for this SHLink  
+                    &emsp;**passcode** (_conditional_) : A user-supplied Passcode if the _P_ flag was present in the SHLink payload  
+                    &emsp;**recipient** (_required_) : A string describing the recipient (e.g.,the name of an organization or person) suitable for display to the Receiving User    
+                    &emsp;**embeddedLengthMax** (_optional_) : Integer upper bound on the length of embedded payloads (see [.files.embedded](https://docs.smarthealthit.org/smart-health-links/spec/#filesembedded-content))   
 
                     <br><br>
                     -->
@@ -117,23 +120,41 @@
             <custom-section id='manifest2' title="Manifest">
                 <section-field label placeholder="Manifest"> </section-field>
                 <doc>
-                    ## Manifest
+                    <!--
+                    ## [Manifest File](https://docs.smarthealthit.org/smart-health-links/spec/#example-shlink-manifest-file)
 
-                    A list of files containing URLs to SMART Health Card records
+                    A list of files containing URLs to SMART Health Card records similar to this:  
+                    ```
+                    {
+                        "files": [{
+                          "contentType": "application/smart-health-card",
+                          "location": "https://bucket.cloud.example.org/file1?sas=MFXK6jL3oL3SI_lRfi_-cEfzIs5oHs6rRWmrsCAFzvk"
+                        }, 
+                        {
+                          "contentType": "application/smart-health-card",
+                          "embedded": "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2R0NNIn0..8zH0NmUXGwMOqEya.xdGRpgyvE9vNoKzHlr4itKKW2vo<snipped>"
+                        },
+                        {
+                          "contentType": "application/fhir+json",
+                          "location": "https://bucket.cloud.example.org/file2?sas=T34xzj1XtqTYb2lzcgj59XCY4I6vLN3AwrTUIT9GuSc"
+                        }]
+                      }
+                      ```
 
                     <br><br>
+                    -->
                 </doc>
             </custom-section>
             <script src='shl/manifest.js' type="module"></script>
 
 
-            <custom-section id='manifestFiles' title="Manifest Files">
+            <custom-section id='manifestFiles' title="Files">
                 <section-field label placeholder="File 1"> </section-field>
                 <doc>
                     <!--
-                    ## Manifest Files (JWE)
+                    ## Manifest Files
 
-                    Each file entry from the above manifest 
+                    Each individual file entry from the above manifest
 
                     <br><br>
                     -->
@@ -142,15 +163,18 @@
             <script src='shl/files.js' type="module"></script>
 
 
-            <custom-section id='encryptedFiles' title="Encrypted Files (JWE)">
+            <custom-section id='encryptedFiles' title="Encrypted Data">
                 <section-field label placeholder="Decryption Key (from payload section)"> </section-field>
                 <section-field label placeholder="Encrypted File 1"> </section-field>
                 <doc>
                     <!--
-                    ## Encrypted Files (JWE)
+                    ## [Encrypted Data](https://docs.smarthealthit.org/smart-health-links/spec/#encrypting-and-decrypting-files)
 
-                    Each file from the above manifest files from its URL
-                    These files are in JSON Web Encryption form (JWE)
+                    Encrypted data downloaded from each _file.location_ above.  
+                    This content is in JSON Web Encryption form (JWE)
+
+                    __Decryption Key__ : [Key](https://docs.smarthealthit.org/smart-health-links/spec/#construct-a-shlink-payload) for processing files returned in the manifest. 43 characters, consisting of 32 random bytes base64urlencoded.  
+                    > This key data is copied from the _SHL Payload_ section above. 
 
                     <br><br>
                     -->
@@ -159,20 +183,33 @@
             <script src='shl/encrypted.js' type="module"></script>
 
 
-            <custom-section id='jwe' title="Decrypted Files">
+            <custom-section id='jwe' title="Decrypted Data">
                 <section-field label placeholder="Decrypted File 1"> </section-field>
                 <doc>
                     <!-- 
-                    ## Decrypted Files
+                    ## Decrypted Data
 
-                    Each file above decrypted with the decryption key into a VerifiableCredential containing JWS encoded SMART Health Cards
+                    Each file above is decrypted with the _decryption key_ into a VerifiableCredential containing a SMART Health Card encoded in a JSON Web Signature (JWS).
 
-                    Press the **Validate** button to transfer the SMART Health Card data to the SMART Health Card Verifier page in a new tab.
+                    Press the **Validate** button to transfer this __SMART Health Card__ data to the SMART Health Card Verifier page in a new tab.
                     <br><br>
                     -->
                 </doc>
             </custom-section>
             <script src='shl/jwe.js' type="module"></script>
+
+            <script>
+                // don't shrink the body when sections/fields shrink/removed
+                // it is disorientating when you enter a value and the bottom of the body
+                // resizes and everything jumps around.
+                new ResizeObserver((entries) => {
+                    const container = entries[0].target;
+                    const minHeight = container.style.minHeight.replace('px', '') ?? 0;
+                    const maxHeight = Math.max(minHeight, container.clientHeight);
+                    if(maxHeight > minHeight ) container.style.minHeight = `${maxHeight}px`;
+                }).observe(document.getElementById('section-container'));
+
+            </script>
 
 
         </div>
@@ -182,7 +219,7 @@
 
     <div class="footer">
         <input type="button" id='buttonClear' value="Clear" />
-        <input type="button" id='buttonToggleLabel' value="Labels" />
+        <input type="button" style='width: 5em' id='buttonToggleLabel' value="Labels" />
     </div>
 
 

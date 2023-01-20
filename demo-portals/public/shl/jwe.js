@@ -68,7 +68,7 @@ sec.initialize = async function () {
     }
 
     // add button that posts the jwe string to the verifier portal
-    sec.fields.forEach((f,i) => {
+    sec.fields.forEach((f, i) => {
         if (f.children.length) return;
 
         // create a button element that navigates to the SHC verifier page with the data as a query-string
@@ -91,19 +91,16 @@ sec.initialize = async function () {
         f.valid = isValid;
     });
 
-    for (let i = 0; i < files.length; i++) {
-        utils.restCall('/validate-jwe', { data: files[i], key: key }, 'POST')
-            .then((function (result) {
+    (await Promise.all(files.map(f => utils.restCall('/validate-jwe', { data: f, key: key }, 'POST'))))
+        .forEach((result, i) => {
 
-                if (result.data) {
-                    sec.fields[this.i].value = result.data;
-                } else {
-                    sec.fields[this.i].value = `Decryption failed for file ${i + 1}. Check the key.`
-                    sec.fields[this.i].errors = result.errors;
-                }
-
-            }).bind({ i }));
-    }
+            if (result.data) {
+                sec.fields[i].value = result.data;
+            } else {
+                sec.fields[i].value = `Decryption failed for file ${i + 1}. Check the key.`
+                sec.fields[i].errors = result.errors;
+            }
+        });
 
 };
 

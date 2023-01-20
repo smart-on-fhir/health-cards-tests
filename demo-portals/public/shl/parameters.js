@@ -1,4 +1,3 @@
-import * as utils from '../utils2.js';
 import payloadSection from './payload.js'
 
 
@@ -62,9 +61,10 @@ sec.initialize = async function () {
         // Normally this is set to 1/2-sec 
         fieldPassCode.options.delay.bounce = 1000;
         fieldPassCode.valid = (field) => {
-            return (field.value.length > 0);
+            const isValid = field.value.length > 0;
+            field.errors = isValid ? [] : ['passcode required'];
+            return isValid;
         }
-        fieldPassCode.errors = fieldPassCode.value ? [] : ['passcode required'];
     }
 
     // set this after 'passcode'
@@ -75,10 +75,7 @@ sec.initialize = async function () {
 
 sec.update = async function (field) {
 
-    const url = fieldUrl.value;
     const passcode = fieldPassCode.value;
-    const recipient = fieldRecipient.value;
-    const embeddedLengthMax = parseInt(fieldEmbeddedLengthMax.value) ?? -1;
 
     // fail if invalid URL
     if (fieldUrl.valid === false) return false;
@@ -91,19 +88,21 @@ sec.update = async function (field) {
 
 sec.value = (section) => {
     return {
-        url: section.fields[0].value,
-        passcode: section.fields[1].value,
-        recipient: section.fields[2].value,
-        embeddedLengthMax: parseInt(section.fields[3].value) ?? undefined
+        url: fieldUrl.value,
+        passcode: fieldPassCode.value,
+        recipient: fieldRecipient.value,
+        embeddedLengthMax: parseInt(fieldEmbeddedLengthMax.value) ?? undefined
     };
 }
 
 // override the clear method to preserve user provided parameters
 sec.clear = (section) => {
-    section.fields[0].clear()
-    if (!section.fields[1].value.trim()) section.fields[1].clear()
-    if (!section.fields[2].value.trim()) section.fields[2].clear()
-    if (!section.fields[3].value.trim()) section.fields[3].clear()
+    fieldUrl.clear()
+    if (!fieldPassCode.value.trim()) fieldPassCode.clear()
+    fieldPassCode.valid = undefined;
+    fieldPassCode.placeholder = "passcode";
+    if (!fieldRecipient.value.trim()) fieldRecipient.clear()
+    if (!fieldEmbeddedLengthMax.value.trim()) fieldEmbeddedLengthMax.clear()
     section.errors = [];
     return false;
 }
