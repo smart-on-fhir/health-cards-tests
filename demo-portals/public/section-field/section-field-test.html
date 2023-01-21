@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>Section-Field Test Page</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+
+    <script src='section-field.js'></script>
+
+    <style>
+        section-field {
+            /* background: rgb(215, 231, 240);
+            --label-background: rgb(80, 100, 80);
+            --notice-background: rgb(134, 162, 189);
+            font-family: 'Courier New', Courier, monospace;
+            color: darkgreen; */
+        }
+    </style>
+
+</head>
+
+
+
+<body style="background-color: #FFF;">
+
+    <section-field id="cf-test" placeholder="First Name"></section-field>
+
+    <input id="buttonToggleLabel" type="button" value="Label" />
+    <input id="buttonToggleNotice" type="button" value="Notice" />
+    <input id="buttonToggleButton" type="button" value="Button" />
+    <input id="buttonToggleDisabled" type="button" value="Disable" />
+    <input id="buttonToggleReadonly" type="button" value="Readonly" />
+    <input id="buttonClear" type="button" value="Clear" />
+    <input id="buttonError" type="button" value="Error" />
+    <input id="buttonWarning" type="button" value="Warning" />
+
+    <script>
+        const field = document.getElementById('cf-test');
+
+        document.getElementById('buttonToggleLabel').addEventListener('click', () => {
+            field.label = !field.label;
+        });
+
+        document.getElementById('buttonToggleNotice').addEventListener('click', () => {
+            field.notice = !field.notice;
+        });
+
+        document.getElementById('buttonToggleButton').addEventListener('click', () => {
+
+
+            const button = document.createElement('INPUT');
+            button.setAttribute("type", "button");
+            button.setAttribute("id", "button");
+            button.value = "Button!";
+            button.onclick = () => {
+                field.value = `
+                    {
+                        "Foo" : "Bar"
+                    }`;
+            };
+            const f = document.getElementById('cf-test');
+            f.appendChild(button);
+
+        });
+
+        document.getElementById('buttonToggleDisabled').addEventListener('click', () => {
+            field.disabled = !field.disabled;
+        });
+
+        document.getElementById('buttonToggleReadonly').addEventListener('click', () => {
+            field.readonly = !field.readonly;
+        });
+
+        document.getElementById('buttonClear').addEventListener('click', () => {
+            field.clear();
+        });
+
+        document.getElementById('buttonError').addEventListener('click', () => {
+            field.errors = ['error!'];
+        });
+
+        document.getElementById('buttonWarning').addEventListener('click', () => {
+            field.errors = field.errors.concat([{message: "warning!", code: 100, level: 2}]);
+        });
+
+        const f = document.getElementById('cf-test');
+        f.addEventListener('change', (_event) => {
+            console.log(`event change: ${_event.data}`);
+        });
+        f.addEventListener('input', (_event) => {
+            console.log(`event input: ${_event.data}`);
+        });
+        f.addEventListener('valid', (_event) => {
+            console.log(`event valid: ${_event.data}`);
+        });
+        f.addEventListener('invalid', (_event) => {
+            console.log(`event invalid: ${_event.data}`);
+        });
+
+        f.valid = (field) => {
+            const valid = /^[A-Z]+$/.test(field.value);
+            if (!valid) {
+                field.errors = [{ message: 'must be uppercase', code: 100, level: 3 }, { message: 'should be uppercase', code: 100, level: 2 }]
+            }
+            return valid;
+        }
+
+        f.addEventListener('valid', (evt) => {
+            const field = evt.data;
+            if(field.valid) {
+                console.log('isvalid');
+            }
+
+        })
+
+    </script>
+
+</body>
+
+</html>
