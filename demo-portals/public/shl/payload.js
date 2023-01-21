@@ -79,7 +79,7 @@ sec.initialize = async function () {
 
     if (!payload) {
         fieldPayload.value = json;
-        sec.setErrors(["Cannot parse SHL into payload"]);
+        sec.errors = ["Cannot parse SHL into payload"];
         return;
     };
 

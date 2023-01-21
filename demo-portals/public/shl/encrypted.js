@@ -72,7 +72,7 @@ sec.initialize = async function () {
 
     const key = payload.key;
     if (!key || typeof key !== 'string') {
-        this.setErrors(['payload is missing key or payload.key is not a string']);
+        this.errors = ['payload is missing key or payload.key is not a string'];
     }
 
     fieldKey.value = key;

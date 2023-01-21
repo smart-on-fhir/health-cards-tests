@@ -29,7 +29,7 @@ sec.initialize = async function () {
     //TODO: returns null if invalid url
 
     if (result.errors.length) {
-        sec.setErrors(result.errors);
+        sec.errors = result.errors;
         return false;
     } else {
         sec.errors = [];

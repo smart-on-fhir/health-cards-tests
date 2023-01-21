@@ -1,7 +1,7 @@
 {
     "name": "shc-demo",
     "version": "0.2.0",
-    "description": "SMART Health Demo Portals",
+    "description": "SMART Health Portals",
     "main": "src/server.ts",
     "scripts": {
         "build": "tsc",
