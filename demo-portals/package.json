@@ -27,7 +27,7 @@
         "health-cards-validation-sdk": "git+https://github.com/smart-on-fhir/health-cards-validation-SDK.git#9c84a6a082c4d67aafd3b495df06c7dffc8b4608",
         "jspdf": "^2.4.0",
         "jsqr": "^1.4.0",
-        "node-jose": "^2.0.0",
+        "node-jose": "^2.2.0",
         "pako": "^2.0.4",
         "qrcode": "^1.4.4",
         "showdown": "^1.9.0",
