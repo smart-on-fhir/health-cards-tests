@@ -12,24 +12,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
-
     - uses: azure/docker-login@v1
       with:
-        login-server: ${{ secrets.CONTAINER_REGISTRY }}
-        username: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}
-        password: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}
-
-    - uses: azure/aks-set-context@v1
+        login-server: ${{ fromJSON(secrets.AKS_2023).containerRegistry }}
+        username: ${{ fromJSON(secrets.AKS_2023).clientId }}
+        password: ${{ fromJSON(secrets.AKS_2023).clientSecret }}
+    - uses: azure/login@v1
       with:
-        creds: '${{ secrets.AZURE_CREDENTIALS }}'
-        cluster-name: ${{ secrets.CLUSTER_NAME }}
-        resource-group: ${{ secrets.RESOURCE_GROUP }}
-
+        creds: ${{ secrets.AKS_2023 }}
+    - uses: azure/aks-set-context@v3
+      with:
+        cluster-name: ${{ fromJSON(secrets.AKS_2023).clusterName }}
+        resource-group: ${{ fromJSON(secrets.AKS_2023).resourceGroup }}
+        admin: 'true'
     - name: Build and rollout to CI
       working-directory: demo-portals
       run: |
         docker build . \
-          -t ${{ secrets.CONTAINER_REGISTRY }}/demo-portals:$GITHUB_SHA \
-          -t ${{ secrets.CONTAINER_REGISTRY }}/demo-portals:latest
-        docker push ${{ secrets.CONTAINER_REGISTRY }}/demo-portals
+          -t ${{ fromJSON(secrets.AKS_2023).containerRegistry }}/demo-portals:$GITHUB_SHA \
+          -t ${{ fromJSON(secrets.AKS_2023).containerRegistry }}/demo-portals:latest
+        docker push ${{ fromJSON(secrets.AKS_2023).containerRegistry }}/demo-portals
         kubectl -n siop rollout restart deployment/demo-portals
