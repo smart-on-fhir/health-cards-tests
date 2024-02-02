@@ -5,7 +5,7 @@ ENV SERVER_BASE=http://localhost:8080/
 
 WORKDIR /usr/src/app
 
-COPY package.json ./
+COPY package.json package-lock.json ./
 COPY src/ ./src
 COPY public/ ./public
 COPY private/ ./private
