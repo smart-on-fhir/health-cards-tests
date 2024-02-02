@@ -1,4 +1,4 @@
-FROM node:15
+FROM node:18
 
 ENV HOST_PORT=8080
 ENV SERVER_BASE=http://localhost:8080/
