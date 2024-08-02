@@ -9,7 +9,6 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   annotations:
-    kubernetes.io/ingress.class: nginx
     cert-manager.io/cluster-issuer: letsencrypt-prod
   name: siop-ingress
   namespace: siop
@@ -19,71 +18,16 @@ spec:
     http:
       paths:
       - pathType: Prefix
-        path: "/"
+        path: /
         backend:
           service:
             name: demo-portals
             port:
               number: 80
-  - host: c19.cards
-    http:
-      paths:
-      - pathType: Prefix
-        path: "/"
-        backend:
-          service:
-            name: siop
-            port:
-              number: 80
   tls:
   - hosts:
-    - c19.cards
     - demo-portals.smarthealth.cards
     secretName: tls-secret
-status:
-  loadBalancer:
-    ingress:
-    - {}
----
-apiVersion: v1
-kind: Service
-metadata:
-  namespace: siop
-  name: siop
-spec:
-  selector:
-    app: siop
-  ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 8080
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: siop
-  namespace: siop
-  labels:
-    app: siop
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: siop
-  template:
-    metadata:
-      labels:
-        app: siop
-    spec:
-      volumes:
-      containers:
-      - name: ui
-        image: argonautcontainerregistry.azurecr.io/siop:latest
-        ports:
-        - containerPort: 8080
-        env:
-        - name: SERVER_BASE
-          value: "https://c19.cards/api"
 ---
 apiVersion: v1
 kind: Service
@@ -118,7 +62,7 @@ spec:
       volumes:
       containers:
       - name: demo-portals
-        image: argonautcontainerregistry.azurecr.io/demo-portals:latest
+        image: ghcr.io/smart-on-fhir/health-cards-tests:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8080

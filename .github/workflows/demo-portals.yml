@@ -1,36 +1,30 @@
-name: Deploy Health Wallet Demo master branch to ci
-# Basics from https://docs.microsoft.com/en-us/azure/dev-spaces/how-to/github-actions
+name: Deploy Server to k8s
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
   push:
     branches:
     - master
-    paths:
-      - "demo-portals/**"
-
+permissions:
+  id-token: write
+  contents: read
+  packages: write
 jobs:
-  build-demo-portals:
+  build:
+    environment: k8deploy
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
-    - uses: azure/docker-login@v1
+    - name: Log in to the Container registry
+      uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
       with:
-        login-server: ${{ fromJSON(secrets.AKS_2023).containerRegistry }}
-        username: ${{ fromJSON(secrets.AKS_2023).clientId }}
-        password: ${{ fromJSON(secrets.AKS_2023).clientSecret }}
-    - uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AKS_2023 }}
-    - uses: azure/aks-set-context@v3
-      with:
-        cluster-name: ${{ fromJSON(secrets.AKS_2023).clusterName }}
-        resource-group: ${{ fromJSON(secrets.AKS_2023).resourceGroup }}
-        admin: 'true'
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     - name: Build and rollout to CI
       working-directory: demo-portals
       run: |
         docker build . \
-          -t ${{ fromJSON(secrets.AKS_2023).containerRegistry }}/demo-portals:$GITHUB_SHA \
-          -t ${{ fromJSON(secrets.AKS_2023).containerRegistry }}/demo-portals:latest
-        docker push ${{ fromJSON(secrets.AKS_2023).containerRegistry }}/demo-portals
-        kubectl -n siop rollout restart deployment/demo-portals
+          -t ghcr.io/smart-on-fhir/health-cards-tests:$GITHUB_SHA \
+          -t ghcr.io/smart-on-fhir/health-cards-tests:latest
+        docker push ghcr.io/smart-on-fhir/health-cards-tests
+        # kubectl -n siop rollout restart deployment/demo-portals
