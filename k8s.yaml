@@ -64,6 +64,10 @@ spec:
       - name: demo-portals
         image: ghcr.io/smart-on-fhir/health-cards-tests:latest
         imagePullPolicy: Always
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "125m"
         ports:
         - containerPort: 8080
         env:
