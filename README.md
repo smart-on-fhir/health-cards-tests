@@ -1,5 +1,19 @@
 # Health Cards Tests
 
+## Simple Overview
+
+This repository contains tools and examples for testing Health Cards using SMART on FHIR standards.
+
+It helps developers understand how health data can be securely shared and verified using modern healthcare APIs.
+
+## Beginner Note
+
+If you are new, you do not need deep knowledge to explore this project.
+
+You can start by trying the demo links below and observing how data is shared between systems.
+
+## Using the hosted demo components
+
 ## Using the hosted demo components
 
 ### Mobile Wallet demo at <https://c19.cards>
