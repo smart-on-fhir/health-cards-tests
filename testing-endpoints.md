@@ -1,3 +1,16 @@
+## Overview
+
+This document provides a list of testing endpoints used in the Health Cards project.
+
+These endpoints help simulate how healthcare data is shared and verified using SMART on FHIR.
+
+## Beginner Note
+
+If you are new, you can think of endpoints as special links (URLs) that allow applications to send or receive data.
+
+You do not need to understand all the technical details to explore this document.
+
+
 ## Examples
 
 #### `api/test/did-doc`
